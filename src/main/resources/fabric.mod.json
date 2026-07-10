@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
-  "id": "${mod_id}",
+  "id": "create_connected",
   "version": "${version}",
-  "name": "${mod_name}",
-  "description": "${mod_description}",
-  "authors": ["${mod_authors}"],
+  "name": "Create: Connected (Fly)",
+  "description": "Fabric port of Create: Connected. Quality-of-life blocks that you wish existed in Create.",
+  "authors": ["Lysine (original)", "scgry (Fabric port)"],
   "contact": {
-    "homepage": "https://github.com/hlysine/create_connected",
-    "sources": "https://github.com/hlysine/create_connected",
-    "issues": "https://github.com/hlysine/create_connected/issues"
+    "homepage": "https://github.com/R2bEEaton-Minecraft/create-connected-fly",
+    "sources": "https://github.com/R2bEEaton-Minecraft/create-connected-fly",
+    "issues": "https://github.com/R2bEEaton-Minecraft/create-connected-fly/issues"
   },
   "license": "AGPL-3.0",
   "icon": "create_connected_icon.png",
@@ -25,12 +25,10 @@
     "create_connected.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=${loader_version}",
-    "minecraft": "${minecraft_version_range}",
+    "fabricloader": ">=0.18.4",
+    "minecraft": "~1.21.11",
+    "java": ">=21",
     "fabric-api": "*",
-    "create": "${create_version_range}"
-  },
-  "suggests": {
-    "flamingo": "*"
+    "create": ">=6.0.9-5"
   }
 }

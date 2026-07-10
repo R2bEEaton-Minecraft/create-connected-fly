@@ -34,3 +34,5 @@ libs
 .fabric/
 remappedSrc/
 decompSrc/
+
+PORTING_NOTES.md
