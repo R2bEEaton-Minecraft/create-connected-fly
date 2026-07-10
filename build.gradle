@@ -46,6 +46,9 @@ dependencies {
 
     // Create Fly
     modImplementation "maven.modrinth:create-fly:${project.create_version}"
+
+    // JEI - optional compat, compile-only since it's a soft dependency (gated by Mods.JEI.isLoaded())
+    modCompileOnly "maven.modrinth:jei:${project.jei_version}"
 }
 
 processResources {
@@ -58,6 +61,7 @@ processResources {
 
 tasks.withType(JavaCompile).configureEach {
     it.options.release = 21
+    it.options.compilerArgs << "-Xmaxerrs" << "5000"
 }
 
 java {

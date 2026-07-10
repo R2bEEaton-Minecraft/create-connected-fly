@@ -3,13 +3,13 @@ package com.hlysine.create_connected.content.inventorybridge;
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.CreateConnected;
 import com.hlysine.create_connected.content.inventoryaccessport.WrappedItemHandler;
-import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
-import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
-import com.simibubi.create.foundation.blockEntity.behaviour.filtering.FilteringBehaviour;
-import com.simibubi.create.foundation.blockEntity.behaviour.filtering.SidedFilteringBehaviour;
-import com.simibubi.create.foundation.blockEntity.behaviour.inventory.CapManipulationBehaviourBase;
-import com.simibubi.create.foundation.blockEntity.behaviour.inventory.InvManipulationBehaviour;
-import net.createmod.catnip.math.BlockFace;
+import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
+import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
+import com.zurrtum.create.client.foundation.blockEntity.behaviour.filtering.FilteringBehaviour;
+import com.zurrtum.create.client.foundation.blockEntity.behaviour.filtering.SidedFilteringBehaviour;
+import com.zurrtum.create.foundation.blockEntity.behaviour.inventory.CapManipulationBehaviourBase;
+import com.zurrtum.create.foundation.blockEntity.behaviour.inventory.InvManipulationBehaviour;
+import com.zurrtum.create.catnip.math.BlockFace;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -60,7 +60,7 @@ public class InventoryBridgeBlockEntity extends SmartBlockEntity {
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
         event.registerBlockEntity(
                 Capabilities.ItemHandler.BLOCK,
-                CCBlockEntityTypes.INVENTORY_BRIDGE.get(),
+                CCBlockEntityTypes.INVENTORY_BRIDGE,
                 (be, context) -> {
                     if (be.itemCapability == null)
                         be.refreshCapability();

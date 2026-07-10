@@ -1,10 +1,10 @@
 package com.hlysine.create_connected.mixin.chaincogwheel;
 
 import com.hlysine.create_connected.registries.CCBlocks;
-import com.simibubi.create.content.kinetics.RotationPropagator;
-import com.simibubi.create.content.kinetics.base.IRotate;
-import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
-import com.simibubi.create.content.kinetics.chainDrive.ChainDriveBlock;
+import com.zurrtum.create.content.kinetics.RotationPropagator;
+import com.zurrtum.create.content.kinetics.base.IRotate;
+import com.zurrtum.create.content.kinetics.base.KineticBlockEntity;
+import com.zurrtum.create.content.kinetics.chainDrive.ChainDriveBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Block;
@@ -34,7 +34,7 @@ public class RotationPropagatorMixin {
                 .subtract(from.getBlockPos());
         final Direction direction = Direction.fromDelta(diff.getX(), diff.getY(), diff.getZ());
 
-        if (stateFrom.is(CCBlocks.ENCASED_CHAIN_COGWHEEL.get()) && stateTo.is(CCBlocks.ENCASED_CHAIN_COGWHEEL.get())) {
+        if (stateFrom.is(CCBlocks.ENCASED_CHAIN_COGWHEEL) && stateTo.is(CCBlocks.ENCASED_CHAIN_COGWHEEL)) {
             if (direction == null) {
                 cir.setReturnValue(0f);
                 return;

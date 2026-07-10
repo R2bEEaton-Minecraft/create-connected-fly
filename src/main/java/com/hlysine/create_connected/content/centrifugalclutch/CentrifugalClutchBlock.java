@@ -2,9 +2,9 @@ package com.hlysine.create_connected.content.centrifugalclutch;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.content.CCBlockStateProperties;
-import com.simibubi.create.content.kinetics.RotationPropagator;
-import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
-import com.simibubi.create.foundation.block.IBE;
+import com.zurrtum.create.content.kinetics.RotationPropagator;
+import com.zurrtum.create.content.kinetics.base.DirectionalKineticBlock;
+import com.zurrtum.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -41,7 +41,7 @@ public class CentrifugalClutchBlock extends DirectionalKineticBlock implements I
 
     @Override
     public BlockEntityType<? extends CentrifugalClutchBlockEntity> getBlockEntityType() {
-        return CCBlockEntityTypes.CENTRIFUGAL_CLUTCH.get();
+        return CCBlockEntityTypes.CENTRIFUGAL_CLUTCH;
     }
 
     @Override

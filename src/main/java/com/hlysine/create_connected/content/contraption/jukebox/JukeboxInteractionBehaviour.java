@@ -1,9 +1,9 @@
 package com.hlysine.create_connected.content.contraption.jukebox;
 
-import com.simibubi.create.api.behaviour.interaction.MovingInteractionBehaviour;
-import com.simibubi.create.content.contraptions.AbstractContraptionEntity;
-import com.simibubi.create.content.contraptions.Contraption;
-import net.createmod.catnip.levelWrappers.WrappedLevel;
+import com.zurrtum.create.api.behaviour.interaction.MovingInteractionBehaviour;
+import com.zurrtum.create.content.contraptions.AbstractContraptionEntity;
+import com.zurrtum.create.content.contraptions.Contraption;
+import com.zurrtum.create.catnip.levelWrappers.WrappedLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerLevel;

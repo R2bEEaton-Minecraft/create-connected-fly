@@ -1,8 +1,7 @@
 package com.hlysine.create_connected.content.brassgearbox;
 
 
-import com.simibubi.create.content.kinetics.transmission.SplitShaftBlockEntity;
-import net.minecraft.MethodsReturnNonnullByDefault;
+import com.zurrtum.create.content.kinetics.transmission.SplitShaftBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -11,7 +10,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import static com.hlysine.create_connected.content.brassgearbox.BrassGearboxBlock.getFaceId;
 import static com.hlysine.create_connected.content.brassgearbox.BrassGearboxBlock.isFaceFlipped;
 
-@MethodsReturnNonnullByDefault
 public class BrassGearboxBlockEntity extends SplitShaftBlockEntity {
 
     public BrassGearboxBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {

@@ -1,14 +1,12 @@
 package com.hlysine.create_connected.compat;
 
-import com.hlysine.create_connected.registries.CCBlocks;
-import com.hlysine.create_connected.registries.CCItems;
 import com.hlysine.create_connected.CreateConnected;
 import com.hlysine.create_connected.config.CCConfigs;
-import com.tterrag.registrate.util.entry.BlockEntry;
-import com.tterrag.registrate.util.entry.ItemEntry;
-import net.createmod.catnip.registry.RegisteredObjectsHelper;
+import com.zurrtum.create.catnip.registry.RegisteredObjectsHelper;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
@@ -16,44 +14,41 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
-import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 import java.util.*;
 
+// Create: Copycats+ has no Fabric build for MC 1.21.11 at all (verified: Modrinth tops out at
+// 1.21.1-fabric as of this port). BLOCK_MAP/ITEM_MAP are intentionally left empty rather than
+// referencing com.copycatsplus.copycats.* classes that don't exist on this platform+version -
+// this makes convert()/existsInCopycats()/isFeatureEnabled() safe no-ops (matching what would
+// happen anyway since Mods.COPYCATS.isLoaded() is always false right now), while keeping the
+// public API intact for the ~7 content/mixin call sites that depend on it, so this integration
+// re-activates automatically (just populate the maps in the static block below) once Copycats+
+// ships a compatible build.
 public class CopycatsManager {
-    public static Map<String, BlockEntry<?>> BLOCK_MAP = new HashMap<>();
-    public static Map<String, ItemEntry<?>> ITEM_MAP = new HashMap<>();
+    public static final Map<String, Block> BLOCK_MAP = new HashMap<>();
+    public static final Map<String, Item> ITEM_MAP = new HashMap<>();
 
     public static final Map<Level, Set<BlockPos>> migrationQueue = Collections.synchronizedMap(new WeakHashMap<>());
 
-    static {
-        BLOCK_MAP.put(CCBlocks.COPYCAT_BLOCK.getKey().location().getPath(), com.copycatsplus.copycats.CCBlocks.COPYCAT_BLOCK);
-        BLOCK_MAP.put(CCBlocks.COPYCAT_SLAB.getKey().location().getPath(), com.copycatsplus.copycats.CCBlocks.COPYCAT_SLAB);
-        BLOCK_MAP.put(CCBlocks.COPYCAT_BEAM.getKey().location().getPath(), com.copycatsplus.copycats.CCBlocks.COPYCAT_BEAM);
-        BLOCK_MAP.put(CCBlocks.COPYCAT_VERTICAL_STEP.getKey().location().getPath(), com.copycatsplus.copycats.CCBlocks.COPYCAT_VERTICAL_STEP);
-        BLOCK_MAP.put(CCBlocks.COPYCAT_STAIRS.getKey().location().getPath(), com.copycatsplus.copycats.CCBlocks.COPYCAT_STAIRS);
-        BLOCK_MAP.put(CCBlocks.COPYCAT_FENCE.getKey().location().getPath(), com.copycatsplus.copycats.CCBlocks.COPYCAT_FENCE);
-        BLOCK_MAP.put(CCBlocks.COPYCAT_FENCE_GATE.getKey().location().getPath(), com.copycatsplus.copycats.CCBlocks.COPYCAT_FENCE_GATE);
-        BLOCK_MAP.put(CCBlocks.COPYCAT_WALL.getKey().location().getPath(), com.copycatsplus.copycats.CCBlocks.COPYCAT_WALL);
-        BLOCK_MAP.put(CCBlocks.COPYCAT_BOARD.getKey().location().getPath(), com.copycatsplus.copycats.CCBlocks.COPYCAT_BOARD);
-        ITEM_MAP.put(CCItems.COPYCAT_BOX.getKey().location().getPath(), com.copycatsplus.copycats.CCItems.COPYCAT_BOX);
-        ITEM_MAP.put(CCItems.COPYCAT_CATWALK.getKey().location().getPath(), com.copycatsplus.copycats.CCItems.COPYCAT_CATWALK);
+    public static void registerTickListener() {
+        ServerTickEvents.END_WORLD_TICK.register(CopycatsManager::onLevelTick);
     }
 
     public static Block convert(Block self) {
-        ResourceLocation key = RegisteredObjectsHelper.getKeyOrThrow(self);
+        Identifier key = RegisteredObjectsHelper.getKeyOrThrow(self);
         if (!validateNamespace(key)) return self;
-        BlockEntry<?> result = BLOCK_MAP.get(key.getPath());
-        if (result != null) return result.get();
+        Block result = BLOCK_MAP.get(key.getPath());
+        if (result != null) return result;
         return self;
     }
 
     public static Item convert(Item self) {
-        ResourceLocation key = RegisteredObjectsHelper.getKeyOrThrow(self);
+        Identifier key = RegisteredObjectsHelper.getKeyOrThrow(self);
         if (!validateNamespace(key)) return self;
-        ItemEntry<?> result = ITEM_MAP.get(key.getPath());
-        if (result != null) return result.get();
-        BlockEntry<?> blockResult = BLOCK_MAP.get(key.getPath());
+        Item result = ITEM_MAP.get(key.getPath());
+        if (result != null) return result;
+        Block blockResult = BLOCK_MAP.get(key.getPath());
         if (blockResult != null) return blockResult.asItem();
         return self;
     }
@@ -77,7 +72,7 @@ public class CopycatsManager {
     }
 
     public static Block convertIfEnabled(Block block) {
-        ResourceLocation key = RegisteredObjectsHelper.getKeyOrThrow(block);
+        Identifier key = RegisteredObjectsHelper.getKeyOrThrow(block);
         if (!validateNamespace(key)) return block;
         if (isFeatureEnabled(key))
             return convert(block);
@@ -85,7 +80,7 @@ public class CopycatsManager {
     }
 
     public static BlockState convertIfEnabled(BlockState state) {
-        ResourceLocation key = RegisteredObjectsHelper.getKeyOrThrow(state.getBlock());
+        Identifier key = RegisteredObjectsHelper.getKeyOrThrow(state.getBlock());
         if (!validateNamespace(key)) return state;
         if (isFeatureEnabled(key))
             return convert(state);
@@ -93,28 +88,25 @@ public class CopycatsManager {
     }
 
     public static ItemLike convertIfEnabled(ItemLike item) {
-        ResourceLocation key = RegisteredObjectsHelper.getKeyOrThrow(item.asItem());
+        Identifier key = RegisteredObjectsHelper.getKeyOrThrow(item.asItem());
         if (!validateNamespace(key)) return item;
         if (isFeatureEnabled(key))
             return convert(item);
         return item;
     }
 
-    private static boolean validateNamespace(ResourceLocation key) {
+    private static boolean validateNamespace(Identifier key) {
         return key.getNamespace().equals(CreateConnected.MODID) || key.getNamespace().equals(Mods.COPYCATS.id());
     }
 
-    public static boolean existsInCopycats(ResourceLocation key) {
+    public static boolean existsInCopycats(Identifier key) {
         if (!validateNamespace(key)) return false;
         if (BLOCK_MAP.containsKey(key.getPath())) return true;
-        if (ITEM_MAP.containsKey(key.getPath())) return true;
-        return false;
+        return ITEM_MAP.containsKey(key.getPath());
     }
 
-    public static boolean isFeatureEnabled(ResourceLocation key) {
-        if (!existsInCopycats(key))
-            return false;
-        return com.copycatsplus.copycats.config.FeatureToggle.isEnabled(Mods.COPYCATS.rl(key.getPath()));
+    public static boolean isFeatureEnabled(Identifier key) {
+        return existsInCopycats(key);
     }
 
     public static void enqueueMigration(Level level, BlockPos pos) {
@@ -126,37 +118,33 @@ public class CopycatsManager {
         }
     }
 
-    public static void onLevelTick(LevelTickEvent.Post event) {
-        if (event.hasTime() && !event.getLevel().isClientSide()) {
-            if (!CCConfigs.common().migrateCopycatsOnInitialize.get()) {
-                migrationQueue.clear();
-                return;
-            }
-            Level level = event.getLevel();
-            synchronized (migrationQueue) {
-                if (migrationQueue.containsKey(level)) {
-                    Set<BlockPos> list = migrationQueue.get(level);
-                    synchronized (list) {
-                        if (list.size() > 0)
-                            CreateConnected.LOGGER.debug("Copycats: Migrated " + list.size() + " copycats in " + level.dimension().location());
-                        for (Iterator<BlockPos> iterator = list.iterator(); iterator.hasNext(); ) {
-                            BlockPos pos = iterator.next();
-                            if (!level.isLoaded(pos)) {
-                                continue;
-                            }
-                            BlockState state = level.getBlockState(pos);
-                            BlockState converted = CopycatsManager.convert(state);
-                            if (!converted.is(state.getBlock())) {
-                                level.setBlock(pos, converted, 2 | 16 | 32);
-                            }
-                            // Re-set block entity to trigger Copycats+ migration
-                            BlockEntity be = level.getBlockEntity(pos);
-                            if (be != null)
-                                level.setBlockEntity(be);
+    public static void onLevelTick(ServerLevel level) {
+        if (!CCConfigs.common().migrateCopycatsOnInitialize.get()) {
+            migrationQueue.clear();
+            return;
+        }
+        synchronized (migrationQueue) {
+            if (migrationQueue.containsKey(level)) {
+                Set<BlockPos> list = migrationQueue.get(level);
+                synchronized (list) {
+                    if (!list.isEmpty())
+                        CreateConnected.LOGGER.debug("Copycats: Migrated " + list.size() + " copycats in " + level.dimension().location());
+                    for (Iterator<BlockPos> iterator = list.iterator(); iterator.hasNext(); ) {
+                        BlockPos pos = iterator.next();
+                        if (!level.isLoaded(pos)) {
+                            continue;
                         }
+                        BlockState state = level.getBlockState(pos);
+                        BlockState converted = CopycatsManager.convert(state);
+                        if (!converted.is(state.getBlock())) {
+                            level.setBlock(pos, converted, 2 | 16 | 32);
+                        }
+                        BlockEntity be = level.getBlockEntity(pos);
+                        if (be != null)
+                            level.setBlockEntity(be);
                     }
-                    migrationQueue.remove(level);
                 }
+                migrationQueue.remove(level);
             }
         }
     }

@@ -10,7 +10,7 @@ import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.PackOutput.PathProvider;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -54,7 +54,7 @@ public class CCAdvancements implements DataProvider {
     BRASS_GEARBOX = create("brass_gearbox", b -> b.icon(CCBlocks.BRASS_GEARBOX)
             .title("Serious Organization")
             .description("Place down a Brass Gearbox")
-            .whenBlockPlaced(CCBlocks.BRASS_GEARBOX.get())
+            .whenBlockPlaced(CCBlocks.BRASS_GEARBOX)
             .after(ROOT)),
 
     OVERPOWERED_BRAKE = create("overpowered_brake_0", b -> b.icon(CCBlocks.BRAKE)
@@ -78,7 +78,7 @@ public class CCAdvancements implements DataProvider {
     SEQUENCED_PULSE_GENERATOR = create("sequenced_pulse_generator", b -> b.icon(CCBlocks.SEQUENCED_PULSE_GENERATOR)
             .title("Computational Supremacy")
             .description("Place down a Sequenced Pulse Generator")
-            .whenBlockPlaced(CCBlocks.SEQUENCED_PULSE_GENERATOR.get())
+            .whenBlockPlaced(CCBlocks.SEQUENCED_PULSE_GENERATOR)
             .after(CONTROL_CHIP)),
 
     PULSE_GEN_INFINITE_LOOP = create("pulse_generator_infinite_loop", b -> b.icon(CCItems.INCOMPLETE_CONTROL_CHIP)
@@ -110,9 +110,9 @@ public class CCAdvancements implements DataProvider {
             PathProvider pathProvider = output.createPathProvider(PackOutput.Target.DATA_PACK, "advancement");
             List<CompletableFuture<?>> futures = new ArrayList<>();
 
-            Set<ResourceLocation> set = Sets.newHashSet();
+            Set<Identifier> set = Sets.newHashSet();
             Consumer<AdvancementHolder> consumer = (advancement) -> {
-                ResourceLocation id = advancement.id();
+                Identifier id = advancement.id();
                 if (!set.add(id))
                     throw new IllegalStateException("Duplicate advancement " + id);
                 Path path = pathProvider.json(id);

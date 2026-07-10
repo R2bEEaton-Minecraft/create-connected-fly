@@ -2,14 +2,14 @@ package com.hlysine.create_connected.content.fluidvessel;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.CreateConnected;
-import com.simibubi.create.api.connectivity.ConnectivityHandler;
-import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
-import com.simibubi.create.content.fluids.tank.FluidTankBlockEntity;
-import com.simibubi.create.foundation.blockEntity.IMultiBlockEntityContainer;
-import com.simibubi.create.foundation.fluid.SmartFluidTank;
-import com.simibubi.create.infrastructure.config.AllConfigs;
-import net.createmod.catnip.animation.LerpedFloat;
-import net.createmod.catnip.nbt.NBTHelper;
+import com.zurrtum.create.api.connectivity.ConnectivityHandler;
+import com.zurrtum.create.client.api.goggles.IHaveGoggleInformation;
+import com.zurrtum.create.content.fluids.tank.FluidTankBlockEntity;
+import com.zurrtum.create.foundation.blockEntity.IMultiBlockEntityContainer;
+import com.zurrtum.create.foundation.fluid.SmartFluidTank;
+import com.zurrtum.create.infrastructure.config.AllConfigs;
+import com.zurrtum.create.catnip.animation.LerpedFloat;
+import com.zurrtum.create.catnip.nbt.NBTHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -58,7 +58,7 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
         event.registerBlockEntity(
                 Capabilities.FluidHandler.BLOCK,
-                CCBlockEntityTypes.FLUID_VESSEL.get(),
+                CCBlockEntityTypes.FLUID_VESSEL,
                 (be, context) -> {
                     if (be.fluidCapability == null)
                         be.refreshCapability();
@@ -67,7 +67,7 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
         );
         event.registerBlockEntity(
                 Capabilities.FluidHandler.BLOCK,
-                CCBlockEntityTypes.CREATIVE_FLUID_VESSEL.get(),
+                CCBlockEntityTypes.CREATIVE_FLUID_VESSEL,
                 (be, context) -> {
                     if (be.fluidCapability == null)
                         be.refreshCapability();

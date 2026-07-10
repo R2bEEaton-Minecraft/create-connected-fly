@@ -1,7 +1,7 @@
 package com.hlysine.create_connected.content.fluidvessel;
 
-import com.simibubi.create.content.fluids.tank.CreativeFluidTankBlockEntity;
-import com.simibubi.create.foundation.fluid.SmartFluidTank;
+import com.zurrtum.create.content.fluids.tank.CreativeFluidTankBlockEntity;
+import com.zurrtum.create.foundation.fluid.SmartFluidTank;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntityType;

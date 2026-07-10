@@ -2,8 +2,8 @@ package com.hlysine.create_connected.mixin.inventoryaccess;
 
 import com.hlysine.create_connected.content.inventoryaccessport.InventoryAccessPortBlockEntity;
 import com.hlysine.create_connected.content.inventorybridge.InventoryBridgeBlockEntity;
-import com.simibubi.create.AllBlocks;
-import com.simibubi.create.content.logistics.packager.PackagerBlockEntity;
+import com.zurrtum.create.AllBlocks;
+import com.zurrtum.create.content.logistics.packager.PackagerBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;

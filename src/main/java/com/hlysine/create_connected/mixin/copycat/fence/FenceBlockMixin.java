@@ -23,10 +23,10 @@ public class FenceBlockMixin {
         // Normally `this` is a wrapped fence while `pState` is a copycat fence
         // But other checks are added in case someone wanna use the wrapped fence by itself
         if (pState.is(BlockTags.FENCES) &&
-                (((FenceBlock) (Object) this).defaultBlockState().is(CCBlocks.COPYCAT_FENCE.get()) ||
-                        ((FenceBlock) (Object) this).defaultBlockState().is(CCBlocks.WRAPPED_COPYCAT_FENCE.get()) ||
-                        pState.is(CCBlocks.COPYCAT_FENCE.get()) ||
-                        pState.is(CCBlocks.WRAPPED_COPYCAT_FENCE.get())))
+                (((FenceBlock) (Object) this).defaultBlockState().is(CCBlocks.COPYCAT_FENCE) ||
+                        ((FenceBlock) (Object) this).defaultBlockState().is(CCBlocks.WRAPPED_COPYCAT_FENCE) ||
+                        pState.is(CCBlocks.COPYCAT_FENCE) ||
+                        pState.is(CCBlocks.WRAPPED_COPYCAT_FENCE)))
             cir.setReturnValue(true);
     }
 

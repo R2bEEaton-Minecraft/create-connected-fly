@@ -2,7 +2,7 @@ package com.hlysine.create_connected.mixin;
 
 import com.hlysine.create_connected.compat.ModMixin;
 import com.llamalad7.mixinextras.MixinExtrasBootstrap;
-import net.neoforged.fml.loading.FMLLoader;
+import net.fabricmc.loader.api.FabricLoader;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
@@ -57,7 +57,7 @@ public class MixinPlugin implements IMixinConfigPlugin {
 
     private static boolean anyModsLoaded(List<String> mods) {
         for (String mod : mods) {
-            if (FMLLoader.getLoadingModList().getMods().stream().anyMatch(m -> m.getModId().equals(mod))) return true;
+            if (FabricLoader.getInstance().isModLoaded(mod)) return true;
         }
         return false;
     }

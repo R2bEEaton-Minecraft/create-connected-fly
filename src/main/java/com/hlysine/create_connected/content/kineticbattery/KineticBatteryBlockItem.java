@@ -2,7 +2,7 @@ package com.hlysine.create_connected.content.kineticbattery;
 
 import com.hlysine.create_connected.ConnectedLang;
 import com.hlysine.create_connected.registries.CCDataComponents;
-import net.createmod.catnip.platform.CatnipServices;
+import com.zurrtum.create.catnip.platform.CatnipServices;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;

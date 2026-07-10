@@ -2,8 +2,8 @@ package com.hlysine.create_connected.content.kineticbridge;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCBlocks;
-import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
-import com.simibubi.create.foundation.block.IBE;
+import com.zurrtum.create.content.kinetics.base.DirectionalKineticBlock;
+import com.zurrtum.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -99,7 +99,7 @@ public class KineticBridgeBlock extends DirectionalKineticBlock implements IBE<K
 
     @Override
     public BlockEntityType<? extends KineticBridgeBlockEntity> getBlockEntityType() {
-        return CCBlockEntityTypes.KINETIC_BRIDGE.get();
+        return CCBlockEntityTypes.KINETIC_BRIDGE;
     }
 
     @Override

@@ -3,13 +3,13 @@ package com.hlysine.create_connected.content.sequencedpulsegenerator;
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.datagen.advancements.AdvancementBehaviour;
 import com.mojang.serialization.MapCodec;
-import com.simibubi.create.AllItems;
-import com.simibubi.create.content.redstone.diodes.AbstractDiodeBlock;
-import com.simibubi.create.content.redstone.diodes.BrassDiodeBlock;
-import com.simibubi.create.content.redstone.diodes.PoweredLatchBlock;
-import com.simibubi.create.foundation.block.IBE;
-import net.createmod.catnip.gui.ScreenOpener;
-import net.createmod.catnip.platform.CatnipServices;
+import com.zurrtum.create.AllItems;
+import com.zurrtum.create.content.redstone.diodes.AbstractDiodeBlock;
+import com.zurrtum.create.content.redstone.diodes.BrassDiodeBlock;
+import com.zurrtum.create.content.redstone.diodes.PoweredLatchBlock;
+import com.zurrtum.create.foundation.block.IBE;
+import com.zurrtum.create.client.catnip.gui.ScreenOpener;
+import com.zurrtum.create.catnip.platform.CatnipServices;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -17,7 +17,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
@@ -136,7 +135,7 @@ public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock implements 
     }
 
     @Override
-    protected @NotNull ItemInteractionResult useItemOn(@NotNull ItemStack stack,
+    protected @NotNull InteractionResult useItemOn(@NotNull ItemStack stack,
                                                        @NotNull BlockState state,
                                                        @NotNull Level level,
                                                        @NotNull BlockPos pos,
@@ -144,14 +143,14 @@ public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock implements 
                                                        @NotNull InteractionHand hand,
                                                        @NotNull BlockHitResult hitResult) {
         if (AllItems.WRENCH.isIn(stack))
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         if (stack.getItem() instanceof BlockItem blockItem) {
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
 
         CatnipServices.PLATFORM.executeOnClientOnly(
                 () -> () -> withBlockEntityDo(level, pos, be -> this.displayScreen(be, player)));
-        return ItemInteractionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 
     @Override
@@ -178,6 +177,6 @@ public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock implements 
 
     @Override
     public BlockEntityType<? extends SequencedPulseGeneratorBlockEntity> getBlockEntityType() {
-        return CCBlockEntityTypes.SEQUENCED_PULSE_GENERATOR.get();
+        return CCBlockEntityTypes.SEQUENCED_PULSE_GENERATOR;
     }
 }

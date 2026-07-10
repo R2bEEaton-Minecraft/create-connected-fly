@@ -2,16 +2,16 @@ package com.hlysine.create_connected.content.itemsilo;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.CreateConnected;
-import com.simibubi.create.api.connectivity.ConnectivityHandler;
-import com.simibubi.create.api.packager.InventoryIdentifier;
-import com.simibubi.create.foundation.ICapabilityProvider;
-import com.simibubi.create.foundation.blockEntity.IMultiBlockEntityContainer;
-import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
-import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
-import com.simibubi.create.foundation.blockEntity.behaviour.inventory.VersionedInventoryWrapper;
-import com.simibubi.create.foundation.mixin.accessor.ItemStackHandlerAccessor;
-import com.simibubi.create.infrastructure.config.AllConfigs;
-import net.createmod.catnip.nbt.NBTHelper;
+import com.zurrtum.create.api.connectivity.ConnectivityHandler;
+import com.zurrtum.create.api.packager.InventoryIdentifier;
+import com.zurrtum.create.foundation.ICapabilityProvider;
+import com.zurrtum.create.foundation.blockEntity.IMultiBlockEntityContainer;
+import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
+import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
+import com.zurrtum.create.foundation.blockEntity.behaviour.inventory.VersionedInventoryWrapper;
+import com.zurrtum.create.foundation.mixin.accessor.ItemStackHandlerAccessor;
+import com.zurrtum.create.infrastructure.config.AllConfigs;
+import com.zurrtum.create.catnip.nbt.NBTHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -70,7 +70,7 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
         event.registerBlockEntity(
                 Capabilities.ItemHandler.BLOCK,
-                CCBlockEntityTypes.ITEM_SILO.get(),
+                CCBlockEntityTypes.ITEM_SILO,
                 (be, context) -> {
                     be.initCapability();
                     if (be.itemCapability == null)
@@ -285,7 +285,7 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
                 for (int zOffset = 0; zOffset < radius; zOffset++) {
                     BlockPos vaultPos = worldPosition.offset(xOffset, yOffset, zOffset);
                     ItemSiloBlockEntity vaultAt =
-                            ConnectivityHandler.partAt(CCBlockEntityTypes.ITEM_SILO.get(), level, vaultPos);
+                            ConnectivityHandler.partAt(CCBlockEntityTypes.ITEM_SILO, level, vaultPos);
                     invs[yOffset * radius * radius + xOffset * radius + zOffset] =
                             vaultAt != null ? vaultAt.inventory : new ItemStackHandler();
                 }

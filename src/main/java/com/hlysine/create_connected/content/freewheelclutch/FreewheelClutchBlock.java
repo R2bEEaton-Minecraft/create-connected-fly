@@ -2,9 +2,9 @@ package com.hlysine.create_connected.content.freewheelclutch;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.content.CCBlockStateProperties;
-import com.simibubi.create.content.kinetics.RotationPropagator;
-import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
-import com.simibubi.create.foundation.block.IBE;
+import com.zurrtum.create.content.kinetics.RotationPropagator;
+import com.zurrtum.create.content.kinetics.base.DirectionalKineticBlock;
+import com.zurrtum.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -41,7 +41,7 @@ public class FreewheelClutchBlock extends DirectionalKineticBlock implements IBE
 
     @Override
     public BlockEntityType<? extends FreewheelClutchBlockEntity> getBlockEntityType() {
-        return CCBlockEntityTypes.FREEWHEEL_CLUTCH.get();
+        return CCBlockEntityTypes.FREEWHEEL_CLUTCH;
     }
 
     @Override

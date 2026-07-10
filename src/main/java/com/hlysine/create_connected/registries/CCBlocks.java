@@ -1,6 +1,5 @@
 package com.hlysine.create_connected.registries;
 
-import com.hlysine.create_connected.CreateConnected;
 import com.hlysine.create_connected.compat.DyeDepotCompat;
 import com.hlysine.create_connected.compat.Mods;
 import com.hlysine.create_connected.compat.SimCompatRegistry;
@@ -14,26 +13,17 @@ import com.hlysine.create_connected.content.brassgearbox.BrassGearboxBlock;
 import com.hlysine.create_connected.content.centrifugalclutch.CentrifugalClutchBlock;
 import com.hlysine.create_connected.content.chaincogwheel.ChainCogwheelBlock;
 import com.hlysine.create_connected.content.copycat.beam.CopycatBeamBlock;
-import com.hlysine.create_connected.content.copycat.beam.CopycatBeamModel;
 import com.hlysine.create_connected.content.copycat.block.CopycatBlockBlock;
-import com.hlysine.create_connected.content.copycat.block.CopycatBlockModel;
 import com.hlysine.create_connected.content.copycat.board.CopycatBoardBlock;
-import com.hlysine.create_connected.content.copycat.board.CopycatBoardModel;
 import com.hlysine.create_connected.content.copycat.fence.CopycatFenceBlock;
-import com.hlysine.create_connected.content.copycat.fence.CopycatFenceModel;
 import com.hlysine.create_connected.content.copycat.fence.WrappedFenceBlock;
 import com.hlysine.create_connected.content.copycat.fencegate.CopycatFenceGateBlock;
-import com.hlysine.create_connected.content.copycat.fencegate.CopycatFenceGateModel;
 import com.hlysine.create_connected.content.copycat.fencegate.WrappedFenceGateBlock;
 import com.hlysine.create_connected.content.copycat.slab.CopycatSlabBlock;
-import com.hlysine.create_connected.content.copycat.slab.CopycatSlabModel;
 import com.hlysine.create_connected.content.copycat.stairs.CopycatStairsBlock;
-import com.hlysine.create_connected.content.copycat.stairs.CopycatStairsModel;
 import com.hlysine.create_connected.content.copycat.stairs.WrappedStairsBlock;
 import com.hlysine.create_connected.content.copycat.verticalstep.CopycatVerticalStepBlock;
-import com.hlysine.create_connected.content.copycat.verticalstep.CopycatVerticalStepModel;
 import com.hlysine.create_connected.content.copycat.wall.CopycatWallBlock;
-import com.hlysine.create_connected.content.copycat.wall.CopycatWallModel;
 import com.hlysine.create_connected.content.copycat.wall.WrappedWallBlock;
 import com.hlysine.create_connected.content.crankwheel.CrankWheelBlock;
 import com.hlysine.create_connected.content.crankwheel.CrankWheelItem;
@@ -42,22 +32,16 @@ import com.hlysine.create_connected.content.crossconnector.EncasedCrossConnector
 import com.hlysine.create_connected.content.dashboard.DashboardBlock;
 import com.hlysine.create_connected.content.fancatalyst.FanCatalystRotatingHeadBlock;
 import com.hlysine.create_connected.content.fluidvessel.FluidVesselBlock;
-import com.hlysine.create_connected.content.fluidvessel.FluidVesselGenerator;
 import com.hlysine.create_connected.content.fluidvessel.FluidVesselItem;
-import com.hlysine.create_connected.content.fluidvessel.FluidVesselModel;
 import com.hlysine.create_connected.content.freewheelclutch.FreewheelClutchBlock;
 import com.hlysine.create_connected.content.inventoryaccessport.InventoryAccessPortBlock;
-import com.hlysine.create_connected.content.inventoryaccessport.InventoryAccessPortGenerator;
 import com.hlysine.create_connected.content.inventorybridge.InventoryBridgeBlock;
 import com.hlysine.create_connected.content.invertedclutch.InvertedClutchBlock;
 import com.hlysine.create_connected.content.invertedgearshift.InvertedGearshiftBlock;
 import com.hlysine.create_connected.content.itemsilo.ItemSiloBlock;
-import com.hlysine.create_connected.content.itemsilo.ItemSiloCTBehaviour;
 import com.hlysine.create_connected.content.itemsilo.ItemSiloItem;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryBlock;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryBlockItem;
-import com.hlysine.create_connected.content.kineticbattery.KineticBatteryGenerator;
-import com.hlysine.create_connected.content.kineticbattery.KineticBatteryOverrides;
 import com.hlysine.create_connected.content.kineticbridge.KineticBridgeBlock;
 import com.hlysine.create_connected.content.kineticbridge.KineticBridgeBlockItem;
 import com.hlysine.create_connected.content.kineticbridge.KineticBridgeDestinationBlock;
@@ -70,1128 +54,535 @@ import com.hlysine.create_connected.content.parallelgearbox.ParallelGearboxBlock
 import com.hlysine.create_connected.content.sequencedpulsegenerator.SequencedPulseGeneratorBlock;
 import com.hlysine.create_connected.content.shearpin.ShearPinBlock;
 import com.hlysine.create_connected.content.sixwaygearbox.SixWayGearboxBlock;
-import com.hlysine.create_connected.datagen.CCBlockStateGen;
-import com.simibubi.create.AllBlocks;
-import com.simibubi.create.AllSpriteShifts;
-import com.simibubi.create.AllTags;
-import com.simibubi.create.Create;
-import com.simibubi.create.api.behaviour.display.DisplaySource;
-import com.simibubi.create.api.connectivity.ConnectivityHandler;
-import com.simibubi.create.api.contraption.BlockMovementChecks;
-import com.simibubi.create.api.contraption.storage.item.MountedItemStorageType;
-import com.simibubi.create.api.stress.BlockStressValues;
-import com.simibubi.create.content.decoration.encasing.EncasedCTBehaviour;
-import com.simibubi.create.content.decoration.encasing.EncasingRegistry;
-import com.simibubi.create.content.fluids.tank.FluidTankMovementBehavior;
-import com.simibubi.create.content.kinetics.chainDrive.ChainDriveGenerator;
-import com.simibubi.create.content.kinetics.simpleRelays.BracketedKineticBlockModel;
-import com.simibubi.create.content.logistics.chute.ChuteGenerator;
-import com.simibubi.create.content.logistics.chute.ChuteItem;
-import com.simibubi.create.foundation.block.render.ReducedDestroyEffects;
-import com.simibubi.create.foundation.data.*;
-import com.tterrag.registrate.providers.DataGenContext;
-import com.tterrag.registrate.providers.RegistrateBlockstateProvider;
-import com.tterrag.registrate.providers.RegistrateLangProvider;
-import com.tterrag.registrate.util.entry.BlockEntry;
-import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.registry.RegisteredObjectsHelper;
-import net.minecraft.advancements.critereon.StatePropertiesPredicate;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.BlockTags;
+import com.zurrtum.create.AllBlocks;
+import com.zurrtum.create.api.connectivity.ConnectivityHandler;
+import com.zurrtum.create.api.contraption.BlockMovementChecks;
+import com.zurrtum.create.api.contraption.storage.fluid.MountedFluidStorageType;
+import com.zurrtum.create.api.contraption.storage.item.MountedItemStorageType;
+import com.zurrtum.create.api.behaviour.display.DisplaySource;
+import com.zurrtum.create.api.stress.BlockStressValues;
+import com.zurrtum.create.content.decoration.encasing.EncasingRegistry;
+import com.zurrtum.create.catnip.registry.RegisteredObjectsHelper;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.DyeColor;
-import net.minecraft.world.item.Rarity;
-import net.minecraft.world.level.block.*;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ButtonBlock;
+import net.minecraft.world.level.block.LeverBlock;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.properties.BlockSetType;
-import net.minecraft.world.level.block.state.properties.WoodType;
 import net.minecraft.world.level.material.MapColor;
-import net.minecraft.world.level.storage.loot.LootPool;
-import net.minecraft.world.level.storage.loot.LootTable;
-import net.minecraft.world.level.storage.loot.entries.LootItem;
-import net.minecraft.world.level.storage.loot.functions.CopyComponentsFunction;
-import net.minecraft.world.level.storage.loot.predicates.ExplosionCondition;
-import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePropertyCondition;
-import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
-import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
-import net.neoforged.neoforge.client.model.generators.ConfiguredModel;
-import net.neoforged.neoforge.client.model.generators.ModelFile;
-import net.neoforged.neoforge.common.Tags;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.function.Function;
 
-import static com.simibubi.create.api.behaviour.display.DisplaySource.displaySource;
-import static com.simibubi.create.api.behaviour.display.DisplayTarget.displayTarget;
-import static com.simibubi.create.api.behaviour.movement.MovementBehaviour.movementBehaviour;
-import static com.simibubi.create.api.contraption.storage.fluid.MountedFluidStorageType.mountedFluidStorage;
-import static com.simibubi.create.foundation.data.AssetLookup.partialBaseModel;
-import static com.simibubi.create.foundation.data.BlockStateGen.axisBlock;
-import static com.simibubi.create.foundation.data.CreateRegistrate.connectedTextures;
-import static com.simibubi.create.foundation.data.ModelGen.customItemModel;
-import static com.simibubi.create.foundation.data.TagGen.axeOrPickaxe;
-import static com.simibubi.create.foundation.data.TagGen.pickaxeOnly;
-
-@SuppressWarnings("removal")
+// Original was a Registrate builder chain (REGISTRATE.block(...).blockstate(...).item()...register()).
+// Registrate does not exist in Create Fly - see PORTING_NOTES.md "CORRECTIONS" section. Converted to
+// direct registration via CCRegistrate (mirrors CreateModAddon's ModBlocks.java pattern). All
+// .blockstate()/.model()/.lang()/.loot()/.tag() calls are dropped: they were pure datagen (asset/tag
+// JSON generation), and this mod's assets+tags are already committed as static JSON under
+// src/generated/resources and src/main/resources. Real runtime behavior (stress values, feature
+// toggles, connectivity, movement checks, mounted storage, display sources) is preserved as explicit
+// statements after each block's registration.
 public class CCBlocks {
-    private static final CreateRegistrate REGISTRATE = CreateConnected.getRegistrate();
+    public static final ChainCogwheelBlock ENCASED_CHAIN_COGWHEEL =
+            CCRegistrate.block("encased_chain_cogwheel", ChainCogwheelBlock::new,
+                    CCSharedProperties.stone().noOcclusion().mapColor(MapColor.PODZOL));
+    static {
+        CStress.setNoImpact(ENCASED_CHAIN_COGWHEEL);
+        FeatureToggle.register(id("encased_chain_cogwheel"), FeatureCategory.KINETIC);
+        CCRegistrate.blockItem(ENCASED_CHAIN_COGWHEEL, "encased_chain_cogwheel");
+    }
 
-    public static final BlockEntry<ChainCogwheelBlock> ENCASED_CHAIN_COGWHEEL =
-            REGISTRATE.block("encased_chain_cogwheel", ChainCogwheelBlock::new)
-                    .initialProperties(SharedProperties::stone)
-                    .properties(p -> p.noOcclusion().mapColor(MapColor.PODZOL))
-                    .addLayer(() -> RenderType::cutoutMipped)
-                    .transform(CStress.setNoImpact())
-                    .transform(FeatureToggle.register(FeatureCategory.KINETIC))
-                    .transform(axeOrPickaxe())
-                    .blockstate((c, p) -> new ChainDriveGenerator((state, suffix) -> p.models()
-                            .getExistingFile(p.modLoc("block/" + c.getName() + "/" + suffix))).generate(c, p))
-                    .item()
-                    .transform(customItemModel())
-                    .register();
+    public static final CrankWheelBlock.Small CRANK_WHEEL =
+            CCRegistrate.block("crank_wheel", CrankWheelBlock.Small::new, CCSharedProperties.wooden().mapColor(MapColor.PODZOL));
+    static {
+        CStress.setCapacity(CRANK_WHEEL, 8.0);
+        BlockStressValues.setGeneratorSpeed(CRANK_WHEEL, 32);
+        FeatureToggle.register(id("crank_wheel"), FeatureCategory.KINETIC);
+        CCRegistrate.blockItem(CRANK_WHEEL, "crank_wheel", (b, p) -> new CrankWheelItem((CrankWheelBlock) b, p));
+    }
 
-    public static final BlockEntry<CrankWheelBlock.Small> CRANK_WHEEL = REGISTRATE.block("crank_wheel", CrankWheelBlock.Small::new)
-            .initialProperties(SharedProperties::wooden)
-            .properties(p -> p.mapColor(MapColor.PODZOL))
-            .transform(axeOrPickaxe())
-            .blockstate(BlockStateGen.directionalBlockProvider(true))
-            .transform(CStress.setCapacity(8.0))
-            .onRegister(BlockStressValues.setGeneratorSpeed(32))
-            .transform(FeatureToggle.register(FeatureCategory.KINETIC))
-            .tag(AllTags.AllBlockTags.BRITTLE.tag)
-            .item(CrankWheelItem::new)
-            .transform(customItemModel())
-            .register();
+    public static final CrankWheelBlock.Large LARGE_CRANK_WHEEL =
+            CCRegistrate.block("large_crank_wheel", CrankWheelBlock.Large::new, CCSharedProperties.wooden().mapColor(MapColor.PODZOL));
+    static {
+        CStress.setCapacity(LARGE_CRANK_WHEEL, 8.0);
+        BlockStressValues.setGeneratorSpeed(LARGE_CRANK_WHEEL, 32);
+        FeatureToggle.register(id("large_crank_wheel"), FeatureCategory.KINETIC);
+        CCRegistrate.blockItem(LARGE_CRANK_WHEEL, "large_crank_wheel", (b, p) -> new CrankWheelItem((CrankWheelBlock) b, p));
+    }
 
-    public static final BlockEntry<CrankWheelBlock.Large> LARGE_CRANK_WHEEL = REGISTRATE.block("large_crank_wheel", CrankWheelBlock.Large::new)
-            .initialProperties(SharedProperties::wooden)
-            .properties(p -> p.mapColor(MapColor.PODZOL))
-            .transform(axeOrPickaxe())
-            .blockstate(BlockStateGen.directionalBlockProvider(true))
-            .transform(CStress.setCapacity(8.0))
-            .onRegister(BlockStressValues.setGeneratorSpeed(32))
-            .transform(FeatureToggle.register(FeatureCategory.KINETIC))
-            .tag(AllTags.AllBlockTags.BRITTLE.tag)
-            .item(CrankWheelItem::new)
-            .transform(customItemModel())
-            .register();
+    public static final ParallelGearboxBlock PARALLEL_GEARBOX =
+            CCRegistrate.block("parallel_gearbox", ParallelGearboxBlock::new, CCSharedProperties.stone().noOcclusion().mapColor(MapColor.PODZOL));
+    static {
+        CStress.setNoImpact(PARALLEL_GEARBOX);
+        FeatureToggle.register(id("parallel_gearbox"), FeatureCategory.KINETIC);
+        // CT behaviour (CreateRegistrate.connectedTextures/casingConnectivity) is client-only
+        // rendering in Create Fly (com.zurrtum.create.client.content.decoration.encasing) - still
+        // needs to be wired from a client-sourceset class; see PORTING_NOTES.md follow-ups.
+        CCRegistrate.blockItem(PARALLEL_GEARBOX, "parallel_gearbox");
+    }
 
-    public static final BlockEntry<ParallelGearboxBlock> PARALLEL_GEARBOX = REGISTRATE.block("parallel_gearbox", ParallelGearboxBlock::new)
-            .initialProperties(SharedProperties::stone)
-            .properties(p -> p.noOcclusion().mapColor(MapColor.PODZOL))
-            .transform(CStress.setNoImpact())
-            .transform(FeatureToggle.register(FeatureCategory.KINETIC))
-            .transform(axeOrPickaxe())
-            .onRegister(CreateRegistrate.connectedTextures(() -> new EncasedCTBehaviour(AllSpriteShifts.ANDESITE_CASING)))
-            .onRegister(CreateRegistrate.casingConnectivity((block, cc) -> cc.make(block, AllSpriteShifts.ANDESITE_CASING,
-                    (s, f) -> f.getAxis() == s.getValue(ParallelGearboxBlock.AXIS))))
-            .blockstate(CCBlockStateGen.axisBlock())
-            .item()
-            .transform(customItemModel())
-            .register();
+    public static final SixWayGearboxBlock SIX_WAY_GEARBOX =
+            CCRegistrate.block("six_way_gearbox", SixWayGearboxBlock::new, CCSharedProperties.stone().noOcclusion().mapColor(MapColor.PODZOL));
+    static {
+        CStress.setNoImpact(SIX_WAY_GEARBOX);
+        FeatureToggle.register(id("six_way_gearbox"), FeatureCategory.KINETIC);
+        CCRegistrate.blockItem(SIX_WAY_GEARBOX, "six_way_gearbox");
+    }
 
-    public static final BlockEntry<SixWayGearboxBlock> SIX_WAY_GEARBOX = REGISTRATE.block("six_way_gearbox", SixWayGearboxBlock::new)
-            .initialProperties(SharedProperties::stone)
-            .properties(p -> p.noOcclusion().mapColor(MapColor.PODZOL))
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(CStress.setNoImpact())
-            .transform(FeatureToggle.register(FeatureCategory.KINETIC))
-            .transform(axeOrPickaxe())
-            .lang("6-way Gearbox")
-            .blockstate((c, p) -> axisBlock(c, p, $ -> partialBaseModel(c, p), false))
-            .item()
-            .transform(customItemModel())
-            .register();
+    public static final CrossConnectorBlock CROSS_CONNECTOR =
+            CCRegistrate.block("cross_connector", CrossConnectorBlock::new, CCSharedProperties.stone().noOcclusion().mapColor(MapColor.PODZOL));
+    static {
+        FeatureToggle.register(id("cross_connector"), FeatureCategory.KINETIC);
+        CCRegistrate.blockItem(CROSS_CONNECTOR, "cross_connector");
+    }
 
-    public static final BlockEntry<CrossConnectorBlock> CROSS_CONNECTOR = REGISTRATE.block("cross_connector", CrossConnectorBlock::new)
-            .initialProperties(SharedProperties::stone)
-            .properties(p -> p.noOcclusion().mapColor(MapColor.PODZOL))
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(FeatureToggle.register(FeatureCategory.KINETIC))
-            .transform(axeOrPickaxe())
-            .blockstate((c, p) -> axisBlock(c, p, $ -> partialBaseModel(c, p), false))
-            .item()
-            .transform(customItemModel())
-            .register();
+    public static final EncasedCrossConnectorBlock ANDESITE_ENCASED_CROSS_CONNECTOR =
+            CCRegistrate.block("andesite_encased_cross_connector", p -> new EncasedCrossConnectorBlock(p, () -> AllBlocks.ANDESITE_CASING),
+                    CCSharedProperties.stone().mapColor(MapColor.PODZOL));
+    static {
+        EncasingRegistry.addVariant(CROSS_CONNECTOR, ANDESITE_ENCASED_CROSS_CONNECTOR);
+        FeatureToggle.registerDependent(id("andesite_encased_cross_connector"), id("cross_connector"), FeatureCategory.KINETIC);
+        CCRegistrate.blockItem(ANDESITE_ENCASED_CROSS_CONNECTOR, "andesite_encased_cross_connector");
+    }
 
+    public static final EncasedCrossConnectorBlock BRASS_ENCASED_CROSS_CONNECTOR =
+            CCRegistrate.block("brass_encased_cross_connector", p -> new EncasedCrossConnectorBlock(p, () -> AllBlocks.BRASS_CASING),
+                    CCSharedProperties.stone().mapColor(MapColor.TERRACOTTA_BROWN));
+    static {
+        EncasingRegistry.addVariant(CROSS_CONNECTOR, BRASS_ENCASED_CROSS_CONNECTOR);
+        FeatureToggle.registerDependent(id("brass_encased_cross_connector"), id("cross_connector"), FeatureCategory.KINETIC);
+        CCRegistrate.blockItem(BRASS_ENCASED_CROSS_CONNECTOR, "brass_encased_cross_connector");
+    }
 
-    public static final BlockEntry<EncasedCrossConnectorBlock> ANDESITE_ENCASED_CROSS_CONNECTOR =
-            REGISTRATE.block("andesite_encased_cross_connector", p -> new EncasedCrossConnectorBlock(p, AllBlocks.ANDESITE_CASING::get))
-                    .properties(p -> p.mapColor(MapColor.PODZOL))
-                    .transform(CCBuilderTransformers.encasedCrossConnector("andesite", () -> AllSpriteShifts.ANDESITE_CASING))
-                    .transform(EncasingRegistry.addVariantTo(CCBlocks.CROSS_CONNECTOR))
-                    .transform(FeatureToggle.registerDependent(CCBlocks.CROSS_CONNECTOR, FeatureCategory.KINETIC))
-                    .transform(axeOrPickaxe())
-                    .register();
+    public static final OverstressClutchBlock OVERSTRESS_CLUTCH =
+            CCRegistrate.block("overstress_clutch", OverstressClutchBlock::new, CCSharedProperties.stone().noOcclusion().mapColor(MapColor.PODZOL));
+    static {
+        CStress.setNoImpact(OVERSTRESS_CLUTCH);
+        FeatureToggle.register(id("overstress_clutch"), FeatureCategory.KINETIC);
+        CCRegistrate.blockItem(OVERSTRESS_CLUTCH, "overstress_clutch");
+    }
 
-    public static final BlockEntry<EncasedCrossConnectorBlock> BRASS_ENCASED_CROSS_CONNECTOR =
-            REGISTRATE.block("brass_encased_cross_connector", p -> new EncasedCrossConnectorBlock(p, AllBlocks.BRASS_CASING::get))
-                    .properties(p -> p.mapColor(MapColor.TERRACOTTA_BROWN))
-                    .transform(CCBuilderTransformers.encasedCrossConnector("brass", () -> AllSpriteShifts.BRASS_CASING))
-                    .transform(EncasingRegistry.addVariantTo(CCBlocks.CROSS_CONNECTOR))
-                    .transform(FeatureToggle.registerDependent(CCBlocks.CROSS_CONNECTOR, FeatureCategory.KINETIC))
-                    .transform(axeOrPickaxe())
-                    .register();
+    public static final ShearPinBlock SHEAR_PIN =
+            CCRegistrate.block("shear_pin", ShearPinBlock::new, CCSharedProperties.stone().mapColor(MapColor.METAL).forceSolidOn());
+    static {
+        CStress.setNoImpact(SHEAR_PIN);
+        FeatureToggle.register(id("shear_pin"), FeatureCategory.KINETIC);
+        CCRegistrate.blockItem(SHEAR_PIN, "shear_pin");
+    }
 
+    public static final InvertedClutchBlock INVERTED_CLUTCH =
+            CCRegistrate.block("inverted_clutch", InvertedClutchBlock::new, CCSharedProperties.stone().noOcclusion().mapColor(MapColor.PODZOL));
+    static {
+        CStress.setNoImpact(INVERTED_CLUTCH);
+        FeatureToggle.register(id("inverted_clutch"), FeatureCategory.KINETIC);
+        CCRegistrate.blockItem(INVERTED_CLUTCH, "inverted_clutch");
+    }
 
-    public static final BlockEntry<OverstressClutchBlock> OVERSTRESS_CLUTCH = REGISTRATE.block("overstress_clutch", OverstressClutchBlock::new)
-            .initialProperties(SharedProperties::stone)
-            .properties(p -> p.noOcclusion().mapColor(MapColor.PODZOL))
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(CStress.setNoImpact())
-            .transform(FeatureToggle.register(FeatureCategory.KINETIC))
-            .transform(axeOrPickaxe())
-            .blockstate((c, p) -> BlockStateGen.axisBlock(c, p, state -> {
-                        if (state.getValue(OverstressClutchBlock.STATE) == OverstressClutchBlock.ClutchState.UNCOUPLED) {
-                            if (state.getValue(OverstressClutchBlock.POWERED)) {
-                                return partialBaseModel(c, p, "uncoupled", "powered");
-                            } else {
-                                return partialBaseModel(c, p, "uncoupled");
-                            }
-                        } else {
-                            if (state.getValue(OverstressClutchBlock.POWERED)) {
-                                return partialBaseModel(c, p, "powered");
-                            } else {
-                                return partialBaseModel(c, p);
-                            }
-                        }
-                    })
-            )
-            .item()
-            .transform(customItemModel())
-            .register();
+    public static final InvertedGearshiftBlock INVERTED_GEARSHIFT =
+            CCRegistrate.block("inverted_gearshift", InvertedGearshiftBlock::new, CCSharedProperties.stone().noOcclusion().mapColor(MapColor.PODZOL));
+    static {
+        CStress.setNoImpact(INVERTED_GEARSHIFT);
+        FeatureToggle.register(id("inverted_gearshift"), FeatureCategory.KINETIC);
+        CCRegistrate.blockItem(INVERTED_GEARSHIFT, "inverted_gearshift");
+    }
 
+    public static final CentrifugalClutchBlock CENTRIFUGAL_CLUTCH =
+            CCRegistrate.block("centrifugal_clutch", CentrifugalClutchBlock::new, CCSharedProperties.stone().noOcclusion().mapColor(MapColor.PODZOL));
+    static {
+        CStress.setNoImpact(CENTRIFUGAL_CLUTCH);
+        FeatureToggle.register(id("centrifugal_clutch"), FeatureCategory.KINETIC);
+        CCRegistrate.blockItem(CENTRIFUGAL_CLUTCH, "centrifugal_clutch");
+    }
 
-    public static final BlockEntry<ShearPinBlock> SHEAR_PIN = REGISTRATE.block("shear_pin", ShearPinBlock::new)
-            .initialProperties(SharedProperties::stone)
-            .properties(p -> p.mapColor(MapColor.METAL).forceSolidOn())
-            .transform(CStress.setNoImpact())
-            .transform(FeatureToggle.register(FeatureCategory.KINETIC))
-            .transform(pickaxeOnly())
-            .blockstate(BlockStateGen.axisBlockProvider(false))
-            .onRegister(CreateRegistrate.blockModel(() -> BracketedKineticBlockModel::new))
-            .simpleItem()
-            .register();
+    public static final FreewheelClutchBlock FREEWHEEL_CLUTCH =
+            CCRegistrate.block("freewheel_clutch", FreewheelClutchBlock::new, CCSharedProperties.stone().noOcclusion().mapColor(MapColor.PODZOL));
+    static {
+        CStress.setNoImpact(FREEWHEEL_CLUTCH);
+        FeatureToggle.register(id("freewheel_clutch"), FeatureCategory.KINETIC);
+        CCRegistrate.blockItem(FREEWHEEL_CLUTCH, "freewheel_clutch");
+    }
 
-    public static final BlockEntry<InvertedClutchBlock> INVERTED_CLUTCH = REGISTRATE.block("inverted_clutch", InvertedClutchBlock::new)
-            .initialProperties(SharedProperties::stone)
-            .properties(p -> p.noOcclusion().mapColor(MapColor.PODZOL))
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(CStress.setNoImpact())
-            .transform(FeatureToggle.register(FeatureCategory.KINETIC))
-            .transform(axeOrPickaxe())
-            .blockstate((c, p) -> BlockStateGen.axisBlock(c, p, AssetLookup.forPowered(c, p)))
-            .item()
-            .transform(customItemModel())
-            .register();
+    public static final KineticBridgeBlock KINETIC_BRIDGE =
+            CCRegistrate.block("kinetic_bridge", KineticBridgeBlock::new, CCSharedProperties.stone().noOcclusion().mapColor(MapColor.TERRACOTTA_BROWN));
+    static {
+        FeatureToggle.register(id("kinetic_bridge"), FeatureCategory.KINETIC);
+        BlockMovementChecks.registerAttachedCheck((state, world, pos, direction) -> {
+            if (!(state.getBlock() instanceof KineticBridgeBlock))
+                return BlockMovementChecks.CheckResult.PASS;
+            if (state.getValue(KineticBridgeBlock.FACING) != direction)
+                return BlockMovementChecks.CheckResult.PASS;
+            return BlockMovementChecks.CheckResult.SUCCESS;
+        });
+        BlockMovementChecks.registerBrittleCheck(state -> {
+            if (!(state.getBlock() instanceof KineticBridgeBlock))
+                return BlockMovementChecks.CheckResult.PASS;
+            return BlockMovementChecks.CheckResult.SUCCESS;
+        });
+        CCRegistrate.blockItem(KINETIC_BRIDGE, "kinetic_bridge", (b, p) -> new KineticBridgeBlockItem(b, p));
+    }
 
-    public static final BlockEntry<InvertedGearshiftBlock> INVERTED_GEARSHIFT = REGISTRATE.block("inverted_gearshift", InvertedGearshiftBlock::new)
-            .initialProperties(SharedProperties::stone)
-            .properties(p -> p.noOcclusion().mapColor(MapColor.PODZOL))
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(CStress.setNoImpact())
-            .transform(FeatureToggle.register(FeatureCategory.KINETIC))
-            .transform(axeOrPickaxe())
-            .blockstate((c, p) -> BlockStateGen.axisBlock(c, p, AssetLookup.forPowered(c, p)))
-            .item()
-            .transform(customItemModel())
-            .register();
+    public static final KineticBridgeDestinationBlock KINETIC_BRIDGE_DESTINATION =
+            CCRegistrate.block("kinetic_bridge_destination", KineticBridgeDestinationBlock::new,
+                    CCSharedProperties.stone().noOcclusion().mapColor(MapColor.TERRACOTTA_BROWN));
+    static {
+        FeatureToggle.registerDependent(id("kinetic_bridge_destination"), id("kinetic_bridge"), FeatureCategory.KINETIC);
+        BlockMovementChecks.registerAttachedCheck((state, world, pos, direction) -> {
+            if (!(state.getBlock() instanceof KineticBridgeDestinationBlock))
+                return BlockMovementChecks.CheckResult.PASS;
+            if (state.getValue(KineticBridgeDestinationBlock.FACING).getOpposite() != direction)
+                return BlockMovementChecks.CheckResult.PASS;
+            return BlockMovementChecks.CheckResult.SUCCESS;
+        });
+        // no item registered in the original (block-only)
+    }
 
+    public static final BrassGearboxBlock BRASS_GEARBOX =
+            CCRegistrate.block("brass_gearbox", BrassGearboxBlock::new, CCSharedProperties.stone().noOcclusion().mapColor(MapColor.TERRACOTTA_BROWN));
+    static {
+        CStress.setNoImpact(BRASS_GEARBOX);
+        FeatureToggle.register(id("brass_gearbox"), FeatureCategory.KINETIC);
+        // CT behaviour: deferred to client conversion, see PORTING_NOTES.md
+        CCRegistrate.blockItem(BRASS_GEARBOX, "brass_gearbox");
+    }
 
-    public static final BlockEntry<CentrifugalClutchBlock> CENTRIFUGAL_CLUTCH = REGISTRATE.block("centrifugal_clutch", CentrifugalClutchBlock::new)
-            .initialProperties(SharedProperties::stone)
-            .properties(p -> p.noOcclusion().mapColor(MapColor.PODZOL))
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(CStress.setNoImpact())
-            .transform(FeatureToggle.register(FeatureCategory.KINETIC))
-            .transform(axeOrPickaxe())
-            .blockstate((c, p) -> p.directionalBlock(c.get(), forBoolean(c, state -> state.getValue(CentrifugalClutchBlock.UNCOUPLED), "uncoupled", p)))
-            .item()
-            .transform(customItemModel())
-            .register();
+    public static final BrakeBlock BRAKE =
+            CCRegistrate.block("brake", BrakeBlock::new, CCSharedProperties.stone().noOcclusion().mapColor(MapColor.PODZOL));
+    static {
+        CStress.setNoImpact(BRAKE); // active stress is a separate config
+        FeatureToggle.register(id("brake"), FeatureCategory.KINETIC);
+        CCRegistrate.blockItem(BRAKE, "brake");
+    }
 
+    public static final KineticBatteryBlock KINETIC_BATTERY =
+            CCRegistrate.block("kinetic_battery", KineticBatteryBlock::new, CCSharedProperties.stone().noOcclusion().mapColor(MapColor.TERRACOTTA_BROWN)
+                    .component(CCDataComponents.KINETIC_BATTERY_CHARGE, 0.0));
+    static {
+        CStress.setCapacity(KINETIC_BATTERY, 32.0);
+        CStress.setImpact(KINETIC_BATTERY, 64.0);
+        FeatureToggle.register(id("kinetic_battery"), FeatureCategory.KINETIC);
+        DisplaySource.BY_BLOCK.add(KINETIC_BATTERY, CCDisplaySources.KINETIC_BATTERY);
+        KineticBatteryBlockItem kineticBatteryItem = CCRegistrate.blockItem(KINETIC_BATTERY, "kinetic_battery", (b, p) -> new KineticBatteryBlockItem(b, p),
+                new net.minecraft.world.item.Item.Properties().component(CCDataComponents.KINETIC_BATTERY_CHARGE, 0.0));
+        // registerModelOverrides()/KineticBatteryOverrides model additions are client-only
+        // rendering, deferred to client conversion (see PORTING_NOTES.md)
+    }
 
-    public static final BlockEntry<FreewheelClutchBlock> FREEWHEEL_CLUTCH = REGISTRATE.block("freewheel_clutch", FreewheelClutchBlock::new)
-            .initialProperties(SharedProperties::stone)
-            .properties(p -> p.noOcclusion().mapColor(MapColor.PODZOL))
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(CStress.setNoImpact())
-            .transform(FeatureToggle.register(FeatureCategory.KINETIC))
-            .transform(axeOrPickaxe())
-            .blockstate((c, p) -> p.directionalBlock(c.get(), forBoolean(c, state -> state.getValue(FreewheelClutchBlock.UNCOUPLED), "uncoupled", p)))
-            .item()
-            .transform(customItemModel())
-            .register();
+    public static final SequencedPulseGeneratorBlock SEQUENCED_PULSE_GENERATOR =
+            CCRegistrate.block("sequenced_pulse_generator", SequencedPulseGeneratorBlock::new, CCSharedProperties.stone());
+    static {
+        FeatureToggle.register(id("sequenced_pulse_generator"), FeatureCategory.REDSTONE);
+        CCRegistrate.blockItem(SEQUENCED_PULSE_GENERATOR, "sequenced_pulse_generator");
+    }
 
-
-    public static final BlockEntry<KineticBridgeBlock> KINETIC_BRIDGE = REGISTRATE.block("kinetic_bridge", KineticBridgeBlock::new)
-            .initialProperties(SharedProperties::stone)
-            .properties(p -> p.noOcclusion().mapColor(MapColor.TERRACOTTA_BROWN))
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(FeatureToggle.register(FeatureCategory.KINETIC))
-            .transform(axeOrPickaxe())
-            .onRegister(b -> BlockMovementChecks.registerAttachedCheck((state, world, pos, direction) -> {
-                if (!(state.getBlock() instanceof KineticBridgeBlock))
-                    return BlockMovementChecks.CheckResult.PASS;
-                if (state.getValue(KineticBridgeBlock.FACING) != direction)
-                    return BlockMovementChecks.CheckResult.PASS;
-                return BlockMovementChecks.CheckResult.SUCCESS;
-            }))
-            .onRegister(b -> BlockMovementChecks.registerBrittleCheck(state -> {
-                if (!(state.getBlock() instanceof KineticBridgeBlock))
-                    return BlockMovementChecks.CheckResult.PASS;
-                return BlockMovementChecks.CheckResult.SUCCESS;
-            }))
-            .blockstate((c, p) -> p.directionalBlock(c.get(), $ -> partialBaseModel(c, p)))
-            .item(KineticBridgeBlockItem::new)
-            .transform(customItemModel())
-            .register();
-
-
-    public static final BlockEntry<KineticBridgeDestinationBlock> KINETIC_BRIDGE_DESTINATION = REGISTRATE.block("kinetic_bridge_destination", KineticBridgeDestinationBlock::new)
-            .initialProperties(SharedProperties::stone)
-            .properties(p -> p.noOcclusion().mapColor(MapColor.TERRACOTTA_BROWN))
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(FeatureToggle.registerDependent(CCBlocks.KINETIC_BRIDGE, FeatureCategory.KINETIC))
-            .transform(axeOrPickaxe())
-            .onRegister(b -> BlockMovementChecks.registerAttachedCheck((state, world, pos, direction) -> {
-                if (!(state.getBlock() instanceof KineticBridgeDestinationBlock))
-                    return BlockMovementChecks.CheckResult.PASS;
-                if (state.getValue(KineticBridgeDestinationBlock.FACING).getOpposite() != direction)
-                    return BlockMovementChecks.CheckResult.PASS;
-                return BlockMovementChecks.CheckResult.SUCCESS;
-            }))
-            .blockstate((c, p) -> p.directionalBlock(c.get(),
-                    $ -> p.models().getExistingFile(p.modLoc("block/kinetic_bridge/block_destination"))
-            ))
-            .lang("Kinetic Bridge")
-            .register();
-
-    public static final BlockEntry<BrassGearboxBlock> BRASS_GEARBOX = REGISTRATE.block("brass_gearbox", BrassGearboxBlock::new)
-            .initialProperties(SharedProperties::stone)
-            .properties(p -> p.noOcclusion().mapColor(MapColor.TERRACOTTA_BROWN))
-            .transform(CStress.setNoImpact())
-            .transform(FeatureToggle.register(FeatureCategory.KINETIC))
-            .transform(axeOrPickaxe())
-            .onRegister(CreateRegistrate.connectedTextures(() -> new EncasedCTBehaviour(AllSpriteShifts.BRASS_CASING)))
-            .onRegister(CreateRegistrate.casingConnectivity((block, cc) -> cc.make(block, AllSpriteShifts.BRASS_CASING,
-                    (s, f) -> f.getAxis() == s.getValue(BrassGearboxBlock.AXIS))))
-            .blockstate(CCBlockStateGen.brassGearbox())
-            .item()
-            .transform(customItemModel())
-            .register();
-
-    public static final BlockEntry<BrakeBlock> BRAKE = REGISTRATE.block("brake", BrakeBlock::new)
-            .initialProperties(SharedProperties::stone)
-            .properties(p -> p.noOcclusion().mapColor(MapColor.PODZOL))
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(CStress.setNoImpact()) // active stress is a separate config
-            .transform(FeatureToggle.register(FeatureCategory.KINETIC))
-            .transform(axeOrPickaxe())
-            .blockstate((c, p) -> BlockStateGen.axisBlock(c, p, AssetLookup.forPowered(c, p)))
-            .item()
-            .transform(customItemModel())
-            .register();
-
-    public static final BlockEntry<KineticBatteryBlock> KINETIC_BATTERY = REGISTRATE.block("kinetic_battery", KineticBatteryBlock::new)
-            .initialProperties(SharedProperties::stone)
-            .properties(p -> p.noOcclusion().mapColor(MapColor.TERRACOTTA_BROWN))
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(CStress.setCapacity(32.0))
-            .transform(CStress.setImpact(64.0))
-            .transform(FeatureToggle.register(FeatureCategory.KINETIC))
-            .transform(DisplaySource.displaySource(CCDisplaySources.KINETIC_BATTERY))
-            .transform(axeOrPickaxe())
-            .blockstate(new KineticBatteryGenerator()::generate)
-            .loot((lt, block) -> {
-                LootTable.Builder builder = LootTable.lootTable();
-                LootItemCondition.Builder survivesExplosion = ExplosionCondition.survivesExplosion();
-                lt.add(block, builder.withPool(LootPool.lootPool()
-                        .when(survivesExplosion)
-                        .setRolls(ConstantValue.exactly(1))
-                        .add(LootItem.lootTableItem(CCBlocks.KINETIC_BATTERY.asItem())
-                                .apply(CopyComponentsFunction.copyComponents(CopyComponentsFunction.Source.BLOCK_ENTITY)
-                                        .include(CCDataComponents.KINETIC_BATTERY_CHARGE)))));
-            })
-            .item(KineticBatteryBlockItem::new)
-            .properties(p -> p.component(CCDataComponents.KINETIC_BATTERY_CHARGE, 0.0))
-            .onRegister(KineticBatteryBlockItem::registerModelOverrides)
-            .model(KineticBatteryOverrides::addOverrideModels)
-            .build()
-            .register();
-
-    public static final BlockEntry<SequencedPulseGeneratorBlock> SEQUENCED_PULSE_GENERATOR =
-            REGISTRATE.block("sequenced_pulse_generator", SequencedPulseGeneratorBlock::new)
-                    .initialProperties(() -> Blocks.REPEATER)
-                    .tag(AllTags.AllBlockTags.SAFE_NBT.tag)
-                    .blockstate(CCBlockStateGen.sequencedPulseGenerator())
-                    .transform(FeatureToggle.register(FeatureCategory.REDSTONE))
-                    .addLayer(() -> RenderType::cutoutMipped)
-                    .simpleItem()
-                    .register();
-
-    public static final Map<BlockSetType, BlockEntry<LinkedButtonBlock>> LINKED_BUTTONS = new HashMap<>();
+    public static final Map<BlockSetType, LinkedButtonBlock> LINKED_BUTTONS = new HashMap<>();
 
     static {
         BlockSetType.values().forEach(type -> {
-            Block button = RegisteredObjectsHelper.getBlock(ResourceLocation.parse(type.name() + "_button"));
+            Block button = RegisteredObjectsHelper.getBlock(Identifier.parse(type.name() + "_button"));
             if (button == null) return;
             if (!(button instanceof ButtonBlock buttonBlock))
                 return;
             String namePath = type.name().contains(":") ? type.name().replace(':', '_') : type.name();
-            LINKED_BUTTONS.put(type, REGISTRATE
-                    .block("linked_" + namePath + "_button", properties -> new LinkedButtonBlock(properties, buttonBlock))
-                    .initialProperties(() -> buttonBlock)
-                    .tag(AllTags.AllBlockTags.SAFE_NBT.tag)
-                    .addLayer(() -> RenderType::cutoutMipped)
-                    .transform(LinkedTransmitterItem.register())
-                    .onRegister(PreciseItemUseOverrides::addBlock)
-                    .blockstate(CCBlockStateGen.linkedButton(
-                            ResourceLocation.withDefaultNamespace("block/" + namePath + "_button"),
-                            ResourceLocation.withDefaultNamespace("block/" + namePath + "_button_pressed")
-                    ))
-                    .register());
+            LinkedButtonBlock linkedButton = CCRegistrate.block("linked_" + namePath + "_button",
+                    properties -> new LinkedButtonBlock(properties, buttonBlock), net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(buttonBlock));
+            LinkedTransmitterItem.MODULE_BLOCKS.add(linkedButton);
+            PreciseItemUseOverrides.addBlock(linkedButton);
+            LINKED_BUTTONS.put(type, linkedButton);
         });
     }
 
-    public static final BlockEntry<LinkedLeverBlock> LINKED_LEVER = REGISTRATE
-            .block("linked_lever", properties -> new LinkedLeverBlock(properties, (LeverBlock) Blocks.LEVER))
-            .initialProperties(() -> Blocks.LEVER)
-            .tag(AllTags.AllBlockTags.SAFE_NBT.tag)
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(LinkedTransmitterItem.register())
-            .onRegister(PreciseItemUseOverrides::addBlock)
-            .blockstate(CCBlockStateGen.linkedLever(
-                    ResourceLocation.withDefaultNamespace("block/lever"),
-                    ResourceLocation.withDefaultNamespace("block/lever_on")
-            ))
-            .register();
+    public static final LinkedLeverBlock LINKED_LEVER =
+            CCRegistrate.block("linked_lever", properties -> new LinkedLeverBlock(properties, (LeverBlock) Blocks.LEVER), net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(Blocks.LEVER));
+    static {
+        LinkedTransmitterItem.MODULE_BLOCKS.add(LINKED_LEVER);
+        PreciseItemUseOverrides.addBlock(LINKED_LEVER);
+    }
 
-    public static final BlockEntry<LinkedAnalogLeverBlock> LINKED_ANALOG_LEVER = REGISTRATE
-            .block("linked_analog_lever", properties -> new LinkedAnalogLeverBlock(properties, AllBlocks.ANALOG_LEVER))
-            .initialProperties(() -> Blocks.LEVER)
-            .tag(AllTags.AllBlockTags.SAFE_NBT.tag)
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(LinkedTransmitterItem.register())
-            .onRegister(PreciseItemUseOverrides::addBlock)
-            .blockstate(CCBlockStateGen.linkedLeverNoPower(
-                    Create.asResource("block/analog_lever/block")
-            ))
-            .register();
+    public static final LinkedAnalogLeverBlock LINKED_ANALOG_LEVER =
+            CCRegistrate.block("linked_analog_lever", properties -> new LinkedAnalogLeverBlock(properties, () -> AllBlocks.ANALOG_LEVER), net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(Blocks.LEVER));
+    static {
+        LinkedTransmitterItem.MODULE_BLOCKS.add(LINKED_ANALOG_LEVER);
+        PreciseItemUseOverrides.addBlock(LINKED_ANALOG_LEVER);
+    }
 
-    public static final BlockEntry<WrenchableBlock> EMPTY_FAN_CATALYST = REGISTRATE.block("empty_fan_catalyst", WrenchableBlock::new)
-            .initialProperties(() -> Blocks.IRON_BLOCK)
-            .properties(p -> p
-                    .mapColor(MapColor.TERRACOTTA_YELLOW)
-                    .requiresCorrectToolForDrops()
-                    .noOcclusion()
-                    .isRedstoneConductor((state, level, pos) -> false)
-            )
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(pickaxeOnly())
-            .transform(FeatureToggle.register(FeatureCategory.LOGISTICS))
-            .blockstate((c, p) -> p.simpleBlock(c.getEntry(), AssetLookup.partialBaseModel(c, p)))
-            .tag(AllTags.AllBlockTags.FAN_TRANSPARENT.tag)
-            .item()
-            .transform(customItemModel())
-            .register();
+    public static final WrenchableBlock EMPTY_FAN_CATALYST = CCRegistrate.block("empty_fan_catalyst", WrenchableBlock::new,
+            net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).mapColor(MapColor.TERRACOTTA_YELLOW).requiresCorrectToolForDrops().noOcclusion()
+                    .isRedstoneConductor((state, level, pos) -> false));
+    static {
+        FeatureToggle.register(id("empty_fan_catalyst"), FeatureCategory.LOGISTICS);
+        CCRegistrate.blockItem(EMPTY_FAN_CATALYST, "empty_fan_catalyst");
+    }
 
-    public static final BlockEntry<WrenchableBlock> FAN_BLASTING_CATALYST = REGISTRATE.block("fan_blasting_catalyst", WrenchableBlock::new)
-            .initialProperties(() -> Blocks.IRON_BLOCK)
-            .properties(p -> p
-                    .mapColor(MapColor.TERRACOTTA_YELLOW)
-                    .requiresCorrectToolForDrops()
-                    .noOcclusion()
-                    .lightLevel(s -> 10)
-                    .isRedstoneConductor((state, level, pos) -> false)
-            )
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(pickaxeOnly())
-            .transform(FeatureToggle.registerDependent(CCBlocks.EMPTY_FAN_CATALYST))
-            .blockstate((c, p) -> p.simpleBlock(c.getEntry(), AssetLookup.partialBaseModel(c, p)))
-            .tag(AllTags.AllBlockTags.FAN_TRANSPARENT.tag)
-            .tag(AllTags.AllBlockTags.FAN_PROCESSING_CATALYSTS_BLASTING.tag)
-            .item()
-            .transform(customItemModel())
-            .register();
+    private static WrenchableBlock fanCatalyst(String path, int lightLevel) {
+        WrenchableBlock block = CCRegistrate.block(path, WrenchableBlock::new,
+                net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).mapColor(MapColor.TERRACOTTA_YELLOW).requiresCorrectToolForDrops().noOcclusion()
+                        .lightLevel(s -> lightLevel).isRedstoneConductor((state, level, pos) -> false));
+        FeatureToggle.registerDependent(id(path), id("empty_fan_catalyst"));
+        CCRegistrate.blockItem(block, path);
+        return block;
+    }
 
-    public static final BlockEntry<WrenchableBlock> FAN_SMOKING_CATALYST = REGISTRATE.block("fan_smoking_catalyst", WrenchableBlock::new)
-            .initialProperties(() -> Blocks.IRON_BLOCK)
-            .properties(p -> p
-                    .mapColor(MapColor.TERRACOTTA_YELLOW)
-                    .requiresCorrectToolForDrops()
-                    .noOcclusion()
-                    .lightLevel(s -> 10)
-                    .isRedstoneConductor((state, level, pos) -> false)
-            )
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(pickaxeOnly())
-            .transform(FeatureToggle.registerDependent(CCBlocks.EMPTY_FAN_CATALYST))
-            .blockstate((c, p) -> p.simpleBlock(c.getEntry(), AssetLookup.partialBaseModel(c, p)))
-            .tag(AllTags.AllBlockTags.FAN_TRANSPARENT.tag)
-            .tag(AllTags.AllBlockTags.FAN_PROCESSING_CATALYSTS_SMOKING.tag)
-            .item()
-            .transform(customItemModel())
-            .register();
+    public static final WrenchableBlock FAN_BLASTING_CATALYST = fanCatalyst("fan_blasting_catalyst", 0);
+    public static final WrenchableBlock FAN_SMOKING_CATALYST = fanCatalyst("fan_smoking_catalyst", 10);
+    public static final WrenchableBlock FAN_SPLASHING_CATALYST = fanCatalyst("fan_splashing_catalyst", 0);
+    public static final WrenchableBlock FAN_HAUNTING_CATALYST = fanCatalyst("fan_haunting_catalyst", 5);
+    public static final WrenchableBlock FAN_FREEZING_CATALYST = fanCatalyst("fan_freezing_catalyst", 0);
+    static {
+        FeatureToggle.addCondition(id("fan_freezing_catalyst"), () -> Mods.GARNISHED.isLoaded() || Mods.DREAMS_DESIRES.isLoaded() || Mods.DRAGONS_PLUS.isLoaded());
+    }
+    public static final WrenchableBlock FAN_SEETHING_CATALYST = fanCatalyst("fan_seething_catalyst", 12);
+    static {
+        FeatureToggle.addCondition(id("fan_seething_catalyst"), Mods.DREAMS_DESIRES::isLoaded);
+    }
+    public static final WrenchableBlock FAN_SANDING_CATALYST = fanCatalyst("fan_sanding_catalyst", 0);
+    static {
+        FeatureToggle.addCondition(id("fan_sanding_catalyst"), () -> Mods.DREAMS_DESIRES.isLoaded() || Mods.DRAGONS_PLUS.isLoaded());
+    }
+    public static final WrenchableBlock FAN_ENRICHED_CATALYST = fanCatalyst("fan_enriched_catalyst", 13);
+    static {
+        FeatureToggle.addCondition(id("fan_enriched_catalyst"), Mods.NUCLEAR::isLoaded);
+    }
+    public static final WrenchableBlock FAN_ENDING_CATALYST_DRAGONS_BREATH = fanCatalyst("fan_ending_catalyst_dragons_breath", 15);
+    static {
+        FeatureToggle.addCondition(id("fan_ending_catalyst_dragons_breath"), Mods.DRAGONS_PLUS::isLoaded);
+    }
 
-    public static final BlockEntry<WrenchableBlock> FAN_SPLASHING_CATALYST = REGISTRATE.block("fan_splashing_catalyst", WrenchableBlock::new)
-            .initialProperties(() -> Blocks.IRON_BLOCK)
-            .properties(p -> p
-                    .mapColor(MapColor.TERRACOTTA_YELLOW)
-                    .requiresCorrectToolForDrops()
-                    .noOcclusion()
-                    .isRedstoneConductor((state, level, pos) -> false)
-            )
-            .transform(pickaxeOnly())
-            .transform(FeatureToggle.registerDependent(CCBlocks.EMPTY_FAN_CATALYST))
-            .blockstate((c, p) -> p.simpleBlock(c.getEntry(), AssetLookup.partialBaseModel(c, p)))
-            .color(() -> CCColorHandlers::waterBlockTint)
-            .lang("Fan Washing Catalyst")
-            .tag(AllTags.AllBlockTags.FAN_TRANSPARENT.tag)
-            .tag(AllTags.AllBlockTags.FAN_PROCESSING_CATALYSTS_SPLASHING.tag)
-            .item()
-            .color(() -> CCColorHandlers::waterItemTint)
-            .transform(customItemModel())
-            .register();
+    public static final FanCatalystRotatingHeadBlock FAN_ENDING_CATALYST_DRAGON_HEAD = CCRegistrate.block("fan_ending_catalyst_dragon_head",
+            properties -> new FanCatalystRotatingHeadBlock(properties, CCBlockEntityTypes.FAN_ENDING_CATALYST_DRAGON_HEAD),
+            net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).mapColor(MapColor.TERRACOTTA_YELLOW).requiresCorrectToolForDrops().noOcclusion()
+                    .lightLevel(s -> 0).isRedstoneConductor((state, level, pos) -> false));
+    static {
+        FeatureToggle.registerDependent(id("fan_ending_catalyst_dragon_head"), id("empty_fan_catalyst"));
+        FeatureToggle.addCondition(id("fan_ending_catalyst_dragon_head"), Mods.DRAGONS_PLUS::isLoaded);
+        CCRegistrate.blockItem(FAN_ENDING_CATALYST_DRAGON_HEAD, "fan_ending_catalyst_dragon_head");
+    }
 
-    public static final BlockEntry<WrenchableBlock> FAN_HAUNTING_CATALYST = REGISTRATE.block("fan_haunting_catalyst", WrenchableBlock::new)
-            .initialProperties(() -> Blocks.IRON_BLOCK)
-            .properties(p -> p
-                    .mapColor(MapColor.TERRACOTTA_YELLOW)
-                    .requiresCorrectToolForDrops()
-                    .noOcclusion()
-                    .lightLevel(s -> 5)
-                    .isRedstoneConductor((state, level, pos) -> false)
-            )
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(pickaxeOnly())
-            .transform(FeatureToggle.registerDependent(CCBlocks.EMPTY_FAN_CATALYST))
-            .blockstate((c, p) -> p.simpleBlock(c.getEntry(), AssetLookup.partialBaseModel(c, p)))
-            .tag(AllTags.AllBlockTags.FAN_TRANSPARENT.tag)
-            .tag(AllTags.AllBlockTags.FAN_PROCESSING_CATALYSTS_HAUNTING.tag)
-            .item()
-            .transform(customItemModel())
-            .register();
+    public static final WrenchableBlock FAN_WITHERING_CATALYST = fanCatalyst("fan_withering_catalyst", 0);
+    static {
+        FeatureToggle.addCondition(id("fan_withering_catalyst"), () -> false); // No mods support bulk withering
+    }
+    public static final WrenchableBlock FAN_CHOCOLATE_COATING_CATALYST = fanCatalyst("fan_chocolate_coating_catalyst", 0);
+    static {
+        FeatureToggle.addCondition(id("fan_chocolate_coating_catalyst"), Mods.MORE_CATALYSTS::isLoaded);
+    }
+    public static final WrenchableBlock FAN_HONEY_COATING_CATALYST = fanCatalyst("fan_honey_coating_catalyst", 0);
+    static {
+        FeatureToggle.addCondition(id("fan_honey_coating_catalyst"), Mods.MORE_CATALYSTS::isLoaded);
+    }
 
-    public static final BlockEntry<WrenchableBlock> FAN_FREEZING_CATALYST = REGISTRATE.block("fan_freezing_catalyst", WrenchableBlock::new)
-            .initialProperties(() -> Blocks.IRON_BLOCK)
-            .properties(p -> p
-                    .mapColor(MapColor.TERRACOTTA_YELLOW)
-                    .requiresCorrectToolForDrops()
-                    .noOcclusion()
-                    .isRedstoneConductor((state, level, pos) -> false)
-            )
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(pickaxeOnly())
-            .transform(FeatureToggle.registerDependent(CCBlocks.EMPTY_FAN_CATALYST))
-            .transform(FeatureToggle.addCondition(() -> Mods.GARNISHED.isLoaded() || Mods.DREAMS_DESIRES.isLoaded() || Mods.DRAGONS_PLUS.isLoaded()))
-            .blockstate((c, p) -> p.simpleBlock(c.getEntry(), AssetLookup.partialBaseModel(c, p)))
-            .tag(AllTags.AllBlockTags.FAN_TRANSPARENT.tag)
-            .item()
-            .transform(customItemModel())
-            .register();
+    public static final FanCatalystRotatingHeadBlock FAN_EXPLODING_CATALYST = CCRegistrate.block("fan_exploding_catalyst",
+            properties -> new FanCatalystRotatingHeadBlock(properties, CCBlockEntityTypes.FAN_EXPLODING_CATALYST),
+            net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).mapColor(MapColor.TERRACOTTA_YELLOW).requiresCorrectToolForDrops().noOcclusion()
+                    .isRedstoneConductor((state, level, pos) -> false));
+    static {
+        FeatureToggle.registerDependent(id("fan_exploding_catalyst"), id("empty_fan_catalyst"));
+        FeatureToggle.addCondition(id("fan_exploding_catalyst"), Mods.MORE_CATALYSTS::isLoaded);
+        CCRegistrate.blockItem(FAN_EXPLODING_CATALYST, "fan_exploding_catalyst");
+    }
 
-    public static final BlockEntry<WrenchableBlock> FAN_SEETHING_CATALYST = REGISTRATE.block("fan_seething_catalyst", WrenchableBlock::new)
-            .initialProperties(() -> Blocks.IRON_BLOCK)
-            .properties(p -> p
-                    .mapColor(MapColor.TERRACOTTA_YELLOW)
-                    .requiresCorrectToolForDrops()
-                    .noOcclusion()
-                    .lightLevel(s -> 12)
-                    .isRedstoneConductor((state, level, pos) -> false)
-            )
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(pickaxeOnly())
-            .transform(FeatureToggle.registerDependent(CCBlocks.EMPTY_FAN_CATALYST))
-            .transform(FeatureToggle.addCondition(Mods.DREAMS_DESIRES::isLoaded))
-            .blockstate((c, p) -> p.simpleBlock(c.getEntry(), AssetLookup.partialBaseModel(c, p)))
-            .tag(AllTags.AllBlockTags.FAN_TRANSPARENT.tag)
-            .item()
-            .transform(customItemModel())
-            .register();
+    public static final WrenchableBlock FAN_RESONANCE_CATALYST = fanCatalyst("fan_resonance_catalyst", 3);
+    static {
+        FeatureToggle.addCondition(id("fan_resonance_catalyst"), Mods.MORE_CATALYSTS::isLoaded);
+    }
+    public static final WrenchableBlock FAN_SCULKING_CATALYST = fanCatalyst("fan_sculking_catalyst", 4);
+    static {
+        FeatureToggle.addCondition(id("fan_sculking_catalyst"), Mods.MORE_CATALYSTS::isLoaded);
+    }
+    public static final WrenchableBlock FAN_PURIFYING_CATALYST = fanCatalyst("fan_purifying_catalyst", 14);
+    static {
+        FeatureToggle.addCondition(id("fan_purifying_catalyst"), Mods.MORE_CATALYSTS::isLoaded);
+    }
+    public static final WrenchableBlock FAN_TRANSMUTATION_CATALYST = fanCatalyst("fan_transmutation_catalyst", 10);
+    static {
+        FeatureToggle.addCondition(id("fan_transmutation_catalyst"), Mods.SHIMMER::isLoaded);
+    }
+    public static final WrenchableBlock FAN_GLOOMING_CATALYST = fanCatalyst("fan_glooming_catalyst", 10);
+    static {
+        FeatureToggle.addCondition(id("fan_glooming_catalyst"), Mods.SHIMMER::isLoaded);
+    }
+    public static final WrenchableBlock FAN_SOUL_STRIPPING_CATALYST = fanCatalyst("fan_soul_stripping_catalyst", 0);
+    static {
+        FeatureToggle.addCondition(id("fan_soul_stripping_catalyst"), Mods.NETHER_INDUSTRY::isLoaded);
+    }
 
-    public static final BlockEntry<WrenchableBlock> FAN_SANDING_CATALYST = REGISTRATE.block("fan_sanding_catalyst", WrenchableBlock::new)
-            .initialProperties(() -> Blocks.IRON_BLOCK)
-            .properties(p -> p
-                    .mapColor(MapColor.TERRACOTTA_YELLOW)
-                    .requiresCorrectToolForDrops()
-                    .noOcclusion()
-                    .isRedstoneConductor((state, level, pos) -> false)
-            )
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(pickaxeOnly())
-            .transform(FeatureToggle.registerDependent(CCBlocks.EMPTY_FAN_CATALYST))
-            .transform(FeatureToggle.addCondition(() -> Mods.DREAMS_DESIRES.isLoaded() || Mods.DRAGONS_PLUS.isLoaded()))
-            .blockstate((c, p) -> p.simpleBlock(c.getEntry(), AssetLookup.partialBaseModel(c, p)))
-            .tag(AllTags.AllBlockTags.FAN_TRANSPARENT.tag)
-            .item()
-            .transform(customItemModel())
-            .register();
-
-    public static final BlockEntry<WrenchableBlock> FAN_ENRICHED_CATALYST = REGISTRATE.block("fan_enriched_catalyst", WrenchableBlock::new)
-            .initialProperties(() -> Blocks.IRON_BLOCK)
-            .properties(p -> p
-                    .mapColor(MapColor.TERRACOTTA_YELLOW)
-                    .requiresCorrectToolForDrops()
-                    .noOcclusion()
-                    .lightLevel(s -> 13)
-                    .isRedstoneConductor((state, level, pos) -> false)
-            )
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(pickaxeOnly())
-            .transform(FeatureToggle.registerDependent(CCBlocks.EMPTY_FAN_CATALYST))
-            .transform(FeatureToggle.addCondition(Mods.NUCLEAR::isLoaded))
-            .blockstate((c, p) -> p.simpleBlock(c.getEntry(), AssetLookup.partialBaseModel(c, p)))
-            .tag(AllTags.AllBlockTags.FAN_TRANSPARENT.tag)
-            .item()
-            .transform(customItemModel())
-            .register();
-
-    public static final BlockEntry<WrenchableBlock> FAN_ENDING_CATALYST_DRAGONS_BREATH = REGISTRATE.block("fan_ending_catalyst_dragons_breath", WrenchableBlock::new)
-            .initialProperties(() -> Blocks.IRON_BLOCK)
-            .properties(p -> p
-                    .mapColor(MapColor.TERRACOTTA_YELLOW)
-                    .requiresCorrectToolForDrops()
-                    .noOcclusion()
-                    .lightLevel(s -> 15)
-                    .isRedstoneConductor((state, level, pos) -> false)
-            )
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(pickaxeOnly())
-            .transform(FeatureToggle.registerDependent(CCBlocks.EMPTY_FAN_CATALYST))
-            .transform(FeatureToggle.addCondition(Mods.DRAGONS_PLUS::isLoaded))
-            .blockstate((c, p) -> p.simpleBlock(c.getEntry(), AssetLookup.partialBaseModel(c, p)))
-            .tag(AllTags.AllBlockTags.FAN_TRANSPARENT.tag)
-            .lang("Fan Ending Catalyst with Dragon's Breath")
-            .item()
-            .transform(customItemModel())
-            .lang("Fan Ending Catalyst with Dragon's Breath")
-            .register();
-
-    public static final BlockEntry<FanCatalystRotatingHeadBlock> FAN_ENDING_CATALYST_DRAGON_HEAD = REGISTRATE
-            .block("fan_ending_catalyst_dragon_head", properties -> new FanCatalystRotatingHeadBlock(properties, CCBlockEntityTypes.FAN_ENDING_CATALYST_DRAGON_HEAD))
-            .initialProperties(() -> Blocks.IRON_BLOCK)
-            .properties(p -> p
-                    .mapColor(MapColor.TERRACOTTA_YELLOW)
-                    .requiresCorrectToolForDrops()
-                    .noOcclusion()
-                    .lightLevel(s -> 0)
-                    .isRedstoneConductor((state, level, pos) -> false)
-            )
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(pickaxeOnly())
-            .transform(FeatureToggle.registerDependent(CCBlocks.EMPTY_FAN_CATALYST))
-            .transform(FeatureToggle.addCondition(Mods.DRAGONS_PLUS::isLoaded))
-            .blockstate((c, p) -> p.simpleBlock(c.getEntry(), p.models().getExistingFile(p.modLoc("block/empty_fan_catalyst/block"))))
-            .tag(AllTags.AllBlockTags.FAN_TRANSPARENT.tag)
-            .lang("Fan Ending Catalyst with Dragon Head")
-            .item()
-            .transform(customItemModel())
-            .lang("Fan Ending Catalyst with Dragon Head")
-            .register();
-
-    public static final BlockEntry<WrenchableBlock> FAN_WITHERING_CATALYST = REGISTRATE.block("fan_withering_catalyst", WrenchableBlock::new)
-            .initialProperties(() -> Blocks.IRON_BLOCK)
-            .properties(p -> p
-                    .mapColor(MapColor.TERRACOTTA_YELLOW)
-                    .requiresCorrectToolForDrops()
-                    .noOcclusion()
-                    .lightLevel(s -> 0)
-                    .isRedstoneConductor((state, level, pos) -> false)
-            )
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(pickaxeOnly())
-            .transform(FeatureToggle.registerDependent(CCBlocks.EMPTY_FAN_CATALYST))
-            .transform(FeatureToggle.addCondition(() -> false)) // No mods support bulk withering in 1.21.1
-            .blockstate((c, p) -> p.simpleBlock(c.getEntry(), AssetLookup.partialBaseModel(c, p)))
-            .tag(AllTags.AllBlockTags.FAN_TRANSPARENT.tag)
-            .item()
-            .transform(customItemModel())
-            .register();
-
-    public static final BlockEntry<WrenchableBlock> FAN_CHOCOLATE_COATING_CATALYST = REGISTRATE.block("fan_chocolate_coating_catalyst", WrenchableBlock::new)
-            .initialProperties(() -> Blocks.IRON_BLOCK)
-            .properties(p -> p
-                    .mapColor(MapColor.TERRACOTTA_YELLOW)
-                    .requiresCorrectToolForDrops()
-                    .noOcclusion()
-                    .isRedstoneConductor((state, level, pos) -> false)
-            )
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(pickaxeOnly())
-            .transform(FeatureToggle.registerDependent(CCBlocks.EMPTY_FAN_CATALYST))
-            .transform(FeatureToggle.addCondition(Mods.MORE_CATALYSTS::isLoaded))
-            .blockstate((c, p) -> p.simpleBlock(c.getEntry(), AssetLookup.partialBaseModel(c, p)))
-            .tag(AllTags.AllBlockTags.FAN_TRANSPARENT.tag)
-            .item()
-            .transform(customItemModel())
-            .register();
-
-    public static final BlockEntry<WrenchableBlock> FAN_HONEY_COATING_CATALYST = REGISTRATE.block("fan_honey_coating_catalyst", WrenchableBlock::new)
-            .initialProperties(() -> Blocks.IRON_BLOCK)
-            .properties(p -> p
-                    .mapColor(MapColor.TERRACOTTA_YELLOW)
-                    .requiresCorrectToolForDrops()
-                    .noOcclusion()
-                    .isRedstoneConductor((state, level, pos) -> false)
-            )
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(pickaxeOnly())
-            .transform(FeatureToggle.registerDependent(CCBlocks.EMPTY_FAN_CATALYST))
-            .transform(FeatureToggle.addCondition(Mods.MORE_CATALYSTS::isLoaded))
-            .blockstate((c, p) -> p.simpleBlock(c.getEntry(), AssetLookup.partialBaseModel(c, p)))
-            .tag(AllTags.AllBlockTags.FAN_TRANSPARENT.tag)
-            .item()
-            .transform(customItemModel())
-            .register();
-
-    public static final BlockEntry<FanCatalystRotatingHeadBlock> FAN_EXPLODING_CATALYST = REGISTRATE
-            .block("fan_exploding_catalyst", properties -> new FanCatalystRotatingHeadBlock(properties, CCBlockEntityTypes.FAN_EXPLODING_CATALYST))
-            .initialProperties(() -> Blocks.IRON_BLOCK)
-            .properties(p -> p
-                    .mapColor(MapColor.TERRACOTTA_YELLOW)
-                    .requiresCorrectToolForDrops()
-                    .noOcclusion()
-                    .isRedstoneConductor((state, level, pos) -> false)
-            )
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(pickaxeOnly())
-            .transform(FeatureToggle.registerDependent(CCBlocks.EMPTY_FAN_CATALYST))
-            .transform(FeatureToggle.addCondition(Mods.MORE_CATALYSTS::isLoaded))
-            .blockstate((c, p) -> p.simpleBlock(c.getEntry(), p.models().getExistingFile(p.modLoc("block/empty_fan_catalyst/block"))))
-            .tag(AllTags.AllBlockTags.FAN_TRANSPARENT.tag)
-            .item()
-            .transform(customItemModel())
-            .register();
-
-    public static final BlockEntry<WrenchableBlock> FAN_RESONANCE_CATALYST = REGISTRATE.block("fan_resonance_catalyst", WrenchableBlock::new)
-            .initialProperties(() -> Blocks.IRON_BLOCK)
-            .properties(p -> p
-                    .mapColor(MapColor.TERRACOTTA_YELLOW)
-                    .requiresCorrectToolForDrops()
-                    .noOcclusion()
-                    .lightLevel(s -> 3)
-                    .isRedstoneConductor((state, level, pos) -> false)
-            )
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(pickaxeOnly())
-            .transform(FeatureToggle.registerDependent(CCBlocks.EMPTY_FAN_CATALYST))
-            .transform(FeatureToggle.addCondition(Mods.MORE_CATALYSTS::isLoaded))
-            .blockstate((c, p) -> p.simpleBlock(c.getEntry(), AssetLookup.partialBaseModel(c, p)))
-            .tag(AllTags.AllBlockTags.FAN_TRANSPARENT.tag)
-            .item()
-            .transform(customItemModel())
-            .register();
-
-    public static final BlockEntry<WrenchableBlock> FAN_SCULKING_CATALYST = REGISTRATE.block("fan_sculking_catalyst", WrenchableBlock::new)
-            .initialProperties(() -> Blocks.IRON_BLOCK)
-            .properties(p -> p
-                    .mapColor(MapColor.TERRACOTTA_YELLOW)
-                    .requiresCorrectToolForDrops()
-                    .noOcclusion()
-                    .lightLevel(s -> 4)
-                    .isRedstoneConductor((state, level, pos) -> false)
-            )
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(pickaxeOnly())
-            .transform(FeatureToggle.registerDependent(CCBlocks.EMPTY_FAN_CATALYST))
-            .transform(FeatureToggle.addCondition(Mods.MORE_CATALYSTS::isLoaded))
-            .blockstate((c, p) -> p.simpleBlock(c.getEntry(), AssetLookup.partialBaseModel(c, p)))
-            .tag(AllTags.AllBlockTags.FAN_TRANSPARENT.tag)
-            .item()
-            .transform(customItemModel())
-            .register();
-
-    public static final BlockEntry<WrenchableBlock> FAN_PURIFYING_CATALYST = REGISTRATE.block("fan_purifying_catalyst", WrenchableBlock::new)
-            .initialProperties(() -> Blocks.IRON_BLOCK)
-            .properties(p -> p
-                    .mapColor(MapColor.TERRACOTTA_YELLOW)
-                    .requiresCorrectToolForDrops()
-                    .noOcclusion()
-                    .lightLevel(s -> 14)
-                    .isRedstoneConductor((state, level, pos) -> false)
-            )
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(pickaxeOnly())
-            .transform(FeatureToggle.registerDependent(CCBlocks.EMPTY_FAN_CATALYST))
-            .transform(FeatureToggle.addCondition(Mods.MORE_CATALYSTS::isLoaded))
-            .blockstate((c, p) -> p.simpleBlock(c.getEntry(), AssetLookup.partialBaseModel(c, p)))
-            .tag(AllTags.AllBlockTags.FAN_TRANSPARENT.tag)
-            .item()
-            .transform(customItemModel())
-            .register();
-
-    public static final BlockEntry<WrenchableBlock> FAN_TRANSMUTATION_CATALYST = REGISTRATE.block("fan_transmutation_catalyst", WrenchableBlock::new)
-            .initialProperties(() -> Blocks.IRON_BLOCK)
-            .properties(p -> p
-                    .mapColor(MapColor.TERRACOTTA_YELLOW)
-                    .requiresCorrectToolForDrops()
-                    .noOcclusion()
-                    .lightLevel(s -> 10)
-                    .isRedstoneConductor((state, level, pos) -> false)
-            )
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(pickaxeOnly())
-            .transform(FeatureToggle.registerDependent(CCBlocks.EMPTY_FAN_CATALYST))
-            .transform(FeatureToggle.addCondition(Mods.SHIMMER::isLoaded))
-            .blockstate((c, p) -> p.simpleBlock(c.getEntry(), AssetLookup.partialBaseModel(c, p)))
-            .tag(AllTags.AllBlockTags.FAN_TRANSPARENT.tag)
-            .item()
-            .transform(customItemModel())
-            .register();
-
-    public static final BlockEntry<WrenchableBlock> FAN_GLOOMING_CATALYST = REGISTRATE.block("fan_glooming_catalyst", WrenchableBlock::new)
-            .initialProperties(() -> Blocks.IRON_BLOCK)
-            .properties(p -> p
-                    .mapColor(MapColor.TERRACOTTA_YELLOW)
-                    .requiresCorrectToolForDrops()
-                    .noOcclusion()
-                    .lightLevel(s -> 10)
-                    .isRedstoneConductor((state, level, pos) -> false)
-            )
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(pickaxeOnly())
-            .transform(FeatureToggle.registerDependent(CCBlocks.EMPTY_FAN_CATALYST))
-            .transform(FeatureToggle.addCondition(Mods.SHIMMER::isLoaded))
-            .blockstate((c, p) -> p.simpleBlock(c.getEntry(), AssetLookup.partialBaseModel(c, p)))
-            .tag(AllTags.AllBlockTags.FAN_TRANSPARENT.tag)
-            .item()
-            .transform(customItemModel())
-            .register();
-
-    public static final BlockEntry<WrenchableBlock> FAN_SOUL_STRIPPING_CATALYST = REGISTRATE.block("fan_soul_stripping_catalyst", WrenchableBlock::new)
-            .initialProperties(() -> Blocks.IRON_BLOCK)
-            .properties(p -> p
-                    .mapColor(MapColor.TERRACOTTA_YELLOW)
-                    .requiresCorrectToolForDrops()
-                    .noOcclusion()
-                    .isRedstoneConductor((state, level, pos) -> false)
-            )
-            .addLayer(() -> RenderType::cutoutMipped)
-            .transform(pickaxeOnly())
-            .transform(FeatureToggle.registerDependent(CCBlocks.EMPTY_FAN_CATALYST))
-            .transform(FeatureToggle.addCondition(Mods.NETHER_INDUSTRY::isLoaded))
-            .blockstate((c, p) -> p.simpleBlock(c.getEntry(), AssetLookup.partialBaseModel(c, p)))
-            .tag(AllTags.AllBlockTags.FAN_TRANSPARENT.tag)
-            .item()
-            .transform(customItemModel())
-            .register();
-
-    public static final Map<DyeColor, BlockEntry<WrenchableBlock>> FAN_DYEING_CATALYSTS = new TreeMap<>();
+    public static final Map<DyeColor, WrenchableBlock> FAN_DYEING_CATALYSTS = new TreeMap<>();
 
     static {
         for (DyeColor color : DyeColor.values()) {
             String namespace = DyeDepotCompat.getColorNamespace(color);
-            boolean isVanilla = namespace.equals(ResourceLocation.DEFAULT_NAMESPACE);
-            FAN_DYEING_CATALYSTS.put(color, REGISTRATE.block((isVanilla ? "" : (namespace + "_")) + color.getName() + "_fan_dyeing_catalyst", WrenchableBlock::new)
-                    .initialProperties(() -> Blocks.IRON_BLOCK)
-                    .properties(p -> p
-                            .mapColor(MapColor.TERRACOTTA_YELLOW)
-                            .requiresCorrectToolForDrops()
-                            .noOcclusion()
-                            .isRedstoneConductor((state, level, pos) -> false)
-                    )
-                    .addLayer(() -> RenderType::cutoutMipped)
-                    .transform(pickaxeOnly())
-                    .transform(FeatureToggle.registerDependent(CCBlocks.EMPTY_FAN_CATALYST))
-                    .transform(FeatureToggle.addCondition(() -> (Mods.DRAGONS_PLUS.isLoaded() || Mods.GARNISHED.isLoaded()) && (isVanilla || Mods.DYE_DEPOT.isLoaded())))
-                    .blockstate((c, p) -> p.simpleBlock(c.getEntry(), p.models().withExistingParent(c.getName(), p.modLoc("block/fan_catalyst/with_content"))
-                            .texture("content", ResourceLocation.fromNamespaceAndPath(DyeDepotCompat.getColorNamespace(color), "block/" + color.getName() + "_concrete_powder"))
-                    ))
-                    .lang(RegistrateLangProvider.toEnglishName(color.getName() + "_fan_dyeing_catalyst"))
-                    .tag(AllTags.AllBlockTags.FAN_TRANSPARENT.tag)
-                    .asOptional()
-                    .simpleItem()
-                    .register());
+            boolean isVanilla = namespace.equals(Identifier.DEFAULT_NAMESPACE);
+            String path = (isVanilla ? "" : (namespace + "_")) + color.getName() + "_fan_dyeing_catalyst";
+            WrenchableBlock block = CCRegistrate.block(path, WrenchableBlock::new,
+                    net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).mapColor(MapColor.TERRACOTTA_YELLOW).requiresCorrectToolForDrops().noOcclusion()
+                            .isRedstoneConductor((state, level, pos) -> false));
+            FeatureToggle.registerDependent(id(path), id("empty_fan_catalyst"));
+            FeatureToggle.addCondition(id(path), () -> (Mods.DRAGONS_PLUS.isLoaded() || Mods.GARNISHED.isLoaded()) && (isVanilla || Mods.DYE_DEPOT.isLoaded()));
+            CCRegistrate.blockItem(block, path);
+            FAN_DYEING_CATALYSTS.put(color, block);
         }
     }
 
-    public static final BlockEntry<ItemSiloBlock> ITEM_SILO = REGISTRATE.block("item_silo", ItemSiloBlock::new)
-            .initialProperties(SharedProperties::softMetal)
-            .properties(p -> p.mapColor(MapColor.TERRACOTTA_BLUE).sound(SoundType.NETHERITE_BLOCK)
-                    .explosionResistance(1200))
-            .transform(pickaxeOnly())
-            .transform(FeatureToggle.register(FeatureCategory.LOGISTICS))
-            .blockstate((c, p) -> p.getVariantBuilder(c.get())
-                    .forAllStates(s -> ConfiguredModel.builder()
-                            .modelFile(AssetLookup.standardModel(c, p))
-                            .build()))
-            .onRegister(connectedTextures(ItemSiloCTBehaviour::new))
-            .transform(MountedItemStorageType.mountedItemStorage(CCMountedStorageTypes.SILO))
-            .onRegister(b -> BlockMovementChecks.registerAttachedCheck((state, world, pos, direction) -> {
-                if (state.getBlock() instanceof ItemSiloBlock)
-                    return BlockMovementChecks.CheckResult.of(ConnectivityHandler.isConnected(world, pos, pos.relative(direction)));
-                return BlockMovementChecks.CheckResult.PASS;
-            }))
-            .item(ItemSiloItem::new)
-            .build()
-            .register();
+    public static final ItemSiloBlock ITEM_SILO = CCRegistrate.block("item_silo", ItemSiloBlock::new,
+            CCSharedProperties.softMetal().mapColor(MapColor.TERRACOTTA_BLUE).sound(SoundType.NETHERITE_BLOCK).explosionResistance(1200));
+    static {
+        FeatureToggle.register(id("item_silo"), FeatureCategory.LOGISTICS);
+        MountedItemStorageType.REGISTRY.register(ITEM_SILO, CCMountedStorageTypes.SILO);
+        BlockMovementChecks.registerAttachedCheck((state, world, pos, direction) -> {
+            if (state.getBlock() instanceof ItemSiloBlock)
+                return BlockMovementChecks.CheckResult.of(ConnectivityHandler.isConnected(world, pos, pos.relative(direction)));
+            return BlockMovementChecks.CheckResult.PASS;
+        });
+        CCRegistrate.blockItem(ITEM_SILO, "item_silo", (b, p) -> new ItemSiloItem(b, p));
+    }
 
-    public static final BlockEntry<FluidVesselBlock> FLUID_VESSEL = REGISTRATE.block("fluid_vessel", FluidVesselBlock::regular)
-            .initialProperties(SharedProperties::copperMetal)
-            .properties(p -> p.noOcclusion().isRedstoneConductor((p1, p2, p3) -> true))
-            .transform(pickaxeOnly())
-            .transform(FeatureToggle.register(FeatureCategory.LOGISTICS))
-            .blockstate(new FluidVesselGenerator()::generate)
-            .onRegister(CreateRegistrate.blockModel(() -> FluidVesselModel::standard))
-            .onRegister(b -> BlockMovementChecks.registerAttachedCheck((state, world, pos, direction) -> {
-                if (state.getBlock() instanceof FluidVesselBlock)
-                    return BlockMovementChecks.CheckResult.of(ConnectivityHandler.isConnected(world, pos, pos.relative(direction)));
-                return BlockMovementChecks.CheckResult.PASS;
-            }))
-            .transform(displaySource(CCDisplaySources.BOILER_STATUS))
-            .transform(mountedFluidStorage(CCMountedStorageTypes.FLUID_VESSEL))
-            .onRegister(movementBehaviour(new FluidTankMovementBehavior()))
-            .addLayer(() -> RenderType::cutoutMipped)
-            .item(FluidVesselItem::new)
-            .model(AssetLookup.customBlockItemModel("_", "block_x_single_window"))
-            .build()
-            .register();
+    public static final FluidVesselBlock FLUID_VESSEL = CCRegistrate.block("fluid_vessel", FluidVesselBlock::regular,
+            CCSharedProperties.copperMetal().noOcclusion().isRedstoneConductor((p1, p2, p3) -> true));
+    static {
+        FeatureToggle.register(id("fluid_vessel"), FeatureCategory.LOGISTICS);
+        BlockMovementChecks.registerAttachedCheck((state, world, pos, direction) -> {
+            if (state.getBlock() instanceof FluidVesselBlock)
+                return BlockMovementChecks.CheckResult.of(ConnectivityHandler.isConnected(world, pos, pos.relative(direction)));
+            return BlockMovementChecks.CheckResult.PASS;
+        });
+        DisplaySource.BY_BLOCK.add(FLUID_VESSEL, CCDisplaySources.BOILER_STATUS);
+        MountedFluidStorageType.REGISTRY.register(FLUID_VESSEL, CCMountedStorageTypes.FLUID_VESSEL);
+        CCRegistrate.blockItem(FLUID_VESSEL, "fluid_vessel", (b, p) -> new FluidVesselItem(b, p));
+    }
 
-    public static final BlockEntry<FluidVesselBlock> CREATIVE_FLUID_VESSEL =
-            REGISTRATE.block("creative_fluid_vessel", FluidVesselBlock::creative)
-                    .initialProperties(SharedProperties::copperMetal)
-                    .properties(p -> p.noOcclusion().mapColor(MapColor.COLOR_PURPLE))
-                    .transform(pickaxeOnly())
-                    .transform(FeatureToggle.registerDependent(FLUID_VESSEL))
-                    .tag(AllTags.AllBlockTags.SAFE_NBT.tag)
-                    .blockstate(new FluidVesselGenerator("creative_")::generate)
-                    .onRegister(CreateRegistrate.blockModel(() -> FluidVesselModel::creative))
-                    .addLayer(() -> RenderType::cutoutMipped)
-                    .item(FluidVesselItem::new)
-                    .properties(p -> p.rarity(Rarity.EPIC))
-                    .model((c, p) -> p.withExistingParent(c.getName(), p.modLoc("block/fluid_vessel/block_x_single_window"))
-                            .texture("5", Create.asResource("block/creative_fluid_tank_window_single"))
-                            .texture("1", Create.asResource("block/creative_fluid_tank"))
-                            .texture("particle", Create.asResource("block/creative_fluid_tank"))
-                            .texture("4", Create.asResource("block/creative_casing"))
-                            .texture("6", p.modLoc("block/fluid_container_window"))
-                            .texture("7", p.modLoc("block/creative_fluid_container_window_single"))
-                            .texture("0", Create.asResource("block/creative_casing")))
-                    .build()
-                    .register();
+    public static final FluidVesselBlock CREATIVE_FLUID_VESSEL = CCRegistrate.block("creative_fluid_vessel", FluidVesselBlock::creative,
+            CCSharedProperties.copperMetal().noOcclusion().mapColor(MapColor.COLOR_PURPLE));
+    static {
+        FeatureToggle.registerDependent(id("creative_fluid_vessel"), id("fluid_vessel"));
+        CCRegistrate.blockItem(CREATIVE_FLUID_VESSEL, "creative_fluid_vessel", (b, p) -> new FluidVesselItem(b, p),
+                new net.minecraft.world.item.Item.Properties().rarity(net.minecraft.world.item.Rarity.EPIC));
+    }
 
-    public static final BlockEntry<InventoryAccessPortBlock> INVENTORY_ACCESS_PORT =
-            REGISTRATE.block("inventory_access_port", InventoryAccessPortBlock::new)
-                    .initialProperties(SharedProperties::stone)
-                    .properties(p -> p.mapColor(MapColor.TERRACOTTA_BROWN).noOcclusion())
-                    .transform(axeOrPickaxe())
-                    .transform(FeatureToggle.register(FeatureCategory.LOGISTICS))
-                    .blockstate(new InventoryAccessPortGenerator()::generate)
-                    .item()
-                    .transform(customItemModel("_", "block_wall"))
-                    .register();
+    public static final InventoryAccessPortBlock INVENTORY_ACCESS_PORT = CCRegistrate.block("inventory_access_port", InventoryAccessPortBlock::new,
+            CCSharedProperties.stone().mapColor(MapColor.TERRACOTTA_BROWN).noOcclusion());
+    static {
+        FeatureToggle.register(id("inventory_access_port"), FeatureCategory.LOGISTICS);
+        CCRegistrate.blockItem(INVENTORY_ACCESS_PORT, "inventory_access_port");
+    }
 
-    public static final BlockEntry<InventoryBridgeBlock> INVENTORY_BRIDGE =
-            REGISTRATE.block("inventory_bridge", InventoryBridgeBlock::new)
-                    .initialProperties(SharedProperties::stone)
-                    .properties(p -> p.mapColor(MapColor.TERRACOTTA_BROWN).noOcclusion())
-                    .transform(axeOrPickaxe())
-                    .transform(FeatureToggle.register(FeatureCategory.LOGISTICS))
-                    .blockstate((c, p) -> BlockStateGen.axisBlock(c, p, state -> {
-                        boolean negative = state.getValue(InventoryBridgeBlock.ATTACHED_NEGATIVE);
-                        boolean positive = state.getValue(InventoryBridgeBlock.ATTACHED_POSITIVE);
-                        if (negative && positive)
-                            return AssetLookup.partialBaseModel(c, p, "both");
-                        if (negative)
-                            return AssetLookup.partialBaseModel(c, p, "negative");
-                        if (positive)
-                            return AssetLookup.partialBaseModel(c, p, "positive");
-                        return AssetLookup.partialBaseModel(c, p);
-                    }))
-                    .item()
-                    .transform(customItemModel())
-                    .register();
+    public static final InventoryBridgeBlock INVENTORY_BRIDGE = CCRegistrate.block("inventory_bridge", InventoryBridgeBlock::new,
+            CCSharedProperties.stone().mapColor(MapColor.TERRACOTTA_BROWN).noOcclusion());
+    static {
+        FeatureToggle.register(id("inventory_bridge"), FeatureCategory.LOGISTICS);
+        CCRegistrate.blockItem(INVENTORY_BRIDGE, "inventory_bridge");
+    }
 
-    public static final BlockEntry<BrassChuteBlock> BRASS_CHUTE = REGISTRATE.block("brass_chute", BrassChuteBlock::new)
-            .initialProperties(SharedProperties::softMetal)
-            .properties(p -> p.mapColor(MapColor.TERRACOTTA_YELLOW)
-                    .sound(SoundType.NETHERITE_BLOCK)
-                    .noOcclusion()
-                    .isSuffocating((state, level, pos) -> false))
-            .transform(pickaxeOnly())
-            .transform(FeatureToggle.register(FeatureCategory.LOGISTICS))
-            .addLayer(() -> RenderType::cutoutMipped)
-            .clientExtension(() -> () -> new ReducedDestroyEffects())
-            .blockstate(new ChuteGenerator()::generate)
-            .item(ChuteItem::new)
-            .transform(customItemModel("_", "block"))
-            .register();
+    public static final BrassChuteBlock BRASS_CHUTE = CCRegistrate.block("brass_chute", BrassChuteBlock::new,
+            CCSharedProperties.softMetal().mapColor(MapColor.TERRACOTTA_YELLOW).sound(SoundType.NETHERITE_BLOCK)
+                    .noOcclusion().isSuffocating((state, level, pos) -> false));
+    static {
+        FeatureToggle.register(id("brass_chute"), FeatureCategory.LOGISTICS);
+        CCRegistrate.blockItem(BRASS_CHUTE, "brass_chute", (b, p) -> new com.zurrtum.create.content.logistics.chute.ChuteItem(b, p));
+    }
 
-    public static final BlockEntry<DashboardBlock> DASHBOARD =
-            REGISTRATE.block("dashboard", DashboardBlock::new)
-                    .initialProperties(SharedProperties::stone)
-                    .properties(p -> p.mapColor(MapColor.PODZOL))
-                    .addLayer(() -> RenderType::cutoutMipped)
-                    .transform(axeOrPickaxe())
-                    .transform(FeatureToggle.register(FeatureCategory.KINETIC))
-                    .transform(displayTarget(CCDisplayTargets.DASHBOARD))
-                    .blockstate((c, p) -> p.horizontalBlock(c.get(), s -> {
-                        if (s.getValue(DashboardBlock.OPEN))
-                            return AssetLookup.partialBaseModel(c, p, "open");
-                        return AssetLookup.partialBaseModel(c, p);
-                    }))
-                    .item()
-                    .transform(customItemModel("_", "block_open"))
-                    .register();
+    public static final DashboardBlock DASHBOARD = CCRegistrate.block("dashboard", DashboardBlock::new,
+            CCSharedProperties.stone().mapColor(MapColor.PODZOL));
+    static {
+        FeatureToggle.register(id("dashboard"), FeatureCategory.KINETIC);
+        com.zurrtum.create.api.behaviour.display.DisplayTarget.BY_BLOCK.register(DASHBOARD, CCDisplayTargets.DASHBOARD);
+        CCRegistrate.blockItem(DASHBOARD, "dashboard");
+    }
 
-    public static final BlockEntry<CopycatSlabBlock> COPYCAT_SLAB =
-            REGISTRATE.block("copycat_slab", CopycatSlabBlock::new)
-                    .transform(BuilderTransformers.copycat())
-                    .tag(BlockTags.SLABS)
-                    .transform(FeatureToggle.register(FeatureCategory.COPYCATS))
-                    .loot((lt, block) -> lt.add(block, lt.createSlabItemTable(block)))
-                    .onRegister(CreateRegistrate.blockModel(() -> CopycatSlabModel::new))
-                    .item()
-                    .tag(CCTags.Items.COPYCAT_SLAB.tag)
-                    .transform(customItemModel("copycat_base", "slab"))
-                    .register();
+    public static final CopycatSlabBlock COPYCAT_SLAB = CCRegistrate.block("copycat_slab", CopycatSlabBlock::new,
+            CCBuilderTransformers.copycatProperties());
+    static {
+        FeatureToggle.register(id("copycat_slab"), FeatureCategory.COPYCATS);
+        CCRegistrate.blockItem(COPYCAT_SLAB, "copycat_slab");
+    }
 
-    public static final BlockEntry<CopycatBlockBlock> COPYCAT_BLOCK =
-            REGISTRATE.block("copycat_block", CopycatBlockBlock::new)
-                    .transform(BuilderTransformers.copycat())
-                    .transform(FeatureToggle.register(FeatureCategory.COPYCATS))
-                    .onRegister(CreateRegistrate.blockModel(() -> CopycatBlockModel::new))
-                    .item()
-                    .tag(CCTags.Items.COPYCAT_BLOCK.tag)
-                    .transform(customItemModel("copycat_base", "block"))
-                    .register();
+    public static final CopycatBlockBlock COPYCAT_BLOCK = CCRegistrate.block("copycat_block", CopycatBlockBlock::new,
+            CCBuilderTransformers.copycatProperties());
+    static {
+        FeatureToggle.register(id("copycat_block"), FeatureCategory.COPYCATS);
+        CCRegistrate.blockItem(COPYCAT_BLOCK, "copycat_block");
+    }
 
-    public static final BlockEntry<CopycatBeamBlock> COPYCAT_BEAM =
-            REGISTRATE.block("copycat_beam", CopycatBeamBlock::new)
-                    .transform(BuilderTransformers.copycat())
-                    .transform(FeatureToggle.register(FeatureCategory.COPYCATS))
-                    .onRegister(CreateRegistrate.blockModel(() -> CopycatBeamModel::new))
-                    .item()
-                    .tag(CCTags.Items.COPYCAT_BEAM.tag)
-                    .transform(customItemModel("copycat_base", "beam"))
-                    .register();
+    public static final CopycatBeamBlock COPYCAT_BEAM = CCRegistrate.block("copycat_beam", CopycatBeamBlock::new,
+            CCBuilderTransformers.copycatProperties());
+    static {
+        FeatureToggle.register(id("copycat_beam"), FeatureCategory.COPYCATS);
+        CCRegistrate.blockItem(COPYCAT_BEAM, "copycat_beam");
+    }
 
-    public static final BlockEntry<CopycatVerticalStepBlock> COPYCAT_VERTICAL_STEP =
-            REGISTRATE.block("copycat_vertical_step", CopycatVerticalStepBlock::new)
-                    .transform(BuilderTransformers.copycat())
-                    .transform(FeatureToggle.register(FeatureCategory.COPYCATS))
-                    .onRegister(CreateRegistrate.blockModel(() -> CopycatVerticalStepModel::new))
-                    .item()
-                    .tag(CCTags.Items.COPYCAT_VERTICAL_STEP.tag)
-                    .transform(customItemModel("copycat_base", "vertical_step"))
-                    .register();
+    public static final CopycatVerticalStepBlock COPYCAT_VERTICAL_STEP = CCRegistrate.block("copycat_vertical_step", CopycatVerticalStepBlock::new,
+            CCBuilderTransformers.copycatProperties());
+    static {
+        FeatureToggle.register(id("copycat_vertical_step"), FeatureCategory.COPYCATS);
+        CCRegistrate.blockItem(COPYCAT_VERTICAL_STEP, "copycat_vertical_step");
+    }
 
-    public static final BlockEntry<CopycatStairsBlock> COPYCAT_STAIRS =
-            REGISTRATE.block("copycat_stairs", CopycatStairsBlock::new)
-                    .transform(BuilderTransformers.copycat())
-                    .tag(BlockTags.STAIRS)
-                    .transform(FeatureToggle.register(FeatureCategory.COPYCATS))
-                    .onRegister(CreateRegistrate.blockModel(() -> CopycatStairsModel::new))
-                    .item()
-                    .tag(CCTags.Items.COPYCAT_STAIRS.tag)
-                    .transform(customItemModel("copycat_base", "stairs"))
-                    .register();
+    public static final CopycatStairsBlock COPYCAT_STAIRS = CCRegistrate.block("copycat_stairs", CopycatStairsBlock::new,
+            CCBuilderTransformers.copycatProperties());
+    static {
+        FeatureToggle.register(id("copycat_stairs"), FeatureCategory.COPYCATS);
+        CCRegistrate.blockItem(COPYCAT_STAIRS, "copycat_stairs");
+    }
 
-    public static final BlockEntry<WrappedStairsBlock> WRAPPED_COPYCAT_STAIRS =
-            REGISTRATE.block("wrapped_copycat_stairs", p -> new WrappedStairsBlock(Blocks.STONE.defaultBlockState(), p))
-                    .initialProperties(() -> Blocks.STONE_STAIRS)
-                    .onRegister(b -> CopycatStairsBlock.stairs = b)
-                    .tag(BlockTags.STAIRS)
-                    .blockstate((c, p) -> p.simpleBlock(c.getEntry(), p.models().withExistingParent("wrapped_copycat_stairs", "block/barrier")))
-                    .register();
+    public static final WrappedStairsBlock WRAPPED_COPYCAT_STAIRS = CCRegistrate.block("wrapped_copycat_stairs",
+            p -> new WrappedStairsBlock(Blocks.STONE.defaultBlockState(), p), net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(Blocks.STONE_STAIRS));
+    static {
+        CopycatStairsBlock.stairs = WRAPPED_COPYCAT_STAIRS;
+    }
 
-    public static final BlockEntry<CopycatFenceBlock> COPYCAT_FENCE =
-            REGISTRATE.block("copycat_fence", CopycatFenceBlock::new)
-                    .transform(BuilderTransformers.copycat())
-                    .tag(BlockTags.FENCES, Tags.Blocks.FENCES)
-                    .transform(FeatureToggle.register(FeatureCategory.COPYCATS))
-                    .onRegister(CreateRegistrate.blockModel(() -> CopycatFenceModel::new))
-                    .item()
-                    .tag(CCTags.Items.COPYCAT_FENCE.tag)
-                    .transform(customItemModel("copycat_base", "fence"))
-                    .register();
+    public static final CopycatFenceBlock COPYCAT_FENCE = CCRegistrate.block("copycat_fence", CopycatFenceBlock::new,
+            CCBuilderTransformers.copycatProperties());
+    static {
+        FeatureToggle.register(id("copycat_fence"), FeatureCategory.COPYCATS);
+        CCRegistrate.blockItem(COPYCAT_FENCE, "copycat_fence");
+    }
 
-    public static final BlockEntry<WrappedFenceBlock> WRAPPED_COPYCAT_FENCE =
-            REGISTRATE.block("wrapped_copycat_fence", WrappedFenceBlock::new)
-                    .initialProperties(() -> Blocks.OAK_FENCE)
-                    .onRegister(b -> CopycatFenceBlock.fence = b)
-                    .tag(BlockTags.FENCES, Tags.Blocks.FENCES)
-                    .blockstate((c, p) -> p.simpleBlock(c.getEntry(), p.models().withExistingParent("wrapped_copycat_fence", "block/barrier")))
-                    .register();
+    public static final WrappedFenceBlock WRAPPED_COPYCAT_FENCE = CCRegistrate.block("wrapped_copycat_fence", WrappedFenceBlock::new,
+            net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_FENCE));
+    static {
+        CopycatFenceBlock.fence = WRAPPED_COPYCAT_FENCE;
+    }
 
-    public static final BlockEntry<CopycatWallBlock> COPYCAT_WALL =
-            REGISTRATE.block("copycat_wall", CopycatWallBlock::new)
-                    .transform(BuilderTransformers.copycat())
-                    .properties(p -> p.forceSolidOn())
-                    .tag(BlockTags.WALLS)
-                    .transform(FeatureToggle.register(FeatureCategory.COPYCATS))
-                    .onRegister(CreateRegistrate.blockModel(() -> CopycatWallModel::new))
-                    .item()
-                    .tag(CCTags.Items.COPYCAT_WALL.tag)
-                    .transform(customItemModel("copycat_base", "wall"))
-                    .register();
+    public static final CopycatWallBlock COPYCAT_WALL = CCRegistrate.block("copycat_wall", CopycatWallBlock::new,
+            CCBuilderTransformers.copycatProperties().forceSolidOn());
+    static {
+        FeatureToggle.register(id("copycat_wall"), FeatureCategory.COPYCATS);
+        CCRegistrate.blockItem(COPYCAT_WALL, "copycat_wall");
+    }
 
-    public static final BlockEntry<WrappedWallBlock> WRAPPED_COPYCAT_WALL =
-            REGISTRATE.block("wrapped_copycat_wall", WrappedWallBlock::new)
-                    .initialProperties(() -> Blocks.COBBLESTONE_WALL)
-                    .onRegister(b -> CopycatWallBlock.wall = b)
-                    .tag(BlockTags.WALLS)
-                    .blockstate((c, p) -> p.simpleBlock(c.getEntry(), p.models().withExistingParent("wrapped_copycat_wall", "block/barrier")))
-                    .register();
+    public static final WrappedWallBlock WRAPPED_COPYCAT_WALL = CCRegistrate.block("wrapped_copycat_wall", WrappedWallBlock::new,
+            net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(Blocks.COBBLESTONE_WALL));
+    static {
+        CopycatWallBlock.wall = WRAPPED_COPYCAT_WALL;
+    }
 
-    public static final BlockEntry<CopycatFenceGateBlock> COPYCAT_FENCE_GATE =
-            REGISTRATE.block("copycat_fence_gate", CopycatFenceGateBlock::new)
-                    .transform(BuilderTransformers.copycat())
-                    .properties(p -> p.forceSolidOn())
-                    .tag(BlockTags.FENCE_GATES, Tags.Blocks.FENCE_GATES, BlockTags.UNSTABLE_BOTTOM_CENTER, AllTags.AllBlockTags.MOVABLE_EMPTY_COLLIDER.tag)
-                    .transform(FeatureToggle.register(FeatureCategory.COPYCATS))
-                    .onRegister(CreateRegistrate.blockModel(() -> CopycatFenceGateModel::new))
-                    .item()
-                    .tag(CCTags.Items.COPYCAT_FENCE_GATE.tag)
-                    .transform(customItemModel("copycat_base", "fence_gate"))
-                    .register();
+    public static final CopycatFenceGateBlock COPYCAT_FENCE_GATE = CCRegistrate.block("copycat_fence_gate", CopycatFenceGateBlock::new,
+            CCBuilderTransformers.copycatProperties().forceSolidOn());
+    static {
+        FeatureToggle.register(id("copycat_fence_gate"), FeatureCategory.COPYCATS);
+        CCRegistrate.blockItem(COPYCAT_FENCE_GATE, "copycat_fence_gate");
+    }
 
-    public static final BlockEntry<WrappedFenceGateBlock> WRAPPED_COPYCAT_FENCE_GATE =
-            REGISTRATE.block("wrapped_copycat_fence_gate", p -> new WrappedFenceGateBlock(WoodType.OAK, p))
-                    .initialProperties(() -> Blocks.OAK_FENCE_GATE)
-                    .onRegister(b -> CopycatFenceGateBlock.fenceGate = b)
-                    .tag(BlockTags.FENCE_GATES, Tags.Blocks.FENCE_GATES, BlockTags.UNSTABLE_BOTTOM_CENTER, AllTags.AllBlockTags.MOVABLE_EMPTY_COLLIDER.tag)
-                    .blockstate((c, p) -> p.simpleBlock(c.getEntry(), p.models().withExistingParent("wrapped_copycat_fence_gate", "block/barrier")))
-                    .register();
+    public static final WrappedFenceGateBlock WRAPPED_COPYCAT_FENCE_GATE = CCRegistrate.block("wrapped_copycat_fence_gate",
+            p -> new WrappedFenceGateBlock(net.minecraft.world.level.block.state.properties.WoodType.OAK, p), net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_FENCE_GATE));
+    static {
+        CopycatFenceGateBlock.fenceGate = WRAPPED_COPYCAT_FENCE_GATE;
+    }
 
-    public static final BlockEntry<CopycatBoardBlock> COPYCAT_BOARD =
-            REGISTRATE.block("copycat_board", CopycatBoardBlock::new)
-                    .transform(BuilderTransformers.copycat())
-                    .transform(FeatureToggle.register(FeatureCategory.COPYCATS))
-                    .onRegister(CreateRegistrate.blockModel(() -> CopycatBoardModel::new))
-                    .loot((lt, block) -> {
-                        LootTable.Builder builder = LootTable.lootTable();
-                        for (Direction direction : Iterate.directions) {
-                            builder.withPool(
-                                    LootPool.lootPool()
-                                            .setRolls(ConstantValue.exactly(1.0F))
-                                            .when(ExplosionCondition.survivesExplosion())
-                                            .when(LootItemBlockStatePropertyCondition
-                                                    .hasBlockStateProperties(block)
-                                                    .setProperties(StatePropertiesPredicate.Builder.properties().hasProperty(CopycatBoardBlock.byDirection(direction), true)))
-                                            .add(LootItem.lootTableItem(block))
-                            );
-                        }
-                        lt.add(block, builder);
-                    })
-                    .item()
-                    .tag(CCTags.Items.COPYCAT_BOARD.tag)
-                    .transform(customItemModel("copycat_base", "board"))
-                    .register();
+    public static final CopycatBoardBlock COPYCAT_BOARD = CCRegistrate.block("copycat_board", CopycatBoardBlock::new,
+            CCBuilderTransformers.copycatProperties());
+    static {
+        FeatureToggle.register(id("copycat_board"), FeatureCategory.COPYCATS);
+        CCRegistrate.blockItem(COPYCAT_BOARD, "copycat_board");
+    }
 
     public static void register() {
         Mods.SIMULATED.executeIfInstalled(() -> SimCompatRegistry::register);
     }
 
-    private static Function<BlockState, ModelFile> forBoolean(DataGenContext<?, ?> ctx,
-                                                              Function<BlockState, Boolean> condition,
-                                                              String key,
-                                                              RegistrateBlockstateProvider prov) {
-        return state -> condition.apply(state) ? partialBaseModel(ctx, prov, key)
-                : partialBaseModel(ctx, prov);
+    private static Identifier id(String path) {
+        return com.hlysine.create_connected.CreateConnected.asResource(path);
     }
 }

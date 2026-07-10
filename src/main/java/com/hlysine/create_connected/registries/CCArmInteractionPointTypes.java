@@ -2,23 +2,20 @@ package com.hlysine.create_connected.registries;
 
 import com.hlysine.create_connected.CreateConnected;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryInteractionPoint;
-import com.simibubi.create.api.registry.CreateBuiltInRegistries;
-import com.simibubi.create.content.kinetics.mechanicalArm.ArmInteractionPointType;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.registries.DeferredHolder;
-import net.neoforged.neoforge.registries.DeferredRegister;
+import com.zurrtum.create.api.registry.CreateRegistries;
+import com.zurrtum.create.api.registry.CreateRegistryKeys;
+import com.zurrtum.create.content.kinetics.mechanicalArm.ArmInteractionPointType;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
 
 public class CCArmInteractionPointTypes {
-    private static final DeferredRegister<ArmInteractionPointType> ARM_INTERACTION_POINT_TYPES = DeferredRegister.create(CreateBuiltInRegistries.ARM_INTERACTION_POINT_TYPE, CreateConnected.MODID);
+    public static final ArmInteractionPointType KINETIC_BATTERY = register("kinetic_battery", new KineticBatteryInteractionPoint.Type());
 
-    public static DeferredHolder<ArmInteractionPointType, ? extends ArmInteractionPointType> KINETIC_BATTERY =
-            register("kinetic_battery", new KineticBatteryInteractionPoint.Type());
-
-    private static <T extends ArmInteractionPointType> DeferredHolder<ArmInteractionPointType, T> register(String key, T type) {
-        return ARM_INTERACTION_POINT_TYPES.register(key, () -> type);
+    private static <T extends ArmInteractionPointType> T register(String id, T type) {
+        return Registry.register(CreateRegistries.ARM_INTERACTION_POINT_TYPE,
+                ResourceKey.create(CreateRegistryKeys.ARM_INTERACTION_POINT_TYPE, CreateConnected.asResource(id)), type);
     }
 
-    public static void register(IEventBus modBus) {
-        ARM_INTERACTION_POINT_TYPES.register(modBus);
+    public static void register() {
     }
 }

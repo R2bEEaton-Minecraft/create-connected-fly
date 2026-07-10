@@ -2,9 +2,9 @@ package com.hlysine.create_connected.content.brassgearbox;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCItems;
-import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
-import com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock;
-import com.simibubi.create.foundation.block.IBE;
+import com.zurrtum.create.content.kinetics.base.KineticBlockEntity;
+import com.zurrtum.create.content.kinetics.base.RotatedPillarKineticBlock;
+import com.zurrtum.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -65,14 +65,14 @@ public class BrassGearboxBlock extends RotatedPillarKineticBlock implements IBE<
     public @NotNull List<ItemStack> getDrops(BlockState state, @NotNull LootParams.Builder builder) {
         if (state.getValue(AXIS).isVertical())
             return super.getDrops(state, builder);
-        return List.of(new ItemStack(CCItems.VERTICAL_BRASS_GEARBOX.get()));
+        return List.of(new ItemStack(CCItems.VERTICAL_BRASS_GEARBOX));
     }
 
     @Override
     public ItemStack getCloneItemStack(BlockState state, HitResult target, LevelReader level, BlockPos pos, Player player) {
         if (state.getValue(AXIS).isVertical())
             return super.getCloneItemStack(state, target, level, pos, player);
-        return new ItemStack(CCItems.VERTICAL_BRASS_GEARBOX.get());
+        return new ItemStack(CCItems.VERTICAL_BRASS_GEARBOX);
     }
 
     @Override
@@ -116,7 +116,7 @@ public class BrassGearboxBlock extends RotatedPillarKineticBlock implements IBE<
 
     @Override
     public BlockEntityType<? extends BrassGearboxBlockEntity> getBlockEntityType() {
-        return CCBlockEntityTypes.BRASS_GEARBOX.get();
+        return CCBlockEntityTypes.BRASS_GEARBOX;
     }
 
     @Override

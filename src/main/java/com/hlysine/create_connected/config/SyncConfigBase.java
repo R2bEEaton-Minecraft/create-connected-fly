@@ -1,147 +1,72 @@
 package com.hlysine.create_connected.config;
 
+import com.google.gson.JsonObject;
 import com.hlysine.create_connected.CreateConnected;
-import io.netty.buffer.ByteBuf;
-import net.createmod.catnip.config.ConfigBase;
-import net.createmod.catnip.platform.CatnipServices;
-import net.minecraft.nbt.CompoundTag;
+import com.zurrtum.create.catnip.config.ConfigBase;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.network.protocol.configuration.ServerConfigurationPacketListener;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.network.ConfigurationTask;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.configuration.ICustomConfigurationTask;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
-import net.neoforged.neoforge.network.registration.PayloadRegistrar;
-import net.neoforged.neoforge.server.ServerLifecycleHooks;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Consumer;
-
+// Create Fly's own catnip config is plain JSON with no built-in sync/reload-event hooks
+// (unlike the NeoForge ModConfigSpec this was originally written against), so sync is
+// implemented here directly on top of Fabric's networking API instead.
 public abstract class SyncConfigBase extends ConfigBase {
+    public static void registerPayloadType() {
+        PayloadTypeRegistry.playS2C().register(SyncConfigPayload.TYPE, SyncConfigPayload.STREAM_CODEC);
+    }
 
-    public final CompoundTag getSyncConfig() {
-        CompoundTag nbt = new CompoundTag();
-        writeSyncConfig(nbt);
+    public final JsonObject getSyncConfig() {
+        JsonObject json = new JsonObject();
+        writeSyncConfig(json);
         if (children != null)
             for (ConfigBase child : children) {
                 if (child instanceof SyncConfigBase syncChild) {
-                    if (nbt.contains(child.getName()))
+                    if (json.has(child.getName()))
                         throw new RuntimeException("A sync config key starts with " + child.getName() + " but does not belong to the child");
-                    nbt.put(child.getName(), syncChild.getSyncConfig());
+                    json.add(child.getName(), syncChild.getSyncConfig());
                 }
             }
-        return nbt;
+        return json;
     }
 
-    protected void writeSyncConfig(CompoundTag nbt) {
+    protected void writeSyncConfig(JsonObject json) {
     }
 
-    public final void setSyncConfig(CompoundTag config) {
+    public final void setSyncConfig(JsonObject config) {
         if (children != null)
             for (ConfigBase child : children) {
                 if (child instanceof SyncConfigBase syncChild) {
-                    CompoundTag nbt = config.getCompound(child.getName());
-                    syncChild.readSyncConfig(nbt);
+                    JsonObject json = config.getAsJsonObject(child.getName());
+                    syncChild.readSyncConfig(json == null ? new JsonObject() : json);
                 }
             }
         readSyncConfig(config);
     }
 
-    protected void readSyncConfig(CompoundTag nbt) {
-    }
-
-    @Override
-    public void onLoad() {
-        super.onLoad();
-        syncToAllPlayers();
-    }
-
-    @Override
-    public void onReload() {
-        super.onReload();
-        syncToAllPlayers();
-    }
-
-    public void syncToAllPlayers() {
-        CatnipServices.PLATFORM.executeOnServerOnly(() -> () -> {
-            if (ServerLifecycleHooks.getCurrentServer() == null) return;
-            CreateConnected.LOGGER.debug("Sync Config: Sending server config to all players on reload");
-            PacketDistributor.sendToAllPlayers(new SyncConfig(getSyncConfig()));
-        });
+    protected void readSyncConfig(JsonObject json) {
     }
 
     public void syncToPlayer(ServerPlayer player) {
         if (player == null) return;
-        CatnipServices.PLATFORM.executeOnServerOnly(() -> () -> {
-            CreateConnected.LOGGER.debug("Sync Config: Sending server config to {}", player.getScoreboardName());
-            PacketDistributor.sendToPlayer(player, new SyncConfig(getSyncConfig()));
-        });
+        CreateConnected.LOGGER.debug("Sync Config: Sending server config to {}", player.getScoreboardName());
+        ServerPlayNetworking.send(player, new SyncConfigPayload(getSyncConfig().toString()));
     }
 
-    protected void registerAsSyncRoot(final RegisterPayloadHandlersEvent event, final String version) {
-        final PayloadRegistrar registrar = event.registrar(version);
-        registrar.configurationToClient(
-                SyncConfig.TYPE,
-                SyncConfig.STREAM_CODEC,
-                this::handleData
-        );
-        registrar.playToClient(
-                SyncConfig.TYPE,
-                SyncConfig.STREAM_CODEC,
-                this::handleData
-        );
-        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
-            if (e.getEntity() instanceof ServerPlayer serverPlayer) {
-                syncToPlayer(serverPlayer);
-            }
-        });
-    }
+    public record SyncConfigPayload(String json) implements CustomPacketPayload {
+        public static final Type<SyncConfigPayload> TYPE = new Type<>(CreateConnected.asResource("sync_config"));
 
-    public void handleData(final SyncConfig data, final IPayloadContext context) {
-        this.setSyncConfig(data.nbt());
-        CreateConnected.LOGGER.debug("Sync Config: Received and applied server config {}", data.nbt().toString());
-    }
-
-    public record SyncConfig(CompoundTag nbt) implements CustomPacketPayload {
-        public static final Type<SyncConfig> TYPE = new Type<>(CreateConnected.asResource("sync_config"));
-
-        public static final StreamCodec<ByteBuf, SyncConfig> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.COMPOUND_TAG,
-                SyncConfig::nbt,
-                SyncConfig::new
+        public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncConfigPayload> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.STRING_UTF8,
+                SyncConfigPayload::json,
+                SyncConfigPayload::new
         );
 
         @Override
-        public @NotNull Type<? extends CustomPacketPayload> type() {
-            return TYPE;
-        }
-    }
-
-    public static abstract class SyncConfigTask implements ICustomConfigurationTask {
-        public static final ConfigurationTask.Type TYPE = new Type(CreateConnected.asResource("sync_config_task"));
-        private final ServerConfigurationPacketListener listener;
-
-        public SyncConfigTask(ServerConfigurationPacketListener listener) {
-            this.listener = listener;
-        }
-
-        protected abstract SyncConfigBase getSyncConfig();
-
-        @Override
-        public void run(final Consumer<CustomPacketPayload> sender) {
-            final SyncConfig payload = new SyncConfig(getSyncConfig().getSyncConfig());
-            sender.accept(payload);
-            listener.finishCurrentTask(this.type());
-        }
-
-        @Override
-        public @NotNull Type type() {
+        public Type<? extends CustomPacketPayload> type() {
             return TYPE;
         }
     }

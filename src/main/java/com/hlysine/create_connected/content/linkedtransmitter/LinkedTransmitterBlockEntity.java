@@ -1,19 +1,20 @@
 package com.hlysine.create_connected.content.linkedtransmitter;
 
-import com.simibubi.create.content.redstone.link.LinkBehaviour;
-import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
-import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
-import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
+import com.zurrtum.create.content.redstone.link.ServerLinkBehaviour;
+import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
+import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
 
+// LinkBehaviour split into a server-side ServerLinkBehaviour (real network state, used here) and
+// a client-only LinkBehaviour wrapper (frequency-slot UI, constructed separately) - see
+// PORTING_NOTES.md's ScrollValueBehaviour split note for the same pattern applied elsewhere.
 public class LinkedTransmitterBlockEntity extends SmartBlockEntity {
 
     private int transmittedSignal;
@@ -21,7 +22,7 @@ public class LinkedTransmitterBlockEntity extends SmartBlockEntity {
      * set to false if the module item is already returned to player via wrenching
      */
     public boolean containsBase = true;
-    private LinkBehaviour link;
+    private ServerLinkBehaviour link;
 
     public LinkedTransmitterBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -34,9 +35,7 @@ public class LinkedTransmitterBlockEntity extends SmartBlockEntity {
     }
 
     protected void createLink() {
-        Pair<ValueBoxTransform, ValueBoxTransform> slots =
-                ValueBoxTransform.Dual.makeSlots(LinkedTransmitterFrequencySlot::new);
-        link = LinkBehaviour.transmitter(this, slots, this::getSignal);
+        link = ServerLinkBehaviour.transmitter(this, this::getSignal);
     }
 
     @Override

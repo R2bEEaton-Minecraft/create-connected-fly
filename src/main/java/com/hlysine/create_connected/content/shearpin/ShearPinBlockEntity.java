@@ -3,9 +3,9 @@ package com.hlysine.create_connected.content.shearpin;
 import com.hlysine.create_connected.registries.CCBlocks;
 import com.hlysine.create_connected.datagen.advancements.AdvancementBehaviour;
 import com.hlysine.create_connected.datagen.advancements.CCAdvancements;
-import com.simibubi.create.content.kinetics.base.IRotate;
-import com.simibubi.create.content.kinetics.simpleRelays.BracketedKineticBlockEntity;
-import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.zurrtum.create.content.kinetics.base.IRotate;
+import com.zurrtum.create.content.kinetics.simpleRelays.BracketedKineticBlockEntity;
+import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -31,7 +31,7 @@ public class ShearPinBlockEntity extends BracketedKineticBlockEntity {
         if (IRotate.StressImpact.isEnabled()) {
             if (isOverStressed()) {
                 if (level != null) {
-                    level.scheduleTick(getBlockPos(), CCBlocks.SHEAR_PIN.get(), level.random.nextInt(RANDOM_DELAY), TickPriority.EXTREMELY_HIGH);
+                    level.scheduleTick(getBlockPos(), CCBlocks.SHEAR_PIN, level.random.nextInt(RANDOM_DELAY), TickPriority.EXTREMELY_HIGH);
                 }
             }
         }

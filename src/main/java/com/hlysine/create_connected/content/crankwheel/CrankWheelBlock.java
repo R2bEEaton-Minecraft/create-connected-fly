@@ -2,10 +2,10 @@ package com.hlysine.create_connected.content.crankwheel;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCShapes;
-import com.simibubi.create.content.kinetics.crank.HandCrankBlock;
-import com.simibubi.create.content.kinetics.simpleRelays.CogWheelBlock;
-import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel;
-import net.createmod.catnip.data.Iterate;
+import com.zurrtum.create.content.kinetics.crank.HandCrankBlock;
+import com.zurrtum.create.content.kinetics.simpleRelays.CogWheelBlock;
+import com.zurrtum.create.content.kinetics.simpleRelays.ICogWheel;
+import com.zurrtum.create.catnip.data.Iterate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -22,7 +22,7 @@ import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-import static com.simibubi.create.content.kinetics.simpleRelays.CogWheelBlock.isValidCogwheelPosition;
+import static com.zurrtum.create.content.kinetics.simpleRelays.CogWheelBlock.isValidCogwheelPosition;
 import static net.minecraft.core.Direction.Axis;
 
 public class CrankWheelBlock extends HandCrankBlock implements ICogWheel {
@@ -48,7 +48,7 @@ public class CrankWheelBlock extends HandCrankBlock implements ICogWheel {
 
     @Override
     public BlockEntityType<? extends CrankWheelBlockEntity> getBlockEntityType() {
-        return CCBlockEntityTypes.CRANK_WHEEL.get();
+        return CCBlockEntityTypes.CRANK_WHEEL;
     }
 
     @Override

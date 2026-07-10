@@ -1,9 +1,9 @@
 package com.hlysine.create_connected.mixin.sequencedgearshift;
 
 import com.hlysine.create_connected.registries.CCSequencerInstructions;
-import com.simibubi.create.content.kinetics.transmission.sequencer.Instruction;
-import com.simibubi.create.content.kinetics.transmission.sequencer.SequencedGearshiftBlock;
-import com.simibubi.create.content.kinetics.transmission.sequencer.SequencedGearshiftBlockEntity;
+import com.zurrtum.create.content.kinetics.transmission.sequencer.Instruction;
+import com.zurrtum.create.content.kinetics.transmission.sequencer.SequencedGearshiftBlock;
+import com.zurrtum.create.content.kinetics.transmission.sequencer.SequencedGearshiftBlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

@@ -2,7 +2,7 @@ package com.hlysine.create_connected.content.copycat.stairs;
 
 import com.hlysine.create_connected.content.copycat.ICopycatWithWrappedBlock;
 import com.hlysine.create_connected.content.copycat.WaterloggedCopycatWrappedBlock;
-import com.simibubi.create.content.decoration.copycat.CopycatBlock;
+import com.zurrtum.create.content.decoration.copycat.CopycatBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;

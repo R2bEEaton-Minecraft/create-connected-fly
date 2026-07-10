@@ -1,6 +1,6 @@
 package com.hlysine.create_connected.mixin.sequencedgearshift;
 
-import com.simibubi.create.content.kinetics.transmission.sequencer.InstructionSpeedModifiers;
+import com.zurrtum.create.content.kinetics.transmission.sequencer.InstructionSpeedModifiers;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
