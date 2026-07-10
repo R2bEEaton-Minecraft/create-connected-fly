@@ -1,6 +1,6 @@
 package com.hlysine.create_connected.registries;
 
-import com.simibubi.create.content.kinetics.transmission.sequencer.SequencerInstructions;
+import com.zurrtum.create.content.kinetics.transmission.sequencer.SequencerInstructions;
 import org.jetbrains.annotations.NotNull;
 
 public class CCSequencerInstructions {

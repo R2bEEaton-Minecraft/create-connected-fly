@@ -1,11 +1,8 @@
 package com.hlysine.create_connected.content.kineticbridge;
 
-import com.hlysine.create_connected.ConnectedLang;
 import com.hlysine.create_connected.content.KineticHelper;
-import com.hlysine.create_connected.content.kineticbattery.KineticBatteryValueBox;
-import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
-import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
-import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollValueBehaviour;
+import com.zurrtum.create.content.kinetics.base.KineticBlockEntity;
+import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -16,7 +13,7 @@ import java.util.List;
 
 public class KineticBridgeBlockEntity extends KineticBlockEntity {
 
-    public ScrollValueBehaviour stressMultiplier;
+    public ServerStressImpactScrollValueBehaviour stressMultiplier;
     private float previousStress = 0;
     private float previousSpeed = 0;
 
@@ -27,13 +24,9 @@ public class KineticBridgeBlockEntity extends KineticBlockEntity {
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         super.addBehaviours(behaviours);
-        stressMultiplier = new StressImpactScrollValueBehaviour(
-                ConnectedLang.translateDirect("kinetic_bridge.stress_impact"),
-                this,
-                new KineticBatteryValueBox(8)
-        );
+        stressMultiplier = new ServerStressImpactScrollValueBehaviour(this);
         stressMultiplier.between(0, 2048);
-        stressMultiplier.value = 40;
+        stressMultiplier.setValue(40);
         stressMultiplier.withCallback(i -> this.updateSelfKinetic());
         behaviours.add(stressMultiplier);
     }
@@ -72,7 +65,7 @@ public class KineticBridgeBlockEntity extends KineticBlockEntity {
 
     @Override
     public float calculateStressApplied() {
-        this.lastStressApplied = StressImpactScrollValueBehaviour.convertValue(stressMultiplier.getValue());
+        this.lastStressApplied = ServerStressImpactScrollValueBehaviour.convertValue(stressMultiplier.getValue());
         return this.lastStressApplied;
     }
 

@@ -1,7 +1,7 @@
 package com.hlysine.create_connected.content.kineticbridge;
 
 import com.hlysine.create_connected.content.KineticHelper;
-import com.simibubi.create.content.kinetics.base.GeneratingKineticBlockEntity;
+import com.zurrtum.create.content.kinetics.base.GeneratingKineticBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;

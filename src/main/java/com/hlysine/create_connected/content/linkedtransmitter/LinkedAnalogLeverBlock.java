@@ -2,16 +2,15 @@ package com.hlysine.create_connected.content.linkedtransmitter;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCItems;
-import com.simibubi.create.AllSoundEvents;
-import com.simibubi.create.api.schematic.requirement.SpecialBlockItemRequirement;
-import com.simibubi.create.content.equipment.wrench.IWrenchable;
-import com.simibubi.create.content.redstone.analogLever.AnalogLeverBlock;
-import com.simibubi.create.content.schematics.requirement.ItemRequirement;
-import com.tterrag.registrate.util.nullness.NonNullSupplier;
+import com.zurrtum.create.AllSoundEvents;
+import com.zurrtum.create.api.schematic.requirement.SpecialBlockItemRequirement;
+import com.zurrtum.create.content.equipment.wrench.IWrenchable;
+import com.zurrtum.create.content.redstone.analogLever.AnalogLeverBlock;
+import com.zurrtum.create.content.schematics.requirement.ItemRequirement;
+import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
@@ -40,9 +39,9 @@ public class LinkedAnalogLeverBlock extends AnalogLeverBlock implements SpecialB
     public static BooleanProperty LOCKED = BlockStateProperties.LOCKED;
 
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
-    private final NonNullSupplier<AnalogLeverBlock> baseSupplier;
+    private final Supplier<AnalogLeverBlock> baseSupplier;
 
-    public LinkedAnalogLeverBlock(Properties pProperties, NonNullSupplier<AnalogLeverBlock> baseSupplier) {
+    public LinkedAnalogLeverBlock(Properties pProperties, Supplier<AnalogLeverBlock> baseSupplier) {
         super(pProperties);
         registerDefaultState(defaultBlockState().setValue(POWERED, false).setValue(LOCKED, false));
         this.baseSupplier = baseSupplier;
@@ -92,7 +91,7 @@ public class LinkedAnalogLeverBlock extends AnalogLeverBlock implements SpecialB
     }
 
     @Override
-    public @NotNull ItemInteractionResult useItemOn(@NotNull ItemStack stack,
+    public @NotNull InteractionResult useItemOn(@NotNull ItemStack stack,
                                                     @NotNull BlockState state,
                                                     @NotNull Level level,
                                                     @NotNull BlockPos pos,
@@ -105,7 +104,7 @@ public class LinkedAnalogLeverBlock extends AnalogLeverBlock implements SpecialB
     @Override
     public void onRemove(@NotNull BlockState state, @NotNull Level world, @NotNull BlockPos pos, @NotNull BlockState newState, boolean isMoving) {
         if (!state.is(newState.getBlock()) && !isMoving && getBlockEntityOptional(world, pos).map(be -> ((LinkedAnalogLeverBlockEntity) be).containsBase).orElse(false))
-            Block.popResource(world, pos, new ItemStack(CCItems.LINKED_TRANSMITTER.get()));
+            Block.popResource(world, pos, new ItemStack(CCItems.LINKED_TRANSMITTER));
         getBase().defaultBlockState().onRemove(world, pos, newState, isMoving);
     }
 
@@ -119,7 +118,7 @@ public class LinkedAnalogLeverBlock extends AnalogLeverBlock implements SpecialB
     public InteractionResult onWrenched(BlockState state, UseOnContext context) {
         Player player = context.getPlayer();
         if (!player.isCreative()) {
-            player.getInventory().placeItemBackInInventory(new ItemStack(CCItems.LINKED_TRANSMITTER.get()));
+            player.getInventory().placeItemBackInInventory(new ItemStack(CCItems.LINKED_TRANSMITTER));
         }
         withBlockEntityDo(context.getLevel(), context.getClickedPos(), be -> ((LinkedAnalogLeverBlockEntity) be).containsBase = false);
         replaceWithBase(state, context.getLevel(), context.getClickedPos());
@@ -150,19 +149,19 @@ public class LinkedAnalogLeverBlock extends AnalogLeverBlock implements SpecialB
                                                 @NotNull Player player) {
         if (isHittingBase(state, world, pos, target))
             return getBase().getCloneItemStack(state, target, world, pos, player);
-        return new ItemStack(CCItems.LINKED_TRANSMITTER.get());
+        return new ItemStack(CCItems.LINKED_TRANSMITTER);
     }
 
     @Override
     public ItemRequirement getRequiredItems(BlockState state, BlockEntity be) {
         ArrayList<ItemStack> requiredItems = new ArrayList<>();
         requiredItems.add(new ItemStack(getBase()));
-        requiredItems.add(new ItemStack(CCItems.LINKED_TRANSMITTER.get()));
+        requiredItems.add(new ItemStack(CCItems.LINKED_TRANSMITTER));
         return new ItemRequirement(ItemRequirement.ItemUseType.CONSUME, requiredItems);
     }
 
     @Override
     public BlockEntityType<? extends LinkedAnalogLeverBlockEntity> getBlockEntityType() {
-        return CCBlockEntityTypes.LINKED_ANALOG_LEVER.get();
+        return CCBlockEntityTypes.LINKED_ANALOG_LEVER;
     }
 }

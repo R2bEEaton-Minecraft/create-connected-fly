@@ -3,14 +3,14 @@ package com.hlysine.create_connected.ponder;
 import com.hlysine.create_connected.registries.CCBlocks;
 import com.hlysine.create_connected.registries.CCItems;
 import com.hlysine.create_connected.content.linkedtransmitter.LinkedTransmitterBlockEntity;
-import com.simibubi.create.AllItems;
-import com.simibubi.create.content.redstone.link.RedstoneLinkBlockEntity;
-import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
-import net.createmod.catnip.math.Pointing;
-import net.createmod.ponder.api.PonderPalette;
-import net.createmod.ponder.api.scene.SceneBuilder;
-import net.createmod.ponder.api.scene.SceneBuildingUtil;
-import net.createmod.ponder.api.scene.Selection;
+import com.zurrtum.create.AllItems;
+import com.zurrtum.create.content.redstone.link.RedstoneLinkBlockEntity;
+import com.zurrtum.create.foundation.ponder.CreateSceneBuilder;
+import com.zurrtum.create.catnip.math.Pointing;
+import com.zurrtum.create.ponder.api.PonderPalette;
+import com.zurrtum.create.ponder.api.scene.SceneBuilder;
+import com.zurrtum.create.ponder.api.scene.SceneBuildingUtil;
+import com.zurrtum.create.ponder.api.scene.Selection;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
@@ -59,7 +59,7 @@ public class LinkedTransmitterScenes {
 
         scene.overlay().showControls(transmitVec, Pointing.UP, 40)
                 .rightClick()
-                .withItem(new ItemStack(CCItems.LINKED_TRANSMITTER.get()));
+                .withItem(new ItemStack(CCItems.LINKED_TRANSMITTER));
         scene.idle(10);
         scene.world().modifyBlock(lever, s -> CCBlocks.LINKED_LEVER.getDefaultState()
                         .setValue(ATTACH_FACE, s.getValue(ATTACH_FACE))
@@ -215,11 +215,11 @@ public class LinkedTransmitterScenes {
         scene.idle(20);
         scene.overlay().showControls(util.vector().blockSurface(analogLever, Direction.DOWN).add(0, 4 / 16.0, 0), Pointing.UP, 40)
                 .rightClick()
-                .withItem(new ItemStack(CCItems.LINKED_TRANSMITTER.get()));
+                .withItem(new ItemStack(CCItems.LINKED_TRANSMITTER));
         scene.idle(5);
         scene.overlay().showControls(util.vector().blockSurface(button, Direction.DOWN).add(0, 2 / 16.0, 0), Pointing.DOWN, 40)
                 .rightClick()
-                .withItem(new ItemStack(CCItems.LINKED_TRANSMITTER.get()));
+                .withItem(new ItemStack(CCItems.LINKED_TRANSMITTER));
         scene.idle(20);
         scene.world().modifyBlock(analogLever, s -> CCBlocks.LINKED_ANALOG_LEVER.getDefaultState()
                         .setValue(ATTACH_FACE, s.getValue(ATTACH_FACE))

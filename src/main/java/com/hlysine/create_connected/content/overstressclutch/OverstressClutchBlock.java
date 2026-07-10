@@ -4,10 +4,10 @@ import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.ConnectedLang;
 import com.hlysine.create_connected.datagen.advancements.AdvancementBehaviour;
 import com.hlysine.create_connected.datagen.advancements.CCAdvancements;
-import com.simibubi.create.content.equipment.wrench.IWrenchable;
-import com.simibubi.create.content.kinetics.RotationPropagator;
-import com.simibubi.create.content.kinetics.base.AbstractEncasedShaftBlock;
-import com.simibubi.create.foundation.block.IBE;
+import com.zurrtum.create.content.equipment.wrench.IWrenchable;
+import com.zurrtum.create.content.kinetics.RotationPropagator;
+import com.zurrtum.create.content.kinetics.base.AbstractEncasedShaftBlock;
+import com.zurrtum.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
@@ -66,7 +66,7 @@ public class OverstressClutchBlock extends AbstractEncasedShaftBlock implements 
 
     @Override
     public BlockEntityType<? extends OverstressClutchBlockEntity> getBlockEntityType() {
-        return CCBlockEntityTypes.OVERSTRESS_CLUTCH.get();
+        return CCBlockEntityTypes.OVERSTRESS_CLUTCH;
     }
 
     @Override

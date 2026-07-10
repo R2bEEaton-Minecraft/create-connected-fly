@@ -1,8 +1,8 @@
 package com.hlysine.create_connected.mixin.redstonelinkwildcard;
 
 import com.hlysine.create_connected.content.redstonelinkwildcard.LinkWildcardNetworkHandler;
-import com.simibubi.create.content.redstone.link.IRedstoneLinkable;
-import com.simibubi.create.content.redstone.link.RedstoneLinkNetworkHandler;
+import com.zurrtum.create.content.redstone.link.IRedstoneLinkable;
+import com.zurrtum.create.content.redstone.link.RedstoneLinkNetworkHandler;
 import net.minecraft.world.level.LevelAccessor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

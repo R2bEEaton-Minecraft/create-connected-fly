@@ -2,28 +2,24 @@ package com.hlysine.create_connected.datagen.advancements;
 
 import com.google.common.collect.Maps;
 import com.hlysine.create_connected.CreateConnected;
-import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.advancements.CriterionTrigger;
 import net.minecraft.advancements.critereon.ContextAwarePredicate;
 import net.minecraft.advancements.critereon.SimpleCriterionTrigger;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.PlayerAdvancements;
 import net.minecraft.server.level.ServerPlayer;
 
 import javax.annotation.Nullable;
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.*;
 import java.util.function.Supplier;
 
-@ParametersAreNonnullByDefault
-@MethodsReturnNonnullByDefault
 public abstract class CriterionTriggerBase<T extends CriterionTriggerBase.Instance> implements CriterionTrigger<T> {
 
     public CriterionTriggerBase(String id) {
         this.id = CreateConnected.asResource(id);
     }
 
-    private final ResourceLocation id;
+    private final Identifier id;
     protected final Map<PlayerAdvancements, Set<Listener<T>>> listeners = Maps.newHashMap();
 
     @Override
@@ -49,7 +45,7 @@ public abstract class CriterionTriggerBase<T extends CriterionTriggerBase.Instan
         this.listeners.remove(playerAdvancementsIn);
     }
 
-    public ResourceLocation getId() {
+    public Identifier getId() {
         return id;
     }
 

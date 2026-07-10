@@ -3,26 +3,28 @@ package com.hlysine.create_connected.registries;
 import com.hlysine.create_connected.CreateConnected;
 import com.hlysine.create_connected.config.FeatureToggle;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryBlockEntity;
-import com.simibubi.create.AllCreativeModeTabs;
-import com.tterrag.registrate.util.entry.ItemProviderEntry;
+import com.zurrtum.create.AllCreativeModeTabs;
+import com.zurrtum.create.catnip.registry.RegisteredObjectsHelper;
+import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
-import net.neoforged.neoforge.registries.DeferredHolder;
-import net.neoforged.neoforge.registries.DeferredRegister;
+import net.minecraft.world.level.ItemLike;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
 
+// Original was DeferredRegister<CreativeModeTab> + BuildCreativeModeTabContentsEvent (NeoForge).
+// Converted to direct registration + Fabric API's ItemGroupEvents (see PORTING_NOTES.md).
 public class CCCreativeTabs {
-    private static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, CreateConnected.MODID);
-
-    public static final List<ItemProviderEntry<?, ?>> ITEMS = new ArrayList<>();
+    public static final List<ItemLike> ITEMS = new ArrayList<>();
 
     static {
         ITEMS.addAll(List.of(
@@ -77,7 +79,7 @@ public class CCCreativeTabs {
                 CCBlocks.FAN_GLOOMING_CATALYST,
                 CCBlocks.FAN_SOUL_STRIPPING_CATALYST
         ));
-        CCBlocks.FAN_DYEING_CATALYSTS.forEach((block, value) -> ITEMS.add(value));
+        CCBlocks.FAN_DYEING_CATALYSTS.forEach((color, block) -> ITEMS.add(block));
         ITEMS.addAll(List.of(
                 CCBlocks.COPYCAT_BLOCK,
                 CCBlocks.COPYCAT_SLAB,
@@ -96,40 +98,36 @@ public class CCCreativeTabs {
         ));
     }
 
-    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> MAIN = CREATIVE_MODE_TABS.register("main", () -> CreativeModeTab.builder()
+    public static final ResourceKey<CreativeModeTab> MAIN_KEY = ResourceKey.create(Registries.CREATIVE_MODE_TAB, CreateConnected.asResource("main"));
+
+    public static final CreativeModeTab MAIN = Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, MAIN_KEY, CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.create_connected.main"))
-            .withTabsBefore(AllCreativeModeTabs.PALETTES_CREATIVE_TAB.getKey())
-            .icon(CCBlocks.BRASS_GEARBOX::asStack)
-            .displayItems(new DisplayItemsGenerator(ITEMS))
+            .withTabsBefore(AllCreativeModeTabs.PALETTES_GROUP)
+            .icon(CCBlocks.BRASS_GEARBOX::asItem)
+            .displayItems(new DisplayItemsGenerator())
             .build());
 
-    public static void hideItems(BuildCreativeModeTabContentsEvent event) {
-        if (Objects.equals(event.getTabKey(), MAIN.getKey()) || Objects.equals(event.getTabKey(), CreativeModeTabs.SEARCH)) {
-            Set<ItemStack> hiddenItems = ITEMS.stream()
-                    .filter(x -> !FeatureToggle.isEnabled(x.getId()))
-                    .map(entry -> event.getSearchEntries().stream().filter(stack -> stack.getItem() == entry.asItem()).findFirst()
-                            .orElse(event.getParentEntries().stream().filter(stack -> stack.getItem() == entry.asItem()).findFirst()
-                                    .orElse(null)))
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toSet());
-            for (ItemStack hiddenItem : hiddenItems) {
-                event.remove(hiddenItem, CreativeModeTab.TabVisibility.PARENT_AND_SEARCH_TABS);
-            }
-        }
+    private static boolean isEnabled(ItemLike item) {
+        return FeatureToggle.isEnabled(id(item));
     }
 
-    public static void register(IEventBus modEventBus) {
-        CREATIVE_MODE_TABS.register(modEventBus);
-        modEventBus.addListener(CCCreativeTabs::hideItems);
+    private static Identifier id(ItemLike item) {
+        return RegisteredObjectsHelper.getKeyOrThrow(item.asItem());
     }
 
-    private record DisplayItemsGenerator(
-            List<ItemProviderEntry<?, ?>> items) implements CreativeModeTab.DisplayItemsGenerator {
+    public static void register() {
+        ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.SEARCH).register(entries -> {
+            entries.getDisplayStacks().removeIf(stack -> ITEMS.stream().anyMatch(item -> item.asItem() == stack.getItem()) && !isEnabled(stack.getItem()));
+            entries.getSearchTabStacks().removeIf(stack -> ITEMS.stream().anyMatch(item -> item.asItem() == stack.getItem()) && !isEnabled(stack.getItem()));
+        });
+    }
+
+    private static class DisplayItemsGenerator implements CreativeModeTab.DisplayItemsGenerator {
         @Override
         public void accept(@NotNull CreativeModeTab.ItemDisplayParameters params, @NotNull CreativeModeTab.Output output) {
-            for (ItemProviderEntry<?, ?> item : items) {
-                if (FeatureToggle.isEnabled(item.getId())) {
-                    if (item.is(CCBlocks.KINETIC_BATTERY.asItem())) {
+            for (ItemLike item : ITEMS) {
+                if (isEnabled(item)) {
+                    if (item.asItem() == CCBlocks.KINETIC_BATTERY.asItem()) {
                         ItemStack stack = new ItemStack(item.asItem());
                         stack.set(CCDataComponents.KINETIC_BATTERY_CHARGE, KineticBatteryBlockEntity.getMaxBatteryLevel());
                         output.accept(stack);

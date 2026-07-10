@@ -4,7 +4,7 @@ import com.hlysine.create_connected.compat.Mods;
 import com.hlysine.create_connected.content.contraption.jukebox.JukeboxInteractionBehaviour;
 import com.hlysine.create_connected.content.contraption.menu.MenuBlockInteractionBehaviour;
 import com.hlysine.create_connected.content.contraption.noteblock.NoteBlockInteractionBehaviour;
-import com.simibubi.create.api.behaviour.interaction.MovingInteractionBehaviour;
+import com.zurrtum.create.api.behaviour.interaction.MovingInteractionBehaviour;
 import net.minecraft.world.level.block.Blocks;
 
 public class CCInteractionBehaviours {

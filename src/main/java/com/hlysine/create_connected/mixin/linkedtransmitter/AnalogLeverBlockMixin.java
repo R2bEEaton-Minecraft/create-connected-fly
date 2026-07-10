@@ -2,7 +2,7 @@ package com.hlysine.create_connected.mixin.linkedtransmitter;
 
 import com.hlysine.create_connected.registries.CCBlocks;
 import com.hlysine.create_connected.registries.CCItems;
-import com.simibubi.create.content.redstone.analogLever.AnalogLeverBlock;
+import com.zurrtum.create.content.redstone.analogLever.AnalogLeverBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -29,7 +29,7 @@ public abstract class AnalogLeverBlockMixin extends FaceAttachedHorizontalDirect
             method = "useWithoutItem"
     )
     private void use(BlockState state, Level worldIn, BlockPos pos, Player player, BlockHitResult hit, CallbackInfoReturnable<InteractionResult> cir) {
-        if (player.isHolding(CCItems.LINKED_TRANSMITTER.get()) && !state.is(CCBlocks.LINKED_ANALOG_LEVER.get())) {
+        if (player.isHolding(CCItems.LINKED_TRANSMITTER) && !state.is(CCBlocks.LINKED_ANALOG_LEVER)) {
             cir.setReturnValue(InteractionResult.PASS);
             cir.cancel();
         }

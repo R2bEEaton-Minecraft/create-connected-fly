@@ -3,25 +3,25 @@ package com.hlysine.create_connected.registries;
 import com.hlysine.create_connected.CreateConnected;
 import com.hlysine.create_connected.content.fluidvessel.FluidVesselMountedStorageType;
 import com.hlysine.create_connected.content.itemsilo.ItemSiloMountedStorageType;
-import com.simibubi.create.api.contraption.storage.fluid.MountedFluidStorageType;
-import com.simibubi.create.api.contraption.storage.item.MountedItemStorageType;
-import com.simibubi.create.foundation.data.CreateRegistrate;
-import com.tterrag.registrate.util.entry.RegistryEntry;
-
-import java.util.function.Supplier;
+import com.zurrtum.create.api.contraption.storage.fluid.MountedFluidStorageType;
+import com.zurrtum.create.api.contraption.storage.item.MountedItemStorageType;
+import com.zurrtum.create.api.registry.CreateRegistries;
+import com.zurrtum.create.api.registry.CreateRegistryKeys;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
 
 public class CCMountedStorageTypes {
-    private static final CreateRegistrate REGISTRATE = CreateConnected.getRegistrate();
+    public static final ItemSiloMountedStorageType SILO = register("silo", new ItemSiloMountedStorageType());
+    public static final FluidVesselMountedStorageType FLUID_VESSEL = register("fluid_vessel", new FluidVesselMountedStorageType());
 
-    public static final RegistryEntry<MountedItemStorageType<?>, ItemSiloMountedStorageType> SILO = simpleItem("silo", ItemSiloMountedStorageType::new);
-    public static final RegistryEntry<MountedFluidStorageType<?>, FluidVesselMountedStorageType> FLUID_VESSEL = simpleFluid("fluid_vessel", FluidVesselMountedStorageType::new);
-
-    private static <T extends MountedItemStorageType<?>> RegistryEntry<MountedItemStorageType<?>, T> simpleItem(String name, Supplier<T> supplier) {
-        return REGISTRATE.mountedItemStorage(name, supplier).register();
+    private static <T extends MountedItemStorageType<?>> T register(String id, T type) {
+        return Registry.register(CreateRegistries.MOUNTED_ITEM_STORAGE_TYPE,
+                ResourceKey.create(CreateRegistryKeys.MOUNTED_ITEM_STORAGE_TYPE, CreateConnected.asResource(id)), type);
     }
 
-    private static <T extends MountedFluidStorageType<?>> RegistryEntry<MountedFluidStorageType<?>, T> simpleFluid(String name, Supplier<T> supplier) {
-        return REGISTRATE.mountedFluidStorage(name, supplier).register();
+    private static <T extends MountedFluidStorageType<?>> T register(String id, T type) {
+        return Registry.register(CreateRegistries.MOUNTED_FLUID_STORAGE_TYPE,
+                ResourceKey.create(CreateRegistryKeys.MOUNTED_FLUID_STORAGE_TYPE, CreateConnected.asResource(id)), type);
     }
 
     public static void register() {

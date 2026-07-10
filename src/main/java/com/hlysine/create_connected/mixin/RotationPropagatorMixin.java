@@ -2,8 +2,8 @@ package com.hlysine.create_connected.mixin;
 
 import com.hlysine.create_connected.content.IConnectionForwardingBlock;
 import com.hlysine.create_connected.content.ISplitShaftBlockEntity;
-import com.simibubi.create.content.kinetics.RotationPropagator;
-import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
+import com.zurrtum.create.content.kinetics.RotationPropagator;
+import com.zurrtum.create.content.kinetics.base.KineticBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import org.spongepowered.asm.mixin.Mixin;

@@ -4,12 +4,12 @@ package com.hlysine.create_connected.content.fluidvessel;
 import com.hlysine.create_connected.registries.CCMountedStorageTypes;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import com.simibubi.create.api.contraption.storage.SyncedMountedStorage;
-import com.simibubi.create.api.contraption.storage.fluid.MountedFluidStorageType;
-import com.simibubi.create.api.contraption.storage.fluid.WrapperMountedFluidStorage;
-import com.simibubi.create.content.contraptions.Contraption;
-import com.simibubi.create.content.fluids.tank.FluidTankBlockEntity;
-import net.createmod.catnip.animation.LerpedFloat;
+import com.zurrtum.create.api.contraption.storage.SyncedMountedStorage;
+import com.zurrtum.create.api.contraption.storage.fluid.MountedFluidStorageType;
+import com.zurrtum.create.api.contraption.storage.fluid.WrapperMountedFluidStorage;
+import com.zurrtum.create.content.contraptions.Contraption;
+import com.zurrtum.create.content.fluids.tank.FluidTankBlockEntity;
+import com.zurrtum.create.catnip.animation.LerpedFloat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -35,7 +35,7 @@ public class FluidVesselMountedStorage extends WrapperMountedFluidStorage<FluidV
     }
 
     protected FluidVesselMountedStorage(int capacity, FluidStack stack) {
-        this(CCMountedStorageTypes.FLUID_VESSEL.get(), capacity, stack);
+        this(CCMountedStorageTypes.FLUID_VESSEL, capacity, stack);
     }
 
     @Override

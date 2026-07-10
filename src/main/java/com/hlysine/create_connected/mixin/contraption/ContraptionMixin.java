@@ -1,6 +1,6 @@
 package com.hlysine.create_connected.mixin.contraption;
 
-import com.simibubi.create.content.contraptions.Contraption;
+import com.zurrtum.create.content.contraptions.Contraption;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;

@@ -19,7 +19,7 @@ import java.util.Map;
 public class ChargedKineticBatteryItem extends BlockItem {
 
     public ChargedKineticBatteryItem(Properties builder) {
-        super(CCBlocks.KINETIC_BATTERY.get(), builder);
+        super(CCBlocks.KINETIC_BATTERY, builder);
     }
 
     @Override

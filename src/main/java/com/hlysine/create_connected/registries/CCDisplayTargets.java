@@ -2,19 +2,18 @@ package com.hlysine.create_connected.registries;
 
 import com.hlysine.create_connected.CreateConnected;
 import com.hlysine.create_connected.content.dashboard.DashboardDisplayTarget;
-import com.simibubi.create.api.behaviour.display.DisplayTarget;
-import com.simibubi.create.foundation.data.CreateRegistrate;
-import com.tterrag.registrate.util.entry.RegistryEntry;
-
-import java.util.function.Supplier;
+import com.zurrtum.create.api.behaviour.display.DisplayTarget;
+import com.zurrtum.create.api.registry.CreateRegistries;
+import com.zurrtum.create.api.registry.CreateRegistryKeys;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
 
 public class CCDisplayTargets {
-    private static final CreateRegistrate REGISTRATE = CreateConnected.getRegistrate();
+    public static final DashboardDisplayTarget DASHBOARD = register("dashboard", new DashboardDisplayTarget());
 
-    public static final RegistryEntry<DisplayTarget, DashboardDisplayTarget> DASHBOARD = simple("dashboard", DashboardDisplayTarget::new);
-
-    private static <T extends DisplayTarget> RegistryEntry<DisplayTarget, T> simple(String name, Supplier<T> supplier) {
-        return REGISTRATE.displayTarget(name, supplier).register();
+    private static <T extends DisplayTarget> T register(String id, T target) {
+        return Registry.register(CreateRegistries.DISPLAY_TARGET,
+                ResourceKey.create(CreateRegistryKeys.DISPLAY_TARGET, CreateConnected.asResource(id)), target);
     }
 
     public static void register() {

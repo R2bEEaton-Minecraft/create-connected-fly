@@ -2,11 +2,11 @@ package com.hlysine.create_connected.content.fluidvessel;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCBlocks;
-import com.simibubi.create.api.connectivity.ConnectivityHandler;
-import com.simibubi.create.content.equipment.symmetryWand.SymmetryWandItem;
-import com.simibubi.create.content.fluids.tank.FluidTankBlockEntity;
-import com.simibubi.create.foundation.block.IBE;
-import net.createmod.catnip.math.VecHelper;
+import com.zurrtum.create.api.connectivity.ConnectivityHandler;
+import com.zurrtum.create.content.equipment.symmetryWand.SymmetryWandItem;
+import com.zurrtum.create.content.fluids.tank.FluidTankBlockEntity;
+import com.zurrtum.create.foundation.block.IBE;
+import com.zurrtum.create.catnip.math.VecHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -87,9 +87,9 @@ public class FluidVesselItem extends BlockItem {
 			return;
 		if (SymmetryWandItem.presentInHotbar(player))
 			return;
-		boolean creative = getBlock().equals(CCBlocks.CREATIVE_FLUID_VESSEL.get());
+		boolean creative = getBlock().equals(CCBlocks.CREATIVE_FLUID_VESSEL);
 		FluidVesselBlockEntity tankAt = ConnectivityHandler.partAt(
-			creative ? CCBlockEntityTypes.CREATIVE_FLUID_VESSEL.get() : CCBlockEntityTypes.FLUID_VESSEL.get(), world, placedOnPos
+			creative ? CCBlockEntityTypes.CREATIVE_FLUID_VESSEL : CCBlockEntityTypes.FLUID_VESSEL, world, placedOnPos
 		);
 		if (tankAt == null)
 			return;

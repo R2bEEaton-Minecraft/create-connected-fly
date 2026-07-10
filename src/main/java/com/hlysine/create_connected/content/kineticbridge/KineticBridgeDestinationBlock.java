@@ -2,9 +2,9 @@ package com.hlysine.create_connected.content.kineticbridge;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCBlocks;
-import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
-import com.simibubi.create.foundation.block.IBE;
-import net.createmod.catnip.data.Iterate;
+import com.zurrtum.create.content.kinetics.base.DirectionalKineticBlock;
+import com.zurrtum.create.foundation.block.IBE;
+import com.zurrtum.create.catnip.data.Iterate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -71,7 +71,7 @@ public class KineticBridgeDestinationBlock extends DirectionalKineticBlock imple
 
         if (stillValid(level, clickedPos, state)) {
             BlockPos sourcePos = getSource(clickedPos, state);
-            if (!context.getLevel().getBlockState(sourcePos).is(CCBlocks.KINETIC_BRIDGE.get()))
+            if (!context.getLevel().getBlockState(sourcePos).is(CCBlocks.KINETIC_BRIDGE))
                 return super.onSneakWrenched(state, context);
             context = new UseOnContext(level, context.getPlayer(), context.getHand(), context.getItemInHand(),
                     new BlockHitResult(context.getClickLocation(), context.getClickedFace(), sourcePos,
@@ -86,7 +86,7 @@ public class KineticBridgeDestinationBlock extends DirectionalKineticBlock imple
     public void onRemove(BlockState pState, Level pLevel, BlockPos pPos, BlockState pNewState, boolean pIsMoving) {
         if (stillValid(pLevel, pPos, pState)) {
             BlockPos sourcePos = getSource(pPos, pState);
-            if (pLevel.getBlockState(sourcePos).is(CCBlocks.KINETIC_BRIDGE.get())) {
+            if (pLevel.getBlockState(sourcePos).is(CCBlocks.KINETIC_BRIDGE)) {
                 pLevel.destroyBlock(sourcePos, true);
             }
         }
@@ -96,7 +96,7 @@ public class KineticBridgeDestinationBlock extends DirectionalKineticBlock imple
     public BlockState playerWillDestroy(Level pLevel, BlockPos pPos, BlockState pState, Player pPlayer) {
         if (stillValid(pLevel, pPos, pState)) {
             BlockPos sourcePos = getSource(pPos, pState);
-            if (!pLevel.getBlockState(sourcePos).is(CCBlocks.KINETIC_BRIDGE.get())) {
+            if (!pLevel.getBlockState(sourcePos).is(CCBlocks.KINETIC_BRIDGE)) {
                 return super.playerWillDestroy(pLevel, pPos, pState, pPlayer);
             }
             pLevel.destroyBlockProgress(sourcePos.hashCode(), sourcePos, -1);
@@ -111,9 +111,9 @@ public class KineticBridgeDestinationBlock extends DirectionalKineticBlock imple
                                   BlockPos pCurrentPos, BlockPos pFacingPos) {
         if (stillValid(pLevel, pCurrentPos, pState)) {
             BlockPos sourcePos = getSource(pCurrentPos, pState);
-            if (pLevel.getBlockState(sourcePos).is(CCBlocks.KINETIC_BRIDGE.get()))
-                if (!pLevel.getBlockTicks().hasScheduledTick(sourcePos, CCBlocks.KINETIC_BRIDGE.get()))
-                    pLevel.scheduleTick(sourcePos, CCBlocks.KINETIC_BRIDGE.get(), 1);
+            if (pLevel.getBlockState(sourcePos).is(CCBlocks.KINETIC_BRIDGE))
+                if (!pLevel.getBlockTicks().hasScheduledTick(sourcePos, CCBlocks.KINETIC_BRIDGE))
+                    pLevel.scheduleTick(sourcePos, CCBlocks.KINETIC_BRIDGE, 1);
             return pState;
         }
         if (!(pLevel instanceof Level level) || level.isClientSide())
@@ -147,7 +147,7 @@ public class KineticBridgeDestinationBlock extends DirectionalKineticBlock imple
 
     @Override
     public BlockEntityType<? extends KineticBridgeDestinationBlockEntity> getBlockEntityType() {
-        return CCBlockEntityTypes.KINETIC_BRIDGE_DESTINATION.get();
+        return CCBlockEntityTypes.KINETIC_BRIDGE_DESTINATION;
     }
 
     @Override

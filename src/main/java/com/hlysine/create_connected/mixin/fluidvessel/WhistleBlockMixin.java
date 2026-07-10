@@ -1,7 +1,7 @@
 package com.hlysine.create_connected.mixin.fluidvessel;
 
 import com.hlysine.create_connected.content.fluidvessel.FluidVesselBlock;
-import com.simibubi.create.content.decoration.steamWhistle.WhistleBlock;
+import com.zurrtum.create.content.decoration.steamWhistle.WhistleBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;

@@ -1,6 +1,6 @@
 package com.hlysine.create_connected.content.contraption.menu;
 
-import com.simibubi.create.content.contraptions.AbstractContraptionEntity;
+import com.zurrtum.create.content.contraptions.AbstractContraptionEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.level.Level;

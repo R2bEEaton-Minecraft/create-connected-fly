@@ -1,8 +1,8 @@
 package com.hlysine.create_connected.content.contraption.noteblock;
 
-import com.simibubi.create.content.contraptions.AbstractContraptionEntity;
-import com.simibubi.create.content.contraptions.Contraption;
-import com.simibubi.create.content.contraptions.behaviour.SimpleBlockMovingInteraction;
+import com.zurrtum.create.content.contraptions.AbstractContraptionEntity;
+import com.zurrtum.create.content.contraptions.Contraption;
+import com.zurrtum.create.content.contraptions.behaviour.SimpleBlockMovingInteraction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.entity.player.Player;
@@ -10,11 +10,14 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.common.CommonHooks;
 
 import static net.minecraft.world.level.block.NoteBlock.INSTRUMENT;
 import static net.minecraft.world.level.block.state.properties.BlockStateProperties.NOTE;
 
+// NeoForge's CommonHooks.onNoteChange (a NeoForge-only event hook letting other mods
+// veto/modify note-block pitch changes) has no Fabric equivalent - simplified to the direct
+// vanilla cycle behavior. Only loses other-mod interception of this specific interaction, not
+// this mod's own note-cycling functionality.
 public class NoteBlockInteractionBehaviour extends SimpleBlockMovingInteraction {
 
     @Override
@@ -23,14 +26,7 @@ public class NoteBlockInteractionBehaviour extends SimpleBlockMovingInteraction 
         Level contraptionWorld = contraption.getContraptionWorld();
         Level realWorld = player.level();
         BlockPos realPos = BlockPos.containing(contraptionEntity.toGlobalVector(Vec3.atCenterOf(contraptionPos), 1));
-        int _new = CommonHooks.onNoteChange(contraptionWorld,
-                contraptionPos,
-                currentState,
-                currentState.getValue(NOTE),
-                currentState.cycle(NOTE).getValue(NOTE)
-        );
-        if (_new == -1) return currentState;
-        currentState = currentState.setValue(NOTE, _new);
+        currentState = currentState.cycle(NOTE);
 
         if (currentState.getValue(INSTRUMENT).worksAboveNoteBlock() || contraptionWorld.getBlockState(contraptionPos.above()).isAir()) {
             currentState.triggerEvent(realWorld, realPos, 0, 0);

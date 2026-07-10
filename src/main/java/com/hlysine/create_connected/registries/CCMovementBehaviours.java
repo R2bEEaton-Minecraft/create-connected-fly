@@ -2,7 +2,7 @@ package com.hlysine.create_connected.registries;
 
 import com.hlysine.create_connected.content.contraption.jukebox.JukeboxMovementBehaviour;
 import com.hlysine.create_connected.content.contraption.noteblock.NoteBlockMovementBehaviour;
-import com.simibubi.create.api.behaviour.movement.MovementBehaviour;
+import com.zurrtum.create.api.behaviour.movement.MovementBehaviour;
 import net.minecraft.world.level.block.Blocks;
 
 public class CCMovementBehaviours {

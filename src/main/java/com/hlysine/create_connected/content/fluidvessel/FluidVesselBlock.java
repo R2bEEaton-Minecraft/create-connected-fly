@@ -2,16 +2,16 @@ package com.hlysine.create_connected.content.fluidvessel;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.ConnectedLang;
-import com.simibubi.create.api.connectivity.ConnectivityHandler;
-import com.simibubi.create.content.equipment.wrench.IWrenchable;
-import com.simibubi.create.content.fluids.tank.CreativeFluidTankBlockEntity;
-import com.simibubi.create.content.fluids.transfer.GenericItemEmptying;
-import com.simibubi.create.content.fluids.transfer.GenericItemFilling;
-import com.simibubi.create.foundation.advancement.AdvancementBehaviour;
-import com.simibubi.create.foundation.block.IBE;
-import com.simibubi.create.foundation.blockEntity.ComparatorUtil;
-import com.simibubi.create.foundation.fluid.FluidHelper;
-import com.simibubi.create.foundation.fluid.FluidHelper.FluidExchange;
+import com.zurrtum.create.api.connectivity.ConnectivityHandler;
+import com.zurrtum.create.content.equipment.wrench.IWrenchable;
+import com.zurrtum.create.content.fluids.tank.CreativeFluidTankBlockEntity;
+import com.zurrtum.create.content.fluids.transfer.GenericItemEmptying;
+import com.zurrtum.create.content.fluids.transfer.GenericItemFilling;
+import com.zurrtum.create.foundation.advancement.AdvancementBehaviour;
+import com.zurrtum.create.foundation.block.IBE;
+import com.zurrtum.create.foundation.blockEntity.ComparatorUtil;
+import com.zurrtum.create.foundation.fluid.FluidHelper;
+import com.zurrtum.create.foundation.fluid.FluidHelper.FluidExchange;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -24,7 +24,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -166,22 +165,22 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
     }
 
     @Override
-    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+    protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
         boolean onClient = level.isClientSide;
 
         if (stack.isEmpty())
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         if (!player.isCreative() && !creative)
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
 
         FluidExchange exchange = null;
         FluidVesselBlockEntity be = ConnectivityHandler.partAt(getBlockEntityType(), level, pos);
         if (be == null)
-            return ItemInteractionResult.FAIL;
+            return InteractionResult.FAIL;
 
         IFluidHandler vesselCapability = level.getCapability(Capabilities.FluidHandler.BLOCK, be.getBlockPos(), null);
         if (vesselCapability == null)
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         FluidStack prevFluidInVessel = vesselCapability.getFluidInTank(0)
                 .copy();
 
@@ -193,8 +192,8 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
         if (exchange == null) {
             if (GenericItemEmptying.canItemBeEmptied(level, stack)
                     || GenericItemFilling.canItemBeFilled(level, stack))
-                return ItemInteractionResult.SUCCESS;
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+                return InteractionResult.SUCCESS;
+            return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
 
         SoundEvent soundevent = null;
@@ -258,7 +257,7 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
                                 .scale(1 / 20f);
                         vec = vec.add(motion);
                         level.addParticle(blockParticleData, vec.x, vec.y, vec.z, motion.x, motion.y, motion.z);
-                        return ItemInteractionResult.SUCCESS;
+                        return InteractionResult.SUCCESS;
                     }
 
                     controllerBE.sendDataImmediately();
@@ -267,7 +266,7 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
             }
         }
 
-        return ItemInteractionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 
     @Override
@@ -288,7 +287,7 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
 
     @Override
     public BlockEntityType<? extends FluidVesselBlockEntity> getBlockEntityType() {
-        return creative ? CCBlockEntityTypes.CREATIVE_FLUID_VESSEL.get() : CCBlockEntityTypes.FLUID_VESSEL.get();
+        return creative ? CCBlockEntityTypes.CREATIVE_FLUID_VESSEL : CCBlockEntityTypes.FLUID_VESSEL;
     }
 
     @Override

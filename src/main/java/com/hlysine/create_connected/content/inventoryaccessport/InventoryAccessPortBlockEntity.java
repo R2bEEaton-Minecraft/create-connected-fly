@@ -2,12 +2,12 @@ package com.hlysine.create_connected.content.inventoryaccessport;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.CreateConnected;
-import com.simibubi.create.content.redstone.DirectedDirectionalBlock;
-import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
-import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
-import com.simibubi.create.foundation.blockEntity.behaviour.inventory.CapManipulationBehaviourBase;
-import com.simibubi.create.foundation.blockEntity.behaviour.inventory.InvManipulationBehaviour;
-import net.createmod.catnip.math.BlockFace;
+import com.zurrtum.create.content.redstone.DirectedDirectionalBlock;
+import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
+import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
+import com.zurrtum.create.foundation.blockEntity.behaviour.inventory.CapManipulationBehaviourBase;
+import com.zurrtum.create.foundation.blockEntity.behaviour.inventory.InvManipulationBehaviour;
+import com.zurrtum.create.catnip.math.BlockFace;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -50,7 +50,7 @@ public class InventoryAccessPortBlockEntity extends SmartBlockEntity {
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
         event.registerBlockEntity(
                 Capabilities.ItemHandler.BLOCK,
-                CCBlockEntityTypes.INVENTORY_ACCESS_PORT.get(),
+                CCBlockEntityTypes.INVENTORY_ACCESS_PORT,
                 (be, context) -> {
                     if (be.itemCapability == null)
                         be.refreshCapability();

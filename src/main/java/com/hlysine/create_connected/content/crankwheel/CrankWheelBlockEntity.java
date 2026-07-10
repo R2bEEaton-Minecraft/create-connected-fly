@@ -1,23 +1,29 @@
 package com.hlysine.create_connected.content.crankwheel;
 
-import com.hlysine.create_connected.registries.CCPartialModels;
-import com.simibubi.create.AllSoundEvents;
-import com.simibubi.create.content.kinetics.base.IRotate;
-import com.simibubi.create.content.kinetics.crank.HandCrankBlock;
-import com.simibubi.create.content.kinetics.crank.HandCrankBlockEntity;
-import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel;
-import net.createmod.catnip.animation.AnimationTickHolder;
-import net.createmod.catnip.render.CachedBuffers;
-import net.createmod.catnip.render.SuperByteBuffer;
+import com.zurrtum.create.content.kinetics.base.IRotate;
+import com.zurrtum.create.content.kinetics.crank.HandCrankBlockEntity;
+import com.zurrtum.create.content.kinetics.simpleRelays.ICogWheel;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.List;
 
+// CORRECTION: getRenderedHandle()/tickAudio() overrides used to live here (client-only
+// AnimationTickHolder/CachedBuffers/SuperByteBuffer types), on the mistaken assumption that
+// @OnlyIn(Dist.CLIENT)-marked methods with client-only imports were safe in a main-sourceset
+// class - wrong under Loom's split source sets (compile-time classpath restriction, not runtime -
+// see PORTING_NOTES.md). Investigated the real Create Fly architecture instead of just hooking
+// around it: HandCrankBlockEntity has NO getRenderedHandle()/tickAudio() methods at all anymore -
+// the "handle" render buffer is computed entirely client-side by
+// com.zurrtum.create.client.content.kinetics.crank.HandCrankRenderer.getRenderedHandle(BlockState)
+// (a renderer method, not a block-entity method), so the correct fix is a client-only
+// CrankWheelRenderer extends HandCrankRenderer override (see src/client/java), not anything
+// here. The cranking sound (tickAudio's AllSoundEvents.CRANKING) has no server-side equivalent
+// method to override anymore either - Create Fly moved kinetic audio to a client-only
+// KineticAudioBehaviour registered via BlockEntityBehaviour.CLIENT_REGISTRY - not yet
+// re-implemented for this block (deferred, not silently dropped: flagged here and in
+// PORTING_NOTES.md).
 public class CrankWheelBlockEntity extends HandCrankBlockEntity {
     public CrankWheelBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -34,26 +40,5 @@ public class CrankWheelBlockEntity extends HandCrankBlockEntity {
                         neighbours.add(worldPosition.offset(offset));
                 });
         return neighbours;
-    }
-
-    @Override
-    @OnlyIn(Dist.CLIENT)
-    public SuperByteBuffer getRenderedHandle() {
-        BlockState blockState = getBlockState();
-        Direction facing = blockState.getOptionalValue(HandCrankBlock.FACING)
-                .orElse(Direction.UP);
-        boolean isLarge = blockState.getBlock() instanceof CrankWheelBlock block && block.largeCog;
-        return CachedBuffers.partialFacing(isLarge ? CCPartialModels.LARGE_CRANK_WHEEL_HANDLE : CCPartialModels.CRANK_WHEEL_HANDLE, blockState, facing.getOpposite());
-    }
-
-    @Override
-    @OnlyIn(Dist.CLIENT)
-    public void tickAudio() {
-        super.tickAudio();
-        if (inUse > 0 && AnimationTickHolder.getTicks() % 10 == 0) {
-            if (!(getBlockState().getBlock() instanceof HandCrankBlock))
-                return;
-            AllSoundEvents.CRANKING.playAt(level, worldPosition, (inUse) / 2.5f, .65f + (10 - inUse) / 10f, true);
-        }
     }
 }

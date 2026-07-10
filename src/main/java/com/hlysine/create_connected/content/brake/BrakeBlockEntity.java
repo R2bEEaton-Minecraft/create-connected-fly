@@ -4,8 +4,8 @@ import com.hlysine.create_connected.registries.CCBlocks;
 import com.hlysine.create_connected.config.CCConfigs;
 import com.hlysine.create_connected.datagen.advancements.AdvancementBehaviour;
 import com.hlysine.create_connected.datagen.advancements.CCAdvancements;
-import com.simibubi.create.content.kinetics.transmission.SplitShaftBlockEntity;
-import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.zurrtum.create.content.kinetics.transmission.SplitShaftBlockEntity;
+import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -54,7 +54,7 @@ public class BrakeBlockEntity extends SplitShaftBlockEntity {
         if (tickTimer-- < 0) {
             tickTimer = TICK_INTERVAL;
 
-            DoubleSupplier stressSupplier = CCConfigs.server().stressValues.getImpact(CCBlocks.BRAKE.get());
+            DoubleSupplier stressSupplier = CCConfigs.server().stressValues.getImpact(CCBlocks.BRAKE);
             double unpoweredStress = stressSupplier == null ? 0 : stressSupplier.getAsDouble();
             double poweredStress = CCConfigs.server().brakeActiveStress.get();
             boolean isBraking = getBlockState().getValue(POWERED) == (poweredStress >= unpoweredStress);

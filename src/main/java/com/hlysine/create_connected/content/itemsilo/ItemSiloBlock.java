@@ -2,11 +2,11 @@ package com.hlysine.create_connected.content.itemsilo;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCBlocks;
-import com.simibubi.create.api.connectivity.ConnectivityHandler;
-import com.simibubi.create.content.equipment.wrench.IWrenchable;
-import com.simibubi.create.content.logistics.vault.ItemVaultBlock;
-import com.simibubi.create.foundation.block.IBE;
-import com.simibubi.create.foundation.item.ItemHelper;
+import com.zurrtum.create.api.connectivity.ConnectivityHandler;
+import com.zurrtum.create.content.equipment.wrench.IWrenchable;
+import com.zurrtum.create.content.logistics.vault.ItemVaultBlock;
+import com.zurrtum.create.foundation.block.IBE;
+import com.zurrtum.create.foundation.item.ItemHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvents;
@@ -103,7 +103,7 @@ public class ItemSiloBlock extends Block implements IWrenchable, IBE<ItemSiloBlo
 
     @Override
     public BlockEntityType<? extends ItemSiloBlockEntity> getBlockEntityType() {
-        return CCBlockEntityTypes.ITEM_SILO.get();
+        return CCBlockEntityTypes.ITEM_SILO;
     }
 
     @Override

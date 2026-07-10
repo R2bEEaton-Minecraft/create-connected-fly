@@ -1,9 +1,9 @@
 package com.hlysine.create_connected.config;
 
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.common.ModConfigSpec;
-import org.jetbrains.annotations.NotNull;
+import com.google.gson.JsonObject;
+import com.zurrtum.create.catnip.config.Builder;
+import com.zurrtum.create.catnip.config.ConfigValue;
+import net.minecraft.resources.Identifier;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,58 +11,46 @@ import java.util.Map;
 public class CFeatures extends SyncConfigBase {
 
     @Override
-    public @NotNull String getName() {
+    public String getName() {
         return "features";
     }
 
-    final Map<ResourceLocation, ModConfigSpec.ConfigValue<Boolean>> toggles = new HashMap<>();
+    final Map<Identifier, ConfigValue<Boolean>> toggles = new HashMap<>();
 
-    Map<ResourceLocation, Boolean> synchronizedToggles;
+    Map<Identifier, Boolean> synchronizedToggles;
 
     @Override
-    public void registerAll(ModConfigSpec.Builder builder) {
-        FeatureToggle.TOGGLEABLE_FEATURES.forEach((r) -> toggles.put(r, builder.define(r.getPath(), true)));
+    public void registerAll(Builder builder) {
+        FeatureToggle.TOGGLEABLE_FEATURES.forEach((r) -> toggles.put(r, builder.define(r.toString(), true)));
     }
 
-    public boolean hasToggle(ResourceLocation key) {
+    public boolean hasToggle(Identifier key) {
         return (synchronizedToggles != null && synchronizedToggles.containsKey(key)) || toggles.containsKey(key);
     }
 
-    public boolean isEnabled(ResourceLocation key) {
+    public boolean isEnabled(Identifier key) {
         if (this.synchronizedToggles != null) {
             Boolean synced = synchronizedToggles.get(key);
             if (synced != null) return synced;
         }
-        ModConfigSpec.ConfigValue<Boolean> value = toggles.get(key);
+        ConfigValue<Boolean> value = toggles.get(key);
         if (value != null)
             return value.get();
         return true;
     }
 
     @Override
-    public void onLoad() {
-        super.onLoad();
-        FeatureToggle.refreshItemVisibility();
-    }
-
-    @Override
-    public void onReload() {
-        super.onReload();
-        FeatureToggle.refreshItemVisibility();
-    }
-
-    @Override
-    protected void readSyncConfig(CompoundTag nbt) {
+    protected void readSyncConfig(JsonObject json) {
         synchronizedToggles = new HashMap<>();
-        for (String key : nbt.getAllKeys()) {
-            ResourceLocation location = ResourceLocation.parse(key);
-            synchronizedToggles.put(location, nbt.getBoolean(key));
+        for (String key : json.keySet()) {
+            Identifier location = Identifier.parse(key);
+            synchronizedToggles.put(location, json.get(key).getAsBoolean());
         }
         FeatureToggle.refreshItemVisibility();
     }
 
     @Override
-    protected void writeSyncConfig(CompoundTag nbt) {
-        toggles.forEach((key, value) -> nbt.putBoolean(key.toString(), value.get()));
+    protected void writeSyncConfig(JsonObject json) {
+        toggles.forEach((key, value) -> json.addProperty(key.toString(), value.get()));
     }
 }

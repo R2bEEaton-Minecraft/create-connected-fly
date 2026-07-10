@@ -1,0 +1,15 @@
+accessWidener v2 named
+
+# Original META-INF/accesstransformer.cfg (NeoForge-only, no Fabric equivalent) had 6 entries;
+# access wideners are Loom's real replacement (Create Fly itself ships create.accesswidener in
+# its jar, confirming this mechanism works against this exact dependency). Field descriptors for
+# ButtonBlock are standard/stable across recent MC versions; JukeboxBlockEntity's inner
+# SongPlayer class name/descriptor below is a best-effort guess pending empirical verification -
+# Loom will raise a clear error at build time if it's wrong (wrong descriptor = widener fails to
+# apply), which is a fast, unambiguous fix once caught by a real build attempt.
+accessible field net/minecraft/world/level/block/ButtonBlock type Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+accessible field net/minecraft/world/level/block/ButtonBlock ticksToStayPressed I
+accessible field net/minecraft/world/level/block/entity/JukeboxBlockEntity jukeboxSongPlayer Lnet/minecraft/world/level/block/entity/JukeboxBlockEntity$SongPlayer;
+accessible method net/minecraft/data/recipes/RecipeProvider getName ()Ljava/lang/String;
+accessible method net/minecraft/client/renderer/LevelRenderer notifyNearbyEntities (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Z)V
+accessible method net/minecraft/world/item/crafting/Ingredient <init> (Ljava/util/stream/Stream;)V

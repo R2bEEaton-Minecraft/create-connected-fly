@@ -1,6 +1,6 @@
 package com.hlysine.create_connected.content.invertedgearshift;
 
-import com.simibubi.create.content.kinetics.transmission.GearshiftBlockEntity;
+import com.zurrtum.create.content.kinetics.transmission.GearshiftBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.entity.BlockEntityType;

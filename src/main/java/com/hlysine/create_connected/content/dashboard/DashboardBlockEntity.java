@@ -1,12 +1,10 @@
 package com.hlysine.create_connected.content.dashboard;
 
-import com.hlysine.create_connected.ConnectedLang;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
-import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
-import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
-import net.createmod.catnip.annotations.ClientOnly;
-import net.createmod.catnip.data.Iterate;
+import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
+import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
+import com.zurrtum.create.catnip.data.Iterate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -119,7 +117,6 @@ public class DashboardBlockEntity extends SmartBlockEntity {
         return list;
     }
 
-    @ClientOnly
     private boolean displayStatus() {
         BlockPos seatPos = getSeatPos();
         if (seatPos == null)
@@ -144,9 +141,8 @@ public class DashboardBlockEntity extends SmartBlockEntity {
     }
 
     static void displayOpenStatus(Player player, boolean open) {
-        ConnectedLang
-                .translate(open ? "dashboard.activate_hud" : "dashboard.deactivate_hud")
-                .sendStatus(player);
+        player.displayClientMessage(Component.translatable("create_connected."
+                + (open ? "dashboard.activate_hud" : "dashboard.deactivate_hud")), true);
     }
 
     @Override

@@ -2,10 +2,10 @@ package com.hlysine.create_connected.content.itemsilo;
 
 import com.hlysine.create_connected.registries.CCMountedStorageTypes;
 import com.mojang.serialization.MapCodec;
-import com.simibubi.create.api.contraption.storage.item.MountedItemStorageType;
-import com.simibubi.create.api.contraption.storage.item.WrapperMountedItemStorage;
-import com.simibubi.create.content.contraptions.Contraption;
-import com.simibubi.create.foundation.codec.CreateCodecs;
+import com.zurrtum.create.api.contraption.storage.item.MountedItemStorageType;
+import com.zurrtum.create.api.contraption.storage.item.WrapperMountedItemStorage;
+import com.zurrtum.create.content.contraptions.Contraption;
+import com.zurrtum.create.foundation.codec.CreateCodecs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -27,7 +27,7 @@ public class ItemSiloMountedStorage extends WrapperMountedItemStorage<ItemStackH
     }
 
     protected ItemSiloMountedStorage(ItemStackHandler handler) {
-        this(CCMountedStorageTypes.SILO.get(), handler);
+        this(CCMountedStorageTypes.SILO, handler);
     }
 
     @Override

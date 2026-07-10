@@ -1,16 +1,11 @@
 package com.hlysine.create_connected.registries;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import com.hlysine.create_connected.CreateConnected;
 import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
 import net.minecraft.core.Vec3i;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.data.CachedOutput;
-import net.minecraft.data.DataGenerator;
-import net.minecraft.data.DataProvider;
-import net.minecraft.data.PackOutput;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -18,21 +13,16 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.registries.DeferredHolder;
-import net.neoforged.neoforge.registries.RegisterEvent;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 public class CCSoundEvents {
 
-    public static final Map<ResourceLocation, SoundEntry> ALL = new HashMap<>();
+    public static final Map<Identifier, SoundEntry> ALL = new HashMap<>();
 
     public static final SoundEntry ELEVATOR_MUSIC = create("elevator_music").noSubtitle()
             .category(SoundSource.RECORDS)
@@ -48,30 +38,13 @@ public class CCSoundEvents {
         return create(CreateConnected.asResource(name));
     }
 
-    public static SoundEntryBuilder create(ResourceLocation id) {
+    public static SoundEntryBuilder create(Identifier id) {
         return new SoundEntryBuilder(id);
     }
 
-    public static void prepare() {
+    public static void register() {
         for (SoundEntry entry : ALL.values())
-            entry.prepare();
-    }
-
-    public static void register(RegisterEvent event) {
-        event.register(Registries.SOUND_EVENT, helper -> {
-            for (SoundEntry entry : ALL.values())
-                entry.register(helper);
-        });
-    }
-
-    public static void provideLang(BiConsumer<String, String> consumer) {
-        for (SoundEntry entry : ALL.values())
-            if (entry.hasSubtitle())
-                consumer.accept(entry.getSubtitleKey(), entry.getSubtitle());
-    }
-
-    public static SoundEntryProvider provider(DataGenerator generator) {
-        return new SoundEntryProvider(generator);
+            entry.register();
     }
 
     public static void playItemPickup(Player player) {
@@ -82,7 +55,7 @@ public class CCSoundEvents {
 
 //	@SubscribeEvent
 //	public static void cancelSubtitlesOfCompoundedSounds(PlaySoundEvent event) {
-//		ResourceLocation soundLocation = event.getSound().getSoundLocation();
+//		Identifier soundLocation = event.getSound().getSoundLocation();
 //		if (!soundLocation.getNamespace().equals(CreateConnected.ID))
 //			return;
 //		if (soundLocation.getPath().contains("_compounded_")
@@ -90,52 +63,19 @@ public class CCSoundEvents {
 //
 //	}
 
-    public static class SoundEntryProvider implements DataProvider {
-
-        private PackOutput output;
-
-        public SoundEntryProvider(DataGenerator generator) {
-            output = generator.getPackOutput();
-        }
-
-        @Override
-        public CompletableFuture<?> run(CachedOutput cache) {
-            return generate(output.getOutputFolder(), cache);
-        }
-
-        @Override
-        public String getName() {
-            return "Create Connected's Custom Sounds";
-        }
-
-        public CompletableFuture<?> generate(Path path, CachedOutput cache) {
-            path = path.resolve("assets/create_connected");
-            JsonObject json = new JsonObject();
-            ALL.entrySet()
-                    .stream()
-                    .sorted(Map.Entry.comparingByKey())
-                    .forEach(entry -> {
-                        entry.getValue()
-                                .write(json);
-                    });
-            return DataProvider.saveStable(cache, json, path.resolve("sounds.json"));
-        }
-
-    }
-
     public record ConfiguredSoundEvent(Supplier<SoundEvent> event, float volume, float pitch) {
     }
 
     public static class SoundEntryBuilder {
 
-        protected ResourceLocation id;
+        protected Identifier id;
         protected String subtitle = "unregistered";
         protected SoundSource category = SoundSource.BLOCKS;
         protected List<ConfiguredSoundEvent> wrappedEvents;
-        protected List<ResourceLocation> variants;
+        protected List<Identifier> variants;
         protected int attenuationDistance;
 
-        public SoundEntryBuilder(ResourceLocation id) {
+        public SoundEntryBuilder(Identifier id) {
             wrappedEvents = new ArrayList<>();
             variants = new ArrayList<>();
             this.id = id;
@@ -165,7 +105,7 @@ public class CCSoundEvents {
             return addVariant(CreateConnected.asResource(name));
         }
 
-        public SoundEntryBuilder addVariant(ResourceLocation id) {
+        public SoundEntryBuilder addVariant(Identifier id) {
             variants.add(id);
             return this;
         }
@@ -199,23 +139,19 @@ public class CCSoundEvents {
 
     public static abstract class SoundEntry {
 
-        protected ResourceLocation id;
+        protected Identifier id;
         protected String subtitle;
         protected SoundSource category;
         protected int attenuationDistance;
 
-        public SoundEntry(ResourceLocation id, String subtitle, SoundSource category, int attenuationDistance) {
+        public SoundEntry(Identifier id, String subtitle, SoundSource category, int attenuationDistance) {
             this.id = id;
             this.subtitle = subtitle;
             this.category = category;
             this.attenuationDistance = attenuationDistance;
         }
 
-        public abstract void prepare();
-
-        public abstract void register(RegisterEvent.RegisterHelper<SoundEvent> registry);
-
-        public abstract void write(JsonObject json);
+        public abstract void register();
 
         public abstract Holder<SoundEvent> getMainEventHolder();
 
@@ -225,7 +161,7 @@ public class CCSoundEvents {
             return id.getNamespace() + ".subtitle." + id.getPath();
         }
 
-        public ResourceLocation getId() {
+        public Identifier getId() {
             return id;
         }
 
@@ -285,7 +221,7 @@ public class CCSoundEvents {
         private List<ConfiguredSoundEvent> wrappedEvents;
         private List<CompiledSoundEvent> compiledEvents;
 
-        public WrappedSoundEntry(ResourceLocation id, String subtitle,
+        public WrappedSoundEntry(Identifier id, String subtitle,
                                  List<ConfiguredSoundEvent> wrappedEvents, SoundSource category, int attenuationDistance) {
             super(id, subtitle, category, attenuationDistance);
             this.wrappedEvents = wrappedEvents;
@@ -293,20 +229,13 @@ public class CCSoundEvents {
         }
 
         @Override
-        public void prepare() {
+        public void register() {
             for (int i = 0; i < wrappedEvents.size(); i++) {
                 ConfiguredSoundEvent wrapped = wrappedEvents.get(i);
-                ResourceLocation location = getIdOf(i);
-                DeferredHolder<SoundEvent, SoundEvent> event = DeferredHolder.create(Registries.SOUND_EVENT, location);
+                Identifier location = getIdOf(i);
+                Holder.Reference<SoundEvent> event = Registry.registerForHolder(BuiltInRegistries.SOUND_EVENT, location,
+                        SoundEvent.createVariableRangeEvent(location));
                 compiledEvents.add(new CompiledSoundEvent(event, wrapped.volume(), wrapped.pitch()));
-            }
-        }
-
-        @Override
-        public void register(RegisterEvent.RegisterHelper<SoundEvent> helper) {
-            for (CompiledSoundEvent compiledEvent : compiledEvents) {
-                ResourceLocation location = compiledEvent.event().getId();
-                helper.register(location, SoundEvent.createVariableRangeEvent(location));
             }
         }
 
@@ -317,39 +246,17 @@ public class CCSoundEvents {
 
         @Override
         public SoundEvent getMainEvent() {
-            return compiledEvents.getFirst().event().get();
+            return compiledEvents.getFirst().event().value();
         }
 
-        protected ResourceLocation getIdOf(int i) {
-            return ResourceLocation.fromNamespaceAndPath(id.getNamespace(), i == 0 ? id.getPath() : id.getPath() + "_compounded_" + i);
-        }
-
-        @Override
-        public void write(JsonObject json) {
-            for (int i = 0; i < wrappedEvents.size(); i++) {
-                ConfiguredSoundEvent event = wrappedEvents.get(i);
-                JsonObject entry = new JsonObject();
-                JsonArray list = new JsonArray();
-                JsonObject s = new JsonObject();
-                s.addProperty("name", event.event()
-                        .get()
-                        .getLocation()
-                        .toString());
-                s.addProperty("type", "event");
-                if (attenuationDistance != 0)
-                    s.addProperty("attenuation_distance", attenuationDistance);
-                list.add(s);
-                entry.add("sounds", list);
-                if (i == 0 && hasSubtitle())
-                    entry.addProperty("subtitle", getSubtitleKey());
-                json.add(getIdOf(i).getPath(), entry);
-            }
+        protected Identifier getIdOf(int i) {
+            return Identifier.fromNamespaceAndPath(id.getNamespace(), i == 0 ? id.getPath() : id.getPath() + "_compounded_" + i);
         }
 
         @Override
         public void play(Level world, Player entity, double x, double y, double z, float volume, float pitch) {
             for (WrappedSoundEntry.CompiledSoundEvent event : compiledEvents) {
-                world.playSound(entity, x, y, z, event.event().get(), category, event.volume() * volume,
+                world.playSound(entity, x, y, z, event.event().value(), category, event.volume() * volume,
                         event.pitch() * pitch);
             }
         }
@@ -362,82 +269,45 @@ public class CCSoundEvents {
             }
         }
 
-        private record CompiledSoundEvent(DeferredHolder<SoundEvent, SoundEvent> event, float volume, float pitch) {
+        private record CompiledSoundEvent(Holder.Reference<SoundEvent> event, float volume, float pitch) {
         }
 
     }
 
     private static class CustomSoundEntry extends SoundEntry {
 
-        protected List<ResourceLocation> variants;
-        protected DeferredHolder<SoundEvent, SoundEvent> event;
-        protected Holder<SoundEvent> directEvent;
+        protected List<Identifier> variants;
+        protected Holder.Reference<SoundEvent> event;
 
-        public CustomSoundEntry(ResourceLocation id, List<ResourceLocation> variants, String subtitle,
+        public CustomSoundEntry(Identifier id, List<Identifier> variants, String subtitle,
                                 SoundSource category, int attenuationDistance) {
             super(id, subtitle, category, attenuationDistance);
             this.variants = variants;
         }
 
         @Override
-        public void prepare() {
-            event = DeferredHolder.create(Registries.SOUND_EVENT, id);
-        }
-
-        @Override
-        public void register(RegisterEvent.RegisterHelper<SoundEvent> helper) {
-            ResourceLocation location = event.getId();
-            helper.register(location, SoundEvent.createVariableRangeEvent(location));
+        public void register() {
+            event = Registry.registerForHolder(BuiltInRegistries.SOUND_EVENT, id, SoundEvent.createVariableRangeEvent(id));
         }
 
         @Override
         public Holder<SoundEvent> getMainEventHolder() {
-            if (directEvent == null) {
-                directEvent = Holder.direct(getMainEvent());
-            }
-            return directEvent;
+            return event;
         }
 
         @Override
         public SoundEvent getMainEvent() {
-            return event.get();
-        }
-
-        @Override
-        public void write(JsonObject json) {
-            JsonObject entry = new JsonObject();
-            JsonArray list = new JsonArray();
-
-            JsonObject s = new JsonObject();
-            s.addProperty("name", id.toString());
-            s.addProperty("type", "file");
-            if (attenuationDistance != 0)
-                s.addProperty("attenuation_distance", attenuationDistance);
-            list.add(s);
-
-            for (ResourceLocation variant : variants) {
-                s = new JsonObject();
-                s.addProperty("name", variant.toString());
-                s.addProperty("type", "file");
-                if (attenuationDistance != 0)
-                    s.addProperty("attenuation_distance", attenuationDistance);
-                list.add(s);
-            }
-
-            entry.add("sounds", list);
-            if (hasSubtitle())
-                entry.addProperty("subtitle", getSubtitleKey());
-            json.add(id.getPath(), entry);
+            return event.value();
         }
 
         @Override
         public void play(Level world, Player entity, double x, double y, double z, float volume, float pitch) {
-            world.playSound(entity, x, y, z, event.get(), category, volume, pitch);
+            world.playSound(entity, x, y, z, event.value(), category, volume, pitch);
         }
 
         @Override
         public void playAt(Level world, double x, double y, double z, float volume, float pitch, boolean fade) {
-            world.playLocalSound(x, y, z, event.get(), category, volume, pitch, fade);
+            world.playLocalSound(x, y, z, event.value(), category, volume, pitch, fade);
         }
 
     }

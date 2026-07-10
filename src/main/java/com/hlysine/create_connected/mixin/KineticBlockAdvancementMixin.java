@@ -1,7 +1,7 @@
 package com.hlysine.create_connected.mixin;
 
 import com.hlysine.create_connected.datagen.advancements.AdvancementBehaviour;
-import com.simibubi.create.content.kinetics.base.KineticBlock;
+import com.zurrtum.create.content.kinetics.base.KineticBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;

@@ -2,8 +2,6 @@
   "required": true,
   "package": "com.hlysine.create_connected.mixin",
   "compatibilityLevel": "JAVA_21",
-  "minVersion": "0.8",
-  "refmap": "create_connected.refmap.json",
   "plugin": "com.hlysine.create_connected.mixin.MixinPlugin",
   "mixins": [
     "ItemUseOverridesMixin",
@@ -22,7 +20,6 @@
     "copycat.TrackPlacementMixin",
     "copycat.fence.COMPATFenceBlockMixin",
     "copycat.fence.FenceBlockMixin",
-    "copycat.fence.ValueBoxRendererMixin",
     "copycat.fencegate.BlockCanSurviveMixin",
     "copycat.fencegate.COMPATPathNodeDefaultsMixin",
     "copycat.fencegate.FenceGateBlockAccessor",
@@ -46,22 +43,21 @@
     "kineticbattery.KineticNetworkAccessor",
     "linkedtransmitter.AnalogLeverBlockEntityAccessor",
     "linkedtransmitter.AnalogLeverBlockMixin",
-    "linkedtransmitter.ThrottleLeverBlockMixin",
     "nestedschematics.FilesHelperMixin",
     "nestedschematics.SchematicExportMixin",
     "nestedschematics.ServerSchematicLoaderMixin",
     "redstonelinkwildcard.RedstoneLinkNetworkHandlerMixin",
-    "sequencedgearshift.AbstractSimiScreenAccessor",
     "sequencedgearshift.InstructionAccessor",
     "sequencedgearshift.InstructionMixin",
     "sequencedgearshift.InstructionSpeedModifiersAccessor",
-    "sequencedgearshift.SequencedGearshiftBlockEntityMixin",
-    "sequencedgearshift.SequencerInstructionsMixin"
+    "sequencedgearshift.SequencedGearshiftBlockEntityMixin"
   ],
   "client": [
-    "featuretoggle.SubMenuConfigScreenMixin",
+    "copycat.fence.ValueBoxRendererMixin",
     "nestedschematics.ClientSchematicLoaderMixin",
-    "sequencedgearshift.SequencedGearshiftScreenMixin"
+    "sequencedgearshift.AbstractSimiScreenAccessor",
+    "sequencedgearshift.SequencedGearshiftScreenMixin",
+    "sequencedgearshift.SequencerInstructionsMixin"
   ],
   "injectors": {
     "defaultRequire": 1

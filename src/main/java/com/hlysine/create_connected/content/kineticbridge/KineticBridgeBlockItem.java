@@ -1,21 +1,24 @@
 package com.hlysine.create_connected.content.kineticbridge;
 
-import com.hlysine.create_connected.ConnectedLang;
-import net.createmod.catnip.data.Pair;
-import net.createmod.catnip.outliner.Outliner;
-import net.createmod.catnip.platform.CatnipServices;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.phys.AABB;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
+import java.util.function.Consumer;
+
+// CORRECTION: an earlier version of this file kept showBounds() here directly, reasoning that
+// "guarded by isClientSide(), so its client-only imports (Outliner/LocalPlayer) are never
+// resolved on a dedicated server" was safe. That reasoning was WRONG - Loom's
+// splitEnvironmentSourceSets() filters the *compile-time* classpath per source set, so importing
+// a client-only class from a main-sourceset file is a compile error regardless of any runtime
+// guard around its use; "guarded" only helps for classes that exist on both sides. The real fix
+// is this hook: showBounds' implementation now lives in
+// src/client/java/.../content/kineticbridge/KineticBridgeBlockItemClient.java, which
+// CreateConnectedClient.onInitializeClient() wires into this field.
 public class KineticBridgeBlockItem extends BlockItem {
+    public static Consumer<BlockPlaceContext> showBoundsHook = ctx -> {
+    };
 
     public KineticBridgeBlockItem(Block block, Properties properties) {
         super(block, properties);
@@ -25,22 +28,7 @@ public class KineticBridgeBlockItem extends BlockItem {
     public InteractionResult place(BlockPlaceContext ctx) {
         InteractionResult result = super.place(ctx);
         if (result == InteractionResult.FAIL && ctx.getLevel().isClientSide())
-            CatnipServices.PLATFORM.executeOnClientOnly(() -> () -> showBounds(ctx));
+            showBoundsHook.accept(ctx);
         return result;
     }
-
-    @OnlyIn(Dist.CLIENT)
-    public void showBounds(BlockPlaceContext context) {
-        BlockPos pos = context.getClickedPos();
-        Direction facing = ((KineticBridgeBlock) getBlock()).getDirectionForPlacement(context);
-        if (!(context.getPlayer() instanceof LocalPlayer localPlayer))
-            return;
-        Outliner.getInstance().showAABB(Pair.of("kinetic_bridge", pos), new AABB(pos).expandTowards(facing.getNormal().getX(), facing.getNormal().getY(), facing.getNormal().getZ()))
-                .colored(0xFF_ff5d6c);
-        ConnectedLang.translate("kinetic_bridge.not_enough_space")
-                .color(0xFF_ff5d6c)
-                .sendStatus(localPlayer);
-    }
-
 }
-

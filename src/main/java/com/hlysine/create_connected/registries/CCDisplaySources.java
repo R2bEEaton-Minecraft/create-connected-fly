@@ -2,21 +2,20 @@ package com.hlysine.create_connected.registries;
 
 import com.hlysine.create_connected.CreateConnected;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryDisplaySource;
-import com.simibubi.create.api.behaviour.display.DisplaySource;
-import com.simibubi.create.content.redstone.displayLink.source.BoilerDisplaySource;
-import com.simibubi.create.foundation.data.CreateRegistrate;
-import com.tterrag.registrate.util.entry.RegistryEntry;
-
-import java.util.function.Supplier;
+import com.zurrtum.create.api.behaviour.display.DisplaySource;
+import com.zurrtum.create.api.registry.CreateRegistries;
+import com.zurrtum.create.api.registry.CreateRegistryKeys;
+import com.zurrtum.create.content.redstone.displayLink.source.BoilerDisplaySource;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
 
 public class CCDisplaySources {
-    private static final CreateRegistrate REGISTRATE = CreateConnected.getRegistrate();
+    public static final BoilerDisplaySource BOILER_STATUS = register("boiler_status", new BoilerDisplaySource());
+    public static final KineticBatteryDisplaySource KINETIC_BATTERY = register("kinetic_battery", new KineticBatteryDisplaySource());
 
-    public static final RegistryEntry<DisplaySource, BoilerDisplaySource> BOILER_STATUS = simple("boiler_status", BoilerDisplaySource::new);
-    public static final RegistryEntry<DisplaySource, KineticBatteryDisplaySource> KINETIC_BATTERY = simple("kinetic_battery", KineticBatteryDisplaySource::new);
-
-    private static <T extends DisplaySource> RegistryEntry<DisplaySource, T> simple(String name, Supplier<T> supplier) {
-        return REGISTRATE.displaySource(name, supplier).register();
+    private static <T extends DisplaySource> T register(String id, T source) {
+        return Registry.register(CreateRegistries.DISPLAY_SOURCE,
+                ResourceKey.create(CreateRegistryKeys.DISPLAY_SOURCE, CreateConnected.asResource(id)), source);
     }
 
     public static void register() {

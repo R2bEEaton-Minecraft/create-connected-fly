@@ -1,10 +1,10 @@
 package com.hlysine.create_connected.mixin.sequencedgearshift;
 
 import com.hlysine.create_connected.registries.CCSequencerInstructions;
-import com.simibubi.create.content.kinetics.transmission.sequencer.Instruction;
-import com.simibubi.create.content.kinetics.transmission.sequencer.InstructionSpeedModifiers;
-import com.simibubi.create.content.kinetics.transmission.sequencer.OnIsPoweredResult;
-import com.simibubi.create.content.kinetics.transmission.sequencer.SequencerInstructions;
+import com.zurrtum.create.content.kinetics.transmission.sequencer.Instruction;
+import com.zurrtum.create.content.kinetics.transmission.sequencer.InstructionSpeedModifiers;
+import com.zurrtum.create.content.kinetics.transmission.sequencer.OnIsPoweredResult;
+import com.zurrtum.create.content.kinetics.transmission.sequencer.SequencerInstructions;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;

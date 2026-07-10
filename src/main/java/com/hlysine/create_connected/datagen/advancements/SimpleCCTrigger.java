@@ -5,18 +5,14 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
-import javax.annotation.ParametersAreNonnullByDefault;
 
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.advancements.critereon.ContextAwarePredicate;
 import net.minecraft.advancements.critereon.EntityPredicate;
 import net.minecraft.server.level.ServerPlayer;
 
-@MethodsReturnNonnullByDefault
-@ParametersAreNonnullByDefault
 public class SimpleCCTrigger extends CriterionTriggerBase<SimpleCCTrigger.Instance> {
 
     public SimpleCCTrigger(String id) {

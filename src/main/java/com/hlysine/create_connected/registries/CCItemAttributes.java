@@ -4,9 +4,11 @@ import com.hlysine.create_connected.CreateConnected;
 import com.hlysine.create_connected.content.attributefilter.ItemDamageAttribute;
 import com.hlysine.create_connected.content.attributefilter.ItemIdAttribute;
 import com.hlysine.create_connected.content.attributefilter.ItemStackCountAttribute;
-import com.simibubi.create.api.registry.CreateBuiltInRegistries;
-import com.simibubi.create.content.logistics.item.filter.attribute.ItemAttributeType;
+import com.zurrtum.create.api.registry.CreateRegistries;
+import com.zurrtum.create.api.registry.CreateRegistryKeys;
+import com.zurrtum.create.content.logistics.item.filter.attribute.ItemAttributeType;
 import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
 
 public class CCItemAttributes {
 
@@ -18,6 +20,7 @@ public class CCItemAttributes {
     }
 
     private static ItemAttributeType register(String id, ItemAttributeType type) {
-        return Registry.register(CreateBuiltInRegistries.ITEM_ATTRIBUTE_TYPE, CreateConnected.asResource(id), type);
+        return Registry.register(CreateRegistries.ITEM_ATTRIBUTE_TYPE,
+                ResourceKey.create(CreateRegistryKeys.ITEM_ATTRIBUTE_TYPE, CreateConnected.asResource(id)), type);
     }
 }

@@ -2,7 +2,7 @@ package com.hlysine.create_connected.content.sequencedpulsegenerator;
 
 import com.hlysine.create_connected.registries.CCPackets;
 import com.hlysine.create_connected.content.sequencedpulsegenerator.instructions.Instruction;
-import com.simibubi.create.foundation.networking.BlockEntityConfigurationPacket;
+import com.zurrtum.create.foundation.networking.BlockEntityConfigurationPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;

@@ -1,8 +1,7 @@
 package com.hlysine.create_connected.content.fancatalyst;
 
-import com.simibubi.create.content.equipment.wrench.IWrenchable;
-import com.simibubi.create.foundation.block.IBE;
-import com.tterrag.registrate.util.entry.BlockEntityEntry;
+import com.zurrtum.create.content.equipment.wrench.IWrenchable;
+import com.zurrtum.create.foundation.block.IBE;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -11,9 +10,9 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class FanCatalystRotatingHeadBlock extends Block implements IBE<FanCatalystRotatingHeadBlockEntity>, IWrenchable {
-    private final BlockEntityEntry<? extends FanCatalystRotatingHeadBlockEntity> blockEntityType;
+    private final BlockEntityType<? extends FanCatalystRotatingHeadBlockEntity> blockEntityType;
 
-    public FanCatalystRotatingHeadBlock(Properties properties, BlockEntityEntry<? extends FanCatalystRotatingHeadBlockEntity> blockEntityType) {
+    public FanCatalystRotatingHeadBlock(Properties properties, BlockEntityType<? extends FanCatalystRotatingHeadBlockEntity> blockEntityType) {
         super(properties);
         this.blockEntityType = blockEntityType;
     }
@@ -30,6 +29,6 @@ public class FanCatalystRotatingHeadBlock extends Block implements IBE<FanCataly
 
     @Override
     public BlockEntityType<? extends FanCatalystRotatingHeadBlockEntity> getBlockEntityType() {
-        return blockEntityType.get();
+        return blockEntityType;
     }
 }

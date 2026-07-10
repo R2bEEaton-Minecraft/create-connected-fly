@@ -1,8 +1,8 @@
 package com.hlysine.create_connected.mixin.fluidvessel;
 
 import com.hlysine.create_connected.content.fluidvessel.FluidVesselBlockEntity;
-import com.simibubi.create.content.fluids.tank.FluidTankBlockEntity;
-import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
+import com.zurrtum.create.content.fluids.tank.FluidTankBlockEntity;
+import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
