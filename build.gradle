@@ -1,0 +1,78 @@
+plugins {
+    id 'fabric-loom' version '1.8-SNAPSHOT'
+    id 'maven-publish'
+}
+
+version = project.mod_version
+group   = project.mod_group_id
+
+base {
+    archivesName = project.mod_id
+}
+
+repositories {
+    maven { url = 'https://maven.fabricmc.net/' }
+    // Parchment mappings
+    maven {
+        name = 'ParchmentMC'
+        url  = 'https://maven.parchmentmc.org'
+    }
+    // Create Fabric + porting-lib
+    maven { url = 'https://mvn.devos.one/snapshots/' }
+    maven { url = 'https://mvn.devos.one/releases/'  }
+    // Registrate (Fabric flavour)
+    maven { url = 'https://maven.tterrag.com/' }
+    // Modrinth Maven (fallback for Create Fabric if needed)
+    maven {
+        name = 'Modrinth'
+        url  = 'https://api.modrinth.com/maven'
+        content { includeGroup 'maven.modrinth' }
+    }
+    mavenCentral()
+}
+
+dependencies {
+    // Minecraft + mappings
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings loom.layered() {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${project.parchment_minecraft_version}:${project.parchment_version}@zip")
+    }
+
+    // Fabric loader + API
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+    // Create Fabric
+    // TODO: Verify exact group:artifact on https://modrinth.com/mod/create-fabric
+    //       and replace the placeholder version below.
+    modImplementation "com.simibubi.create:create-fabric-${project.minecraft_version}:${project.create_version}"
+}
+
+processResources {
+    inputs.property "version",                project.version
+    inputs.property "minecraft_version_range", project.minecraft_version_range
+    inputs.property "loader_version",          project.loader_version
+    inputs.property "fabric_api_version",      project.fabric_api_version
+    inputs.property "create_version_range",    project.create_version_range
+
+    filesMatching("fabric.mod.json") {
+        expand project.properties
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 21
+}
+
+java {
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+jar {
+    from("LICENSE") {
+        rename { "${it}_${project.mod_id}" }
+    }
+}

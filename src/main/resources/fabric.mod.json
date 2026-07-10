@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "${mod_id}",
+  "version": "${version}",
+  "name": "${mod_name}",
+  "description": "${mod_description}",
+  "authors": ["${mod_authors}"],
+  "contact": {
+    "homepage": "https://github.com/hlysine/create_connected",
+    "sources": "https://github.com/hlysine/create_connected",
+    "issues": "https://github.com/hlysine/create_connected/issues"
+  },
+  "license": "AGPL-3.0",
+  "icon": "create_connected_icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.hlysine.create_connected.CreateConnected"
+    ],
+    "client": [
+      "com.hlysine.create_connected.CreateConnectedClient"
+    ]
+  },
+  "mixins": [
+    "create_connected.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "${minecraft_version_range}",
+    "fabric-api": "*",
+    "create": "${create_version_range}"
+  },
+  "suggests": {
+    "flamingo": "*"
+  }
+}
