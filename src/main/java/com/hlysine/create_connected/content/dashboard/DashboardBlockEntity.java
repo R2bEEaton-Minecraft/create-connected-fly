@@ -1,16 +1,12 @@
 package com.hlysine.create_connected.content.dashboard;
 
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.DynamicOps;
 import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
 import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
 import com.zurrtum.create.catnip.data.Iterate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.Tag;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.player.Player;
@@ -39,7 +35,7 @@ public class DashboardBlockEntity extends SmartBlockEntity {
     }
 
     @Override
-    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+    public void addBehaviours(List<BlockEntityBehaviour<?>> behaviours) {
     }
 
     public SignText getText() {
@@ -165,20 +161,14 @@ public class DashboardBlockEntity extends SmartBlockEntity {
     }
 
     @Override
-    public void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        super.write(tag, registries, clientPacket);
-        DynamicOps<Tag> ops = registries.createSerializationContext(NbtOps.INSTANCE);
-        DataResult<Tag> result = SignText.DIRECT_CODEC.encodeStart(ops, this.text);
-        result.result().ifPresent((tagResult) -> tag.put("text", tagResult));
+    public void write(ValueOutput view, boolean clientPacket) {
+        super.write(view, clientPacket);
+        view.store("text", SignText.DIRECT_CODEC, this.text);
     }
 
     @Override
-    protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        super.read(tag, registries, clientPacket);
-        DynamicOps<Tag> ops = registries.createSerializationContext(NbtOps.INSTANCE);
-        if (tag.contains("text")) {
-            DataResult<SignText> result = SignText.DIRECT_CODEC.parse(ops, tag.getCompound("text"));
-            result.result().ifPresent((signText) -> this.text = signText);
-        }
+    protected void read(ValueInput view, boolean clientPacket) {
+        super.read(view, clientPacket);
+        view.read("text", SignText.DIRECT_CODEC).ifPresent(signText -> this.text = signText);
     }
 }

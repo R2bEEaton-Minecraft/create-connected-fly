@@ -4,8 +4,8 @@ import com.zurrtum.create.content.redstone.link.ServerLinkBehaviour;
 import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
 import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -29,7 +29,7 @@ public class LinkedTransmitterBlockEntity extends SmartBlockEntity {
     }
 
     @Override
-    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+    public void addBehaviours(List<BlockEntityBehaviour<?>> behaviours) {
         createLink();
         behaviours.add(link);
     }
@@ -55,15 +55,15 @@ public class LinkedTransmitterBlockEntity extends SmartBlockEntity {
     }
 
     @Override
-    protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
+    protected void write(ValueOutput tag, boolean clientPacket) {
         tag.putInt("Transmit", transmittedSignal);
-        super.write(tag, registries, clientPacket);
+        super.write(tag, clientPacket);
     }
 
     @Override
-    protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        super.read(tag, registries, clientPacket);
-        if (level == null || level.isClientSide || !link.newPosition)
-            transmittedSignal = tag.getInt("Transmit");
+    protected void read(ValueInput tag, boolean clientPacket) {
+        super.read(tag, clientPacket);
+        if (level == null || level.isClientSide() || !link.newPosition)
+            transmittedSignal = tag.getIntOr("Transmit", 0);
     }
 }

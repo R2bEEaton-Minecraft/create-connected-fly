@@ -166,7 +166,7 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
 
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
-        boolean onClient = level.isClientSide;
+        boolean onClient = level.isClientSide();
 
         if (stack.isEmpty())
             return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;

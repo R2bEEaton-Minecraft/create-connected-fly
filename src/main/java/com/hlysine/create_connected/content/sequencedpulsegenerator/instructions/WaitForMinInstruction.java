@@ -1,6 +1,5 @@
 package com.hlysine.create_connected.content.sequencedpulsegenerator.instructions;
 
-import com.hlysine.create_connected.registries.CCGuiTextures;
 import com.hlysine.create_connected.content.sequencedpulsegenerator.SequencedPulseGeneratorBlockEntity;
 import net.minecraft.nbt.CompoundTag;
 
@@ -9,7 +8,7 @@ public class WaitForMinInstruction extends Instruction {
     public WaitForMinInstruction(int target, int signal) {
         super(
                 "wait_for_min",
-                CCGuiTextures.SEQUENCER_INSTRUCTION,
+                "SEQUENCER_INSTRUCTION",
                 new ParameterConfig(
                         0,
                         15,

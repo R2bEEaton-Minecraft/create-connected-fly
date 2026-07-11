@@ -3,8 +3,8 @@ package com.hlysine.create_connected.content.kineticbridge;
 import com.hlysine.create_connected.content.KineticHelper;
 import com.zurrtum.create.content.kinetics.base.GeneratingKineticBlockEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -75,14 +75,14 @@ public class KineticBridgeDestinationBlockEntity extends GeneratingKineticBlockE
     }
 
     @Override
-    protected void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
-        super.write(compound, registries, clientPacket);
+    protected void write(ValueOutput compound, boolean clientPacket) {
+        super.write(compound, clientPacket);
         compound.putBoolean("UpdateKineticNextTick", updateKineticsNextTick);
     }
 
     @Override
-    protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
-        super.read(compound, registries, clientPacket);
-        updateKineticsNextTick = compound.getBoolean("UpdateKineticNextTick");
+    protected void read(ValueInput compound, boolean clientPacket) {
+        super.read(compound, clientPacket);
+        updateKineticsNextTick = compound.getBooleanOr("UpdateKineticNextTick", false);
     }
 }

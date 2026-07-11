@@ -11,7 +11,7 @@ import com.zurrtum.create.catnip.data.Iterate;
 import com.zurrtum.create.catnip.platform.NeoForgeCatnipServices;
 import com.zurrtum.create.client.catnip.render.CachedBuffers;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;

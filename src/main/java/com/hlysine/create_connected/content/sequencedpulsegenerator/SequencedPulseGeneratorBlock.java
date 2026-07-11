@@ -8,9 +8,6 @@ import com.zurrtum.create.content.redstone.diodes.AbstractDiodeBlock;
 import com.zurrtum.create.content.redstone.diodes.BrassDiodeBlock;
 import com.zurrtum.create.content.redstone.diodes.PoweredLatchBlock;
 import com.zurrtum.create.foundation.block.IBE;
-import com.zurrtum.create.client.catnip.gui.ScreenOpener;
-import com.zurrtum.create.catnip.platform.CatnipServices;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -31,9 +28,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.BiConsumer;
 
 public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock implements IBE<SequencedPulseGeneratorBlockEntity> {
     public static final BooleanProperty POWERING = BrassDiodeBlock.POWERING;
@@ -148,8 +145,7 @@ public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock implements 
             return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
 
-        CatnipServices.PLATFORM.executeOnClientOnly(
-                () -> () -> withBlockEntityDo(level, pos, be -> this.displayScreen(be, player)));
+        withBlockEntityDo(level, pos, be -> displayScreenHook.accept(be, player));
         return InteractionResult.SUCCESS;
     }
 
@@ -159,16 +155,18 @@ public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock implements 
                                                      @NotNull BlockPos pos,
                                                      @NotNull Player player,
                                                      @NotNull BlockHitResult hit) {
-        CatnipServices.PLATFORM.executeOnClientOnly(
-                () -> () -> withBlockEntityDo(worldIn, pos, be -> this.displayScreen(be, player)));
+        withBlockEntityDo(worldIn, pos, be -> displayScreenHook.accept(be, player));
         return InteractionResult.SUCCESS;
     }
 
-    @OnlyIn(value = Dist.CLIENT)
-    protected void displayScreen(SequencedPulseGeneratorBlockEntity be, Player player) {
-        if (player instanceof LocalPlayer)
-            ScreenOpener.open(new SequencedPulseGeneratorScreen(be));
-    }
+    // Real screen-opening body (ScreenOpener/SequencedPulseGeneratorScreen, both client-only) lives
+    // in the client-only SequencedPulseGeneratorBlockClient, populated from
+    // CreateConnectedClient.onInitializeClient() - same hook-extraction pattern as
+    // KineticBridgeBlockItem/OverstressClutchBlockEntity (see PORTING_NOTES.md). The old
+    // CatnipServices.PLATFORM.executeOnClientOnly(...) guard doesn't exist in Create Fly anymore
+    // and wouldn't have helped anyway - Loom's split source sets are a compile-time restriction,
+    // not a runtime one, so a runtime-only guard can't make a client-only reference safe here.
+    public static BiConsumer<SequencedPulseGeneratorBlockEntity, Player> displayScreenHook = (be, player) -> {};
 
     @Override
     public Class<SequencedPulseGeneratorBlockEntity> getBlockEntityClass() {

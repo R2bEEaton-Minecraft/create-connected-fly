@@ -106,7 +106,7 @@ public class OverstressClutchBlock extends AbstractEncasedShaftBlock implements 
             return;
         }
         if (kte.delay <= 0) {
-            if (!pLevel.isClientSide) {
+            if (!pLevel.isClientSide()) {
                 pLevel.setBlockAndUpdate(pPos, pState.setValue(STATE, ClutchState.UNCOUPLED));
                 RotationPropagator.handleRemoved(pLevel, pPos, kte);
                 RotationPropagator.handleAdded(pLevel, pPos, kte);

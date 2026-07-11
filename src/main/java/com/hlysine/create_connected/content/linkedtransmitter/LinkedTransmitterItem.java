@@ -31,7 +31,7 @@ public class LinkedTransmitterItem extends Item {
         if (player.mayBuild()) {
             for (LinkedTransmitterBlock moduleBlock : MODULE_BLOCKS) {
                 if (hitState.is(moduleBlock.getBase())) {
-                    if (!world.isClientSide) {
+                    if (!world.isClientSide()) {
                         if (!player.isCreative()) stack.shrink(1);
                         moduleBlock.replaceBase(hitState, world, pos);
                     }

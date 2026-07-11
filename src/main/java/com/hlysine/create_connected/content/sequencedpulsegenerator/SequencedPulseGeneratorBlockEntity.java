@@ -6,15 +6,15 @@ import com.hlysine.create_connected.datagen.advancements.CCAdvancements;
 import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
 import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
@@ -62,7 +62,7 @@ public class SequencedPulseGeneratorBlockEntity extends SmartBlockEntity {
     }
 
     @Override
-    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+    public void addBehaviours(List<BlockEntityBehaviour<?>> behaviours) {
         AdvancementBehaviour.registerAwardables(this, behaviours, CCAdvancements.PULSE_GEN_INFINITE_LOOP);
     }
 
@@ -142,7 +142,7 @@ public class SequencedPulseGeneratorBlockEntity extends SmartBlockEntity {
 
         if (isIdle())
             return;
-        if (level.isClientSide)
+        if (level.isClientSide())
             return;
 
         executeInstruction(true, 0);
@@ -182,24 +182,34 @@ public class SequencedPulseGeneratorBlockEntity extends SmartBlockEntity {
         notifyUpdate();
     }
 
+    // MC 1.21.11 replaced BlockEntity's CompoundTag-based write/read with a Codec-based
+    // ValueOutput/ValueInput view (see PORTING_NOTES.md "ValueInput/ValueOutput" section - this
+    // affects every BlockEntity that overrides write/read, a mod-wide change, not specific to this
+    // class). Instruction.serializeAll/deserializeAll still work in terms of a plain ListTag (their
+    // own API is unaffected and still used by the client Screen/network packet), so this method
+    // just bridges that ListTag to/from a ValueOutput/ValueInput typed list of CompoundTag via
+    // CompoundTag.CODEC.
     @Override
-    protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        tag.putInt("InstructionIndex", currentInstruction);
-        tag.putInt("PrevInput", previousInput);
-        tag.putInt("CurrentInput", currentInput);
-        tag.putInt("CurrentSignal", currentSignal);
-        tag.put("Instructions", Instruction.serializeAll(instructions));
-        super.write(tag, registries, clientPacket);
+    protected void write(ValueOutput view, boolean clientPacket) {
+        view.putInt("InstructionIndex", currentInstruction);
+        view.putInt("PrevInput", previousInput);
+        view.putInt("CurrentInput", currentInput);
+        view.putInt("CurrentSignal", currentSignal);
+        ValueOutput.TypedOutputList<CompoundTag> list = view.list("Instructions", CompoundTag.CODEC);
+        for (net.minecraft.nbt.Tag t : Instruction.serializeAll(instructions))
+            list.add((CompoundTag) t);
+        super.write(view, clientPacket);
     }
 
     @Override
-    protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        currentInstruction = tag.getInt("InstructionIndex");
-        previousInput = tag.getInt("PrevInput");
-        currentInput = tag.getInt("CurrentInput");
-        currentSignal = tag.getInt("CurrentSignal");
-        ListTag list = tag.getList("Instructions", Tag.TAG_COMPOUND);
+    protected void read(ValueInput view, boolean clientPacket) {
+        currentInstruction = view.getIntOr("InstructionIndex", 0);
+        previousInput = view.getIntOr("PrevInput", 0);
+        currentInput = view.getIntOr("CurrentInput", 0);
+        currentSignal = view.getIntOr("CurrentSignal", 0);
+        ListTag list = new ListTag();
+        view.listOrEmpty("Instructions", CompoundTag.CODEC).forEach(list::add);
         instructions = Instruction.deserializeAll(list);
-        super.read(tag, registries, clientPacket);
+        super.read(view, clientPacket);
     }
 }

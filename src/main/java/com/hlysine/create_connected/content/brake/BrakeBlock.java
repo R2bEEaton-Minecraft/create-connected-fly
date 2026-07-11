@@ -52,7 +52,7 @@ public class BrakeBlock extends AbstractEncasedShaftBlock implements IBE<BrakeBl
             @NotNull Block blockIn,
             @NotNull BlockPos fromPos,
             boolean isMoving) {
-        if (worldIn.isClientSide)
+        if (worldIn.isClientSide())
             return;
 
         boolean previouslyPowered = state.getValue(POWERED);

@@ -63,7 +63,7 @@ public class ShearPinBlock extends AbstractBEShaftBlock<ShearPinBlockEntity> {
         if (!kte.isOverStressed())
             return;
 
-        if (!pLevel.isClientSide) {
+        if (!pLevel.isClientSide()) {
             pLevel.destroyBlock(pPos, false);
             Vec3 center = pPos.getCenter();
             pLevel.sendParticles(ParticleTypes.LARGE_SMOKE, center.x, center.y, center.z, 5, 0.1, 0.1, 0.1, 0.05);

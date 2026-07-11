@@ -5,7 +5,7 @@ import com.zurrtum.create.api.connectivity.ConnectivityHandler;
 import com.zurrtum.create.client.infrastructure.model.CTModel;
 import com.zurrtum.create.client.foundation.block.connected.CTSpriteShiftEntry;
 import com.zurrtum.create.catnip.data.Iterate;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;

@@ -79,7 +79,7 @@ public class BrakeBlockEntity extends SplitShaftBlockEntity {
     }
 
     @Override
-    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+    public void addBehaviours(List<BlockEntityBehaviour<?>> behaviours) {
         super.addBehaviours(behaviours);
         AdvancementBehaviour.registerAwardables(this, behaviours, CCAdvancements.OVERPOWERED_BRAKE);
     }

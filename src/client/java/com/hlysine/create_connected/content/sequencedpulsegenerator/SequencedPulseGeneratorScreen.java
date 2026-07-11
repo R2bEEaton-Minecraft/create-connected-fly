@@ -147,7 +147,7 @@ public class SequencedPulseGeneratorScreen extends AbstractSimiScreen {
             }
 
             Instruction instruction = instructions.get(row);
-            instruction.getBackground().render(graphics, x, y + 16 + yOffset);
+            CCGuiTextures.valueOf((String) instruction.getBackground()).render(graphics, x, y + 16 + yOffset);
 
             label(graphics, 36, yOffset - 1, ConnectedLang.translateDirect(instruction.getLangKey()));
             if (instruction.paramConfig != null) {

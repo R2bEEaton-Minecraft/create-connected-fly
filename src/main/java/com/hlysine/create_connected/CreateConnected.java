@@ -4,6 +4,7 @@ import com.hlysine.create_connected.compat.AdditionalPlacementsCompat;
 import com.hlysine.create_connected.compat.CopycatsManager;
 import com.hlysine.create_connected.compat.Mods;
 import com.hlysine.create_connected.config.CCConfigs;
+import com.hlysine.create_connected.content.redstonelinkwildcard.LinkWildcardNetworkHandler;
 import com.hlysine.create_connected.registries.CCArmInteractionPointTypes;
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCBlocks;
@@ -51,6 +52,7 @@ public class CreateConnected implements ModInitializer {
         CCSoundEvents.register();
 
         CCConfigs.register();
+        LinkWildcardNetworkHandler.register();
 
         if (Mods.COPYCATS.isLoaded())
             CopycatsManager.registerTickListener();

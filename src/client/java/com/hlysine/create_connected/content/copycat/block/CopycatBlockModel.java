@@ -1,8 +1,7 @@
 package com.hlysine.create_connected.content.copycat.block;
 
 import com.zurrtum.create.client.infrastructure.model.CopycatModel;
-import com.zurrtum.create.foundation.model.BakedQuadHelper;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
@@ -25,12 +24,10 @@ public class CopycatBlockModel extends CopycatModel {
         BakedModel model = getModelOf(material);
         List<BakedQuad> templateQuads = model.getQuads(material, side, rand, wrappedData, renderType);
 
-        List<BakedQuad> quads = new ArrayList<>();
-
-        for (BakedQuad quad : templateQuads) {
-            quads.add(BakedQuadHelper.clone(quad));
-        }
-
-        return quads;
+        // BakedQuad is an immutable record in this MC version (verified via the real Create Fly
+        // sources - see BakedModelHelper.cropAndMove's record-accessor usage), so the defensive
+        // clone() the old NeoForge BakedQuadHelper did (a mutable int[] vertex array under the
+        // hood back then) has no equivalent need anymore - reusing the same quad instances is safe.
+        return new ArrayList<>(templateQuads);
     }
 }

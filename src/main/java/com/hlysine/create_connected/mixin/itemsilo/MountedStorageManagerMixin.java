@@ -29,9 +29,9 @@ public abstract class MountedStorageManagerMixin {
             )
     )
     private void readLegacy(HolderLookup.Provider registries, CompoundTag nbt, CallbackInfo ci) {
-        NBTHelper.iterateCompoundList(nbt.getList("Storage", Tag.TAG_COMPOUND), tag -> {
+        NBTHelper.iterateCompoundList(nbt.getListOrEmpty("Storage"), tag -> {
             BlockPos pos = NBTHelper.readBlockPos(tag, "Pos");
-            CompoundTag data = tag.getCompound("Data");
+            CompoundTag data = tag.getCompoundOrEmpty("Data");
 
             if (data.contains("NoFuel")) {
                 addStorage(ItemSiloMountedStorage.fromLegacy(registries, data), pos);

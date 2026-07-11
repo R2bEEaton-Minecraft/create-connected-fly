@@ -1,7 +1,6 @@
 package com.hlysine.create_connected.content.copycat;
 
 import com.zurrtum.create.client.foundation.model.BakedModelHelper;
-import com.zurrtum.create.foundation.model.BakedQuadHelper;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.AABB;
@@ -30,8 +29,8 @@ public interface ISimpleCopycatModel {
             if (cull.isCulled(quad.getDirection())) {
                 continue;
             }
-            destQuads.add(BakedQuadHelper.cloneWithCustomGeometry(quad,
-                    BakedModelHelper.cropAndMove(quad.getVertices(), quad.getSprite(), select.toAABB(), offset.toVec3().subtract(select.minX / 16f, select.minY / 16f, select.minZ / 16f))));
+            destQuads.add(BakedModelHelper.cropAndMove(quad, select.toAABB(),
+                    offset.toVec3().subtract(select.minX / 16f, select.minY / 16f, select.minZ / 16f)));
         }
     }
 

@@ -99,7 +99,7 @@ public abstract class ContraptionMixin {
 
             if (parts.size() == 1) {
                 StructureTemplate.StructureBlockInfo part = parts.iterator().next();
-                if (part.nbt().contains("Length") && part.nbt().getInt("Length") > 1) {
+                if (part.nbt().contains("Length") && part.nbt().getIntOr("Length", 0) > 1) {
                     part.nbt().putInt("Length", 1);
                     part.nbt().putInt("Size", 1);
                     toBeReplaced.add(new AbstractMap.SimpleEntry<>(blockPos, new StructureTemplate.StructureBlockInfo(part.pos(), part.state().setValue(ItemSiloBlock.LARGE, false), part.nbt())));

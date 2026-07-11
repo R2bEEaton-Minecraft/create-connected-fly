@@ -1,6 +1,5 @@
 package com.hlysine.create_connected.content.sequencedpulsegenerator.instructions;
 
-import com.hlysine.create_connected.registries.CCGuiTextures;
 import com.hlysine.create_connected.content.sequencedpulsegenerator.SequencedPulseGeneratorBlockEntity;
 import net.minecraft.nbt.CompoundTag;
 
@@ -9,7 +8,7 @@ public class WaitForMaxInstruction extends Instruction {
     public WaitForMaxInstruction(int target, int signal) {
         super(
                 "wait_for_max",
-                CCGuiTextures.SEQUENCER_INSTRUCTION,
+                "SEQUENCER_INSTRUCTION",
                 new ParameterConfig(
                         0,
                         15,

@@ -1,7 +1,5 @@
 package com.hlysine.create_connected.content.fluidvessel;
 
-import com.zurrtum.create.content.fluids.tank.CreativeFluidTankBlockEntity;
-import com.zurrtum.create.foundation.fluid.SmartFluidTank;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -16,8 +14,8 @@ public class CreativeFluidVesselBlockEntity extends FluidVesselBlockEntity {
     }
 
     @Override
-    protected SmartFluidTank createInventory() {
-        return new CreativeFluidTankBlockEntity.CreativeSmartFluidTank(getCapacityMultiplier(), this::onFluidStackChanged);
+    protected CreativeFluidVesselTank createInventory() {
+        return new CreativeFluidVesselTank(getCapacityMultiplier(), this::onFluidStackChanged);
     }
 
     @Override
