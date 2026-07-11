@@ -9,14 +9,15 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition.Builder;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.pathfinder.PathComputationType;
+import net.minecraft.util.RandomSource;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractBEShaftBlock<T extends KineticBlockEntity> extends RotatedPillarKineticBlock
@@ -54,12 +55,14 @@ public abstract class AbstractBEShaftBlock<T extends KineticBlockEntity> extends
 
     @Override
     public @NotNull BlockState updateShape(@NotNull BlockState state,
-                                           @NotNull Direction direction,
-                                           @NotNull BlockState neighbourState,
-                                           @NotNull LevelAccessor world,
+                                           @NotNull LevelReader level,
+                                           @NotNull ScheduledTickAccess scheduledTickAccess,
                                            @NotNull BlockPos pos,
-                                           @NotNull BlockPos neighbourPos) {
-        updateWater(world, state, pos);
+                                           @NotNull Direction direction,
+                                           @NotNull BlockPos neighbourPos,
+                                           @NotNull BlockState neighbourState,
+                                           @NotNull RandomSource random) {
+        updateWater(level, scheduledTickAccess, state, pos);
         return state;
     }
 

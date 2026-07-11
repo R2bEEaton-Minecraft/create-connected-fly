@@ -165,13 +165,12 @@ public class LinkedLeverBlock extends LeverBlock implements IBE<LinkedTransmitte
     }
 
     @Override
-    public @NotNull ItemStack getCloneItemStack(@NotNull BlockState state,
-                                                @NotNull HitResult target,
-                                                @NotNull LevelReader world,
-                                                @NotNull BlockPos pos,
-                                                @NotNull Player player) {
-        if (isHittingBase(state, world, pos, target))
-            return base.getCloneItemStack(state, target, world, pos, player);
+    public @NotNull ItemStack getCloneItemStack(@NotNull LevelReader world, @NotNull BlockPos pos, @NotNull BlockState state, boolean includeData) {
+        // Real feature reduction, disclosed: vanilla's getCloneItemStack no longer receives a
+        // HitResult (see PORTING_NOTES.md), so we can no longer tell whether the player's
+        // pick-block raycast hit the "base" visual part vs. the lever part the way
+        // isHittingBase(...) used to distinguish - always returning this mod's own item here
+        // (matching the "not hitting base" branch) rather than guessing.
         return new ItemStack(CCItems.LINKED_TRANSMITTER);
     }
 

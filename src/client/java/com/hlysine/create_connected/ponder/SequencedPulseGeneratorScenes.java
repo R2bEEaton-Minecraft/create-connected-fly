@@ -2,12 +2,12 @@ package com.hlysine.create_connected.ponder;
 
 import com.hlysine.create_connected.content.sequencedpulsegenerator.SequencedPulseGeneratorBlock;
 import com.zurrtum.create.content.redstone.nixieTube.NixieTubeBlockEntity;
-import com.zurrtum.create.foundation.ponder.CreateSceneBuilder;
+import com.zurrtum.create.client.foundation.ponder.CreateSceneBuilder;
 import com.zurrtum.create.catnip.math.Pointing;
-import com.zurrtum.create.ponder.api.PonderPalette;
-import com.zurrtum.create.ponder.api.scene.SceneBuilder;
-import com.zurrtum.create.ponder.api.scene.SceneBuildingUtil;
-import com.zurrtum.create.ponder.api.scene.Selection;
+import com.zurrtum.create.client.ponder.api.PonderPalette;
+import com.zurrtum.create.client.ponder.api.scene.SceneBuilder;
+import com.zurrtum.create.client.ponder.api.scene.SceneBuildingUtil;
+import com.zurrtum.create.client.ponder.api.scene.Selection;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.RedStoneWireBlock;

@@ -3,11 +3,11 @@ package com.hlysine.create_connected.registries;
 import com.hlysine.create_connected.CreateConnected;
 import com.hlysine.create_connected.ponder.*;
 import com.zurrtum.create.Create;
-import com.zurrtum.create.infrastructure.ponder.AllCreatePonderTags;
-import com.zurrtum.create.infrastructure.ponder.scenes.ChuteScenes;
+import com.zurrtum.create.client.infrastructure.ponder.AllCreatePonderTags;
+import com.zurrtum.create.client.infrastructure.ponder.scenes.ChuteScenes;
 import com.zurrtum.create.catnip.registry.RegisteredObjectsHelper;
-import com.zurrtum.create.ponder.api.level.PonderLevel;
-import com.zurrtum.create.ponder.api.registration.*;
+import com.zurrtum.create.client.ponder.api.level.PonderLevel;
+import com.zurrtum.create.client.ponder.api.registration.*;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.ItemLike;
 import org.jetbrains.annotations.NotNull;
@@ -73,8 +73,8 @@ public class CCPonderPlugin implements PonderPlugin {
                 .addStoryBoard("inventory_bridge", InventoryBridgeScenes::inventoryBridge, AllCreatePonderTags.LOGISTICS)
                 .addStoryBoard("inventory_bridge_filter", InventoryBridgeScenes::filtering, AllCreatePonderTags.LOGISTICS);
         SCENE_HELPER.forComponents(CCBlocks.BRASS_CHUTE)
-                .addStoryBoard(Create.asResource("chute/downward"), ChuteScenes::downward, AllCreatePonderTags.LOGISTICS)
-                .addStoryBoard(Create.asResource("chute/upward"), ChuteScenes::upward);
+                .addStoryBoard(Identifier.fromNamespaceAndPath(Create.MOD_ID, "chute/downward"), ChuteScenes::downward, AllCreatePonderTags.LOGISTICS)
+                .addStoryBoard(Identifier.fromNamespaceAndPath(Create.MOD_ID, "chute/upward"), ChuteScenes::upward);
         SCENE_HELPER.forComponents(CCBlocks.DASHBOARD)
                 .addStoryBoard("dashboard", DashboardScenes::dashboard, AllCreatePonderTags.DISPLAY_TARGETS);
     }

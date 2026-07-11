@@ -10,8 +10,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
@@ -98,16 +99,16 @@ public class CrankWheelBlock extends HandCrankBlock implements ICogWheel {
     }
 
     @Override
-    public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor level, BlockPos currentPos, BlockPos neighborPos) {
-        BlockState newState = super.updateShape(state, direction, neighborState, level, currentPos, neighborPos);
+    public BlockState updateShape(BlockState state, LevelReader level, ScheduledTickAccess scheduledTickAccess, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, RandomSource random) {
+        BlockState newState = super.updateShape(state, level, scheduledTickAccess, pos, direction, neighborPos, neighborState, random);
         if (newState.getValue(FACING).getAxis() != newState.getValue(AXIS))
             return newState.setValue(AXIS, newState.getValue(FACING).getAxis());
         return newState;
     }
 
     @Override
-    public BlockState rotate(BlockState state, LevelAccessor level, BlockPos pos, Rotation direction) {
-        BlockState newState = super.rotate(state, level, pos, direction);
+    public BlockState rotate(BlockState state, Rotation direction) {
+        BlockState newState = super.rotate(state, direction);
         return newState.setValue(AXIS, newState.getValue(AXIS));
     }
 

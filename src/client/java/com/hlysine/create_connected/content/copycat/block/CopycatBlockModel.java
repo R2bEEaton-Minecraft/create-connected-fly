@@ -1,33 +1,40 @@
 package com.hlysine.create_connected.content.copycat.block;
 
 import com.zurrtum.create.client.infrastructure.model.CopycatModel;
-import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.core.Direction;
+import com.zurrtum.create.content.decoration.copycat.CopycatBlock;
+import net.minecraft.client.renderer.block.model.BlockModelPart;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
+import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.client.model.data.ModelData;
 
-import java.util.ArrayList;
 import java.util.List;
 
+// Rewritten for MC 1.21.11's new "unbaked model parts" pipeline - CopycatModel's real API changed
+// entirely (was a BakedModel-wrapping getQuads/getCroppedQuads(state, side, rand, material,
+// ModelData, RenderType) NeoForge-era shape, is now addPartsWithInfo(..., List<BlockModelPart>)
+// building parts via BlockStateModel.collectParts/BlockModelPart.getQuads(Direction) - see
+// PORTING_NOTES.md "CopycatModel architectural rewrite"). This variant has no shape cropping at
+// all (a full-cube copycat just mirrors whatever the material's own model parts already are), so
+// it delegates straight to the base class's addModelParts() helper - same as how the real
+// CopycatPanelModel handles its "trapdoor material" special case.
 public class CopycatBlockModel extends CopycatModel {
 
-    public CopycatBlockModel(BakedModel originalModel) {
-        super(originalModel);
+    public CopycatBlockModel(BlockState state, BlockStateModel.UnbakedRoot unbaked) {
+        super(state, unbaked);
     }
 
     @Override
-    protected List<BakedQuad> getCroppedQuads(BlockState state, Direction side, RandomSource rand, BlockState material,
-                                              ModelData wrappedData, RenderType renderType) {
-        BakedModel model = getModelOf(material);
-        List<BakedQuad> templateQuads = model.getQuads(material, side, rand, wrappedData, renderType);
-
-        // BakedQuad is an immutable record in this MC version (verified via the real Create Fly
-        // sources - see BakedModelHelper.cropAndMove's record-accessor usage), so the defensive
-        // clone() the old NeoForge BakedQuadHelper did (a mutable int[] vertex array under the
-        // hood back then) has no equivalent need anymore - reusing the same quad instances is safe.
-        return new ArrayList<>(templateQuads);
+    protected void addPartsWithInfo(
+            BlockAndTintGetter world,
+            BlockPos pos,
+            BlockState state,
+            CopycatBlock block,
+            BlockState material,
+            RandomSource random,
+            List<BlockModelPart> parts
+    ) {
+        addModelParts(world, pos, material, random, getModelOf(material), parts);
     }
 }

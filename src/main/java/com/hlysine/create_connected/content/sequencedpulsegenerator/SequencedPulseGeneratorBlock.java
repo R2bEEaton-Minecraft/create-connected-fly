@@ -127,7 +127,7 @@ public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock implements 
     }
 
     @Override
-    public int getAnalogOutputSignal(@NotNull BlockState state, @NotNull Level world, @NotNull BlockPos pos) {
+    public int getAnalogOutputSignal(@NotNull BlockState state, @NotNull Level world, @NotNull BlockPos pos, @NotNull Direction direction) {
         return getBlockEntityOptional(world, pos).map(be -> be.currentInstruction + 1).orElse(0);
     }
 

@@ -3,58 +3,72 @@ package com.hlysine.create_connected.content.copycat.slab;
 import com.zurrtum.create.client.infrastructure.model.CopycatModel;
 import com.zurrtum.create.client.foundation.model.BakedModelHelper;
 import com.zurrtum.create.catnip.data.Iterate;
-import net.minecraft.client.renderer.rendertype.RenderType;
+import com.zurrtum.create.content.decoration.copycat.CopycatBlock;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.block.model.BlockModelPart;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
+import net.minecraft.client.renderer.block.model.SimpleModelWrapper;
+import net.minecraft.client.resources.model.QuadCollection;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import net.neoforged.neoforge.client.model.data.ModelData;
-
-import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
+// Rewritten for MC 1.21.11's new "unbaked model parts" pipeline (see PORTING_NOTES.md
+// "CopycatModel architectural rewrite" and CopycatBlockModel's comment for the general shape).
+// Each old getCroppedQuads(state, side, ...) call for a given "side" (null = unculled, or one of
+// the 6 directions) is now one QuadCollection.Builder bucket, built by querying
+// part.getQuads(direction) for that same direction and applying the exact same crop/skip logic as
+// before per quad.
 public class CopycatSlabModel extends CopycatModel {
 
     protected static final AABB CUBE_AABB = new AABB(BlockPos.ZERO);
 
-    public CopycatSlabModel(BakedModel originalModel) {
-        super(originalModel);
+    public CopycatSlabModel(BlockState state, BlockStateModel.UnbakedRoot unbaked) {
+        super(state, unbaked);
     }
 
     @Override
-    protected List<BakedQuad> getCroppedQuads(BlockState state, Direction side, RandomSource rand, BlockState material,
-                                              ModelData wrappedData, RenderType renderType) {
+    protected void addPartsWithInfo(
+            BlockAndTintGetter world,
+            BlockPos pos,
+            BlockState state,
+            CopycatBlock block,
+            BlockState material,
+            RandomSource random,
+            List<BlockModelPart> parts
+    ) {
         Direction facing = state.getOptionalValue(CopycatSlabBlock.SLAB_TYPE).isPresent() ? CopycatSlabBlock.getApparentDirection(state) : Direction.UP;
-
-        BakedModel model = getModelOf(material);
-        List<BakedQuad> templateQuads = model.getQuads(material, side, rand, wrappedData, renderType);
-
-        List<BakedQuad> quads = new ArrayList<>();
         boolean isDouble = state.getOptionalValue(CopycatSlabBlock.SLAB_TYPE).orElse(SlabType.BOTTOM) == SlabType.DOUBLE;
 
-        // 2 pieces
-        for (boolean front : Iterate.trueAndFalse) {
-            assemblePiece(facing, templateQuads, quads, front, false, isDouble);
-        }
+        for (BlockModelPart part : getMaterialParts(world, pos, material, random, getModelOf(material))) {
+            QuadCollection.Builder builder = new QuadCollection.Builder();
 
-        // 2 more pieces for double slabs
-        if (isDouble) {
-            for (boolean front : Iterate.trueAndFalse) {
-                assemblePiece(facing, templateQuads, quads, front, true, isDouble);
-            }
-        }
+            for (boolean front : Iterate.trueAndFalse)
+                assemblePiece(facing, part, builder, front, false, isDouble);
+            if (isDouble)
+                for (boolean front : Iterate.trueAndFalse)
+                    assemblePiece(facing, part, builder, front, true, isDouble);
 
-        return quads;
+            parts.add(new SimpleModelWrapper(builder.build(), part.useAmbientOcclusion(), part.particleIcon()));
+        }
     }
 
-    private static void assemblePiece(Direction facing, List<BakedQuad> templateQuads, List<BakedQuad> quads, boolean front, boolean topSlab, boolean isDouble) {
-        int size = templateQuads.size();
+    private static void assemblePiece(
+            Direction facing,
+            BlockModelPart part,
+            QuadCollection.Builder builder,
+            boolean front,
+            boolean topSlab,
+            boolean isDouble
+    ) {
         Vec3 normal = Vec3.atLowerCornerOf(facing.getNormal());
         Vec3 normalScaled12 = normal.scale(12 / 16f);
         Vec3 normalScaledN8 = topSlab ? normal.scale((front ? 0 : -8) / 16f) : normal.scale((front ? 8 : 0) / 16f);
@@ -63,9 +77,25 @@ public class CopycatSlabModel extends CopycatModel {
         if (!front)
             bb = bb.move(normalScaled12);
 
-        for (int i = 0; i < size; i++) {
-            BakedQuad quad = templateQuads.get(i);
-            Direction direction = quad.getDirection();
+        processQuads(part.getQuads(null), facing, front, topSlab, isDouble, bb, normalScaledN8, builder::addUnculledFace);
+        for (Direction direction : Iterate.directions) {
+            Direction d = direction;
+            processQuads(part.getQuads(direction), facing, front, topSlab, isDouble, bb, normalScaledN8, quad -> builder.addCulledFace(d, quad));
+        }
+    }
+
+    private static void processQuads(
+            List<BakedQuad> quads,
+            Direction facing,
+            boolean front,
+            boolean topSlab,
+            boolean isDouble,
+            AABB bb,
+            Vec3 move,
+            Consumer<BakedQuad> consumer
+    ) {
+        for (BakedQuad quad : quads) {
+            Direction direction = quad.direction();
 
             if (front && direction == facing)
                 continue;
@@ -76,7 +106,7 @@ public class CopycatSlabModel extends CopycatModel {
             if (isDouble && !topSlab && direction == facing.getOpposite())
                 continue;
 
-            quads.add(BakedModelHelper.cropAndMove(quad, bb, normalScaledN8));
+            consumer.accept(BakedModelHelper.cropAndMove(quad, bb, move));
         }
     }
 }

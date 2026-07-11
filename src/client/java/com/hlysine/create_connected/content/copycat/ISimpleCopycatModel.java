@@ -2,9 +2,13 @@ package com.hlysine.create_connected.content.copycat;
 
 import com.zurrtum.create.client.foundation.model.BakedModelHelper;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.BlockModelPart;
+import net.minecraft.client.resources.model.QuadCollection;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+
+import com.zurrtum.create.catnip.data.Iterate;
 
 import java.util.List;
 
@@ -13,24 +17,34 @@ public interface ISimpleCopycatModel {
     /**
      * Assemble the quads of a piece of copycat material.
      *
-     * @param sourceQuads The source model to copy from.
-     * @param destQuads   The destination model to copy to.
-     * @param angle       Number of degrees to rotate the whole operation for. Only supports multiples of 90.
-     * @param flipY       Whether to flip the whole operation vertically.
-     * @param offset      In voxel space, the final position of the assembled piece.
-     * @param select      In voxel space, the selection on the source model to copy from.
-     * @param cull        Faces to skip rendering in the destination model.
+     * @param part     The source model part to copy from.
+     * @param builder  The destination quad collection builder to copy into.
+     * @param angle    Number of degrees to rotate the whole operation for. Only supports multiples of 90.
+     * @param flipY    Whether to flip the whole operation vertically.
+     * @param offset   In voxel space, the final position of the assembled piece.
+     * @param select   In voxel space, the selection on the source model to copy from.
+     * @param cull     Faces to skip rendering in the destination model.
      */
-    default void assemblePiece(List<BakedQuad> sourceQuads, List<BakedQuad> destQuads, int angle, boolean flipY, MutableVec3 offset, MutableAABB select, MutableCullFace cull) {
+    default void assemblePiece(BlockModelPart part, QuadCollection.Builder builder, int angle, boolean flipY, MutableVec3 offset, MutableAABB select, MutableCullFace cull) {
         select.rotate(angle).flipY(flipY);
         offset.rotate(angle).flipY(flipY);
         cull.rotate(angle).flipY(flipY);
-        for (BakedQuad quad : sourceQuads) {
-            if (cull.isCulled(quad.getDirection())) {
+        Vec3 move = offset.toVec3().subtract(select.minX / 16f, select.minY / 16f, select.minZ / 16f);
+        AABB crop = select.toAABB();
+
+        assemblePieceQuads(part.getQuads(null), cull, crop, move, builder::addUnculledFace);
+        for (Direction direction : Iterate.directions) {
+            Direction d = direction;
+            assemblePieceQuads(part.getQuads(direction), cull, crop, move, quad -> builder.addCulledFace(d, quad));
+        }
+    }
+
+    private void assemblePieceQuads(List<BakedQuad> quads, MutableCullFace cull, AABB crop, Vec3 move, java.util.function.Consumer<BakedQuad> consumer) {
+        for (BakedQuad quad : quads) {
+            if (cull.isCulled(quad.direction())) {
                 continue;
             }
-            destQuads.add(BakedModelHelper.cropAndMove(quad, select.toAABB(),
-                    offset.toVec3().subtract(select.minX / 16f, select.minY / 16f, select.minZ / 16f)));
+            consumer.accept(BakedModelHelper.cropAndMove(quad, crop, move));
         }
     }
 

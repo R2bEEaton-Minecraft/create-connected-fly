@@ -12,11 +12,15 @@ import com.hlysine.create_connected.content.sequencedpulsegenerator.instructions
 import com.hlysine.create_connected.registries.CCBlockEntityRenders;
 import com.hlysine.create_connected.registries.CCBlocks;
 import com.hlysine.create_connected.registries.CCDisplaySources;
+import com.hlysine.create_connected.registries.CCModels;
+import com.hlysine.create_connected.registries.CCPonderPlugin;
+import com.zurrtum.create.client.ponder.foundation.PonderIndex;
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.resources.language.I18n;
 
-// registries.CCPartialModels/CCPonderPlugin wiring deferred until the mixin/ and content/
-// conversion passes land (see PORTING_NOTES.md) - those still reference unconverted classes.
+// registries.CCPartialModels doesn't need an explicit register() call beyond its own static field
+// init (PartialModel.of(...) instances get discovered the same way Create Fly's own do - no
+// separate registry step) - see PORTING_NOTES.md for the ponder plugin wiring this session added.
 public class CreateConnectedClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
@@ -29,5 +33,7 @@ public class CreateConnectedClient implements ClientModInitializer {
         CCBlockEntityRenders.register();
         KineticBatteryOverrides.registerModelOverridesClient(CCBlocks.KINETIC_BATTERY_ITEM);
         SequencedPulseGeneratorBlock.displayScreenHook = SequencedPulseGeneratorBlockClient::displayScreen;
+        CCModels.register();
+        PonderIndex.addPlugin(new CCPonderPlugin());
     }
 }

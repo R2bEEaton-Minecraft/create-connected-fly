@@ -85,12 +85,12 @@ public class InventoryAccessPortBlock extends DirectedDirectionalBlock implement
     }
 
     @Override
-    public int getAnalogOutputSignal(@NotNull BlockState blockState, @NotNull Level worldIn, @NotNull BlockPos pos) {
+    public int getAnalogOutputSignal(@NotNull BlockState blockState, @NotNull Level worldIn, @NotNull BlockPos pos, @NotNull Direction direction) {
         if (!blockState.getValue(ATTACHED)) return 0;
         BlockPos targetPos = pos.relative(DirectedDirectionalBlock.getTargetDirection(blockState));
         BlockState targetState = worldIn.getBlockState(targetPos);
         if (targetState.is(this)) return 0;
-        return targetState.hasAnalogOutputSignal() ? targetState.getAnalogOutputSignal(worldIn, targetPos) : 0;
+        return targetState.hasAnalogOutputSignal() ? targetState.getAnalogOutputSignal(worldIn, targetPos, direction) : 0;
     }
 
     @Override

@@ -96,16 +96,16 @@ public class InventoryBridgeBlock extends Block implements IBE<InventoryBridgeBl
     }
 
     @Override
-    public int getAnalogOutputSignal(@NotNull BlockState blockState, @NotNull Level worldIn, @NotNull BlockPos pos) {
+    public int getAnalogOutputSignal(@NotNull BlockState blockState, @NotNull Level worldIn, @NotNull BlockPos pos, @NotNull Direction direction) {
         BlockPos pos1 = pos.relative(getNegativeTarget(blockState));
         BlockPos pos2 = pos.relative(getPositiveTarget(blockState));
         BlockState target1 = worldIn.getBlockState(pos1);
         BlockState target2 = worldIn.getBlockState(pos2);
         int total = 0;
         if (blockState.getValue(ATTACHED_NEGATIVE) && !target1.is(this) && target1.hasAnalogOutputSignal())
-            total += target1.getAnalogOutputSignal(worldIn, pos1);
+            total += target1.getAnalogOutputSignal(worldIn, pos1, direction);
         if (blockState.getValue(ATTACHED_POSITIVE) && !target2.is(this) && target2.hasAnalogOutputSignal())
-            total += target2.getAnalogOutputSignal(worldIn, pos2);
+            total += target2.getAnalogOutputSignal(worldIn, pos2, direction);
         return total / 2;
     }
 

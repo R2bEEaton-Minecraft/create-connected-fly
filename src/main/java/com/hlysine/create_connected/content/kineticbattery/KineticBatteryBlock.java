@@ -184,7 +184,7 @@ public class KineticBatteryBlock extends DirectionalKineticBlock implements IBE<
         IPlacementHelper helper = PlacementHelpers.get(placementHelperId);
         if (helper.matchesItem(stack))
             return helper.getOffset(player, level, state, pos, hitResult)
-                    .placeInWorld(level, (BlockItem) stack.getItem(), player, hand, hitResult);
+                    .placeInWorld(level, (BlockItem) stack.getItem(), player, hand);
 
         return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
@@ -326,7 +326,7 @@ public class KineticBatteryBlock extends DirectionalKineticBlock implements IBE<
     }
 
     @Override
-    public int getAnalogOutputSignal(@NotNull BlockState state, @NotNull Level world, @NotNull BlockPos pos) {
+    public int getAnalogOutputSignal(@NotNull BlockState state, @NotNull Level world, @NotNull BlockPos pos, @NotNull Direction direction) {
         return getBlockEntityOptional(world, pos).map(be -> be.getCrudeBatteryLevel(be.getBatteryLevel(), 15)).orElse(0);
     }
 

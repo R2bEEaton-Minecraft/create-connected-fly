@@ -50,11 +50,11 @@ public class EncasedCrossConnectorBlock extends CrossConnectorBlock implements S
     }
 
     @Override
-    public @NotNull ItemStack getCloneItemStack(@NotNull BlockState state, @NotNull HitResult target, @NotNull LevelReader level, @NotNull BlockPos pos, @NotNull Player player) {
+    public @NotNull ItemStack getCloneItemStack(@NotNull LevelReader level, @NotNull BlockPos pos, @NotNull BlockState state, boolean includeData) {
         if (target instanceof BlockHitResult)
             return ((BlockHitResult) target).getDirection()
                     .getAxis() == getRotationAxis(state) ? CCBlocks.CROSS_CONNECTOR.asStack() : getCasing().asItem().getDefaultInstance();
-        return super.getCloneItemStack(state, target, level, pos, player);
+        return super.getCloneItemStack(level, pos, state, includeData);
     }
 
     @Override
