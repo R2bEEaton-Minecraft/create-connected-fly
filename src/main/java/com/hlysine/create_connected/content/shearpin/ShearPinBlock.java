@@ -94,14 +94,14 @@ public class ShearPinBlock extends AbstractBEShaftBlock<ShearPinBlockEntity> {
     public @NotNull InteractionResult useItemOn(@NotNull ItemStack item, @NotNull BlockState state, @NotNull Level world, @NotNull BlockPos pos, Player player, @NotNull InteractionHand hand,
                                                     @NotNull BlockHitResult ray) {
         if (player.isShiftKeyDown() || !player.mayBuild())
-            return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.TRY_WITH_EMPTY_HAND;
 
         IPlacementHelper helper = PlacementHelpers.get(placementHelperId);
         if (helper.matchesItem(item))
             return helper.getOffset(player, world, state, pos, ray)
                     .placeInWorld(world, (BlockItem) item.getItem(), player, hand);
 
-        return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        return InteractionResult.TRY_WITH_EMPTY_HAND;
     }
 
     private static class PlacementHelper extends PoleHelper<Direction.Axis> {
@@ -109,7 +109,7 @@ public class ShearPinBlock extends AbstractBEShaftBlock<ShearPinBlockEntity> {
         // shafts and cogs
 
         private PlacementHelper() {
-            super(Predicates.or(Predicates.or(AllBlocks.SHAFT::has, AllBlocks.POWERED_SHAFT::has), CCBlocks.SHEAR_PIN::has),
+            super(Predicates.or(Predicates.or((java.util.function.Predicate<BlockState>) state -> state.is(AllBlocks.SHAFT), (java.util.function.Predicate<BlockState>) state -> state.is(AllBlocks.POWERED_SHAFT)), (java.util.function.Predicate<BlockState>) state -> state.is(CCBlocks.SHEAR_PIN)),
                     state -> state.getValue(AXIS), AXIS);
         }
 

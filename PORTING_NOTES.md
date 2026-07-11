@@ -1478,6 +1478,152 @@ the start of this session - session 10's CopycatModel work, plus this session's 
 Block-state API migration, combined for a ~320-error reduction). Real `./gradlew compileJava`:
 **532/91** (main-sourceset subset, cross-checked consistent).
 
+## PROGRESS session 12: kinetic multi-shaft renderer rewrite + more vanilla API drift mop-up
+
+### Kinetic multi-shaft renderer rewrite (BIG FINDING, now done) - 4 files
+While chasing `getRotationOffsetForPosition`/`RenderType.solid()` "cannot find symbol" errors,
+found that `BrassGearboxRenderer`/`ParallelGearboxRenderer`/`SixWayGearboxRenderer`/
+`KineticBatteryRenderer` were still on the OLD NeoForge-era `renderSafe(BlockEntity, float,
+PoseStack, MultiBufferSource, int, int)` single-method renderer shape, calling a
+`kineticRotationTransform(...)` helper method that **doesn't exist anywhere** - not in our mod, not
+in Create Fly's real sources (confirmed by full-text search of the extracted sources jar) - this
+must be a stale leftover from a much older Create version's `KineticTileEntityRenderer` that never
+got properly converted, predating this porting effort entirely. Real Create Fly's
+`KineticBlockEntityRenderer<T, S>` (verified via `javap` on the actual resolved jar, and by reading
+the real `HandCrankRenderer.java`/`HandCrankRenderer.HandCrankRenderState` as the reference
+pattern - same one used for `CrankWheelRenderer` earlier) now requires the same
+extractRenderState/render-state split as every other renderer in this session's and prior
+sessions' work: `createRenderState()`, `extractRenderState(T, S, float, Vec3,
+@Nullable ModelFeatureRenderer.CrumblingOverlay)`, and a nested `KineticRenderState` subclass
+implementing `render(PoseStack.Pose, VertexConsumer)` (note: `com.mojang.blaze3d.vertex.
+VertexConsumer`, not any `net.minecraft.client.renderer.*` type - confirmed via `javap` after an
+initial wrong guess). Since these 4 renderers each draw multiple shaft-half pieces (one per
+direction, computed independently with their own angle), rewrote each with a `List<ShaftPiece>`
+(a small record: `SuperByteBuffer buffer, float angle, Direction direction`) computed once in
+`extractRenderState` and rendered by looping `light()/rotateCentered()/color()/renderInto()` per
+piece in the state's `render()` - same idiom `HandCrankRenderState.render()` uses for its single
+`handle` buffer, just generalized to a list. `getRenderType()` also needed overriding to return
+`RenderTypes.solidMovingBlock()` (see below). All 4 verified compiling clean (zero errors) via the
+javac-direct method after the rewrite - this was a genuine architectural fix, not a stub.
+
+### More MC 1.21.11 API drift found and fixed this session
+- `RenderType.solid()` / `RenderType.cutout()` / `RenderType.cutoutMipped()` - **all static factory
+  methods moved off `RenderType` entirely** onto a new sibling class `net.minecraft.client.
+  renderer.rendertype.RenderTypes` (confirmed via `javap` - the base `RenderType` class now only
+  has a handful of constants, no factory methods at all). Real replacements used:
+  `RenderTypes.solidMovingBlock()` (4 kinetic renderers, matches `HandCrankRenderer.
+  getRenderType`'s own real reference usage exactly) and `RenderTypes.cutoutMovingBlock()`
+  (`FluidVesselRenderer`, `KineticBridgeRenderer` - covers both the old `cutout()` and
+  `cutoutMipped()` call sites, which don't have separate moving-block variants anymore).
+- `Direction.getNearest(int, int, int)` -> `Direction.getNearest(int, int, int, Direction)` -
+  gained a required trailing fallback-direction param (verified via `javap`). Fixed 6 occurrences
+  across the 4 kinetic renderers + their sibling `*Visual.java` Flywheel classes, using the
+  already-in-scope `direction` variable as the fallback where available, `Direction.NORTH`
+  otherwise (only reachable in a genuine same-position edge case, doesn't affect real behavior).
+- `Item.getCloneItemStack`/`Block.rotate`/`Block.updateShape`/etc. Block-state API migration from
+  session 11 turned out incomplete in a few more spots caught by this session's continued sweep;
+  same fix patterns applied (not repeated in detail here, see session 11's entry).
+- `AllItems.WRENCH.isIn(stack)` / `CCBlocks.X::isIn` / `CCBlocks.X::has` (as method references) -
+  **Registrate-era convenience methods that don't exist on plain `Block`/`Item` fields** (the
+  originals were `ItemEntry`/`BlockEntry` wrapper objects with these exact methods; our own
+  `CCRegistrate`-based fields are plain `Block`/`Item`, and Create Fly's own `AllItems.WRENCH` is
+  also a plain field, not a wrapper). Real vanilla idiom: `stack.is(block)` /
+  `stack.is(item)` / `state.is(block)`. Fixed 5 occurrences (`CopycatBeamBlock`,
+  `CopycatSlabBlock` x2, `CopycatVerticalStepBlock`, `ShearPinBlock`,
+  `SequencedPulseGeneratorBlock`) by converting method references to lambdas.
+- `InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION` -> `InteractionResult.TRY_WITH_EMPTY_HAND`
+  (a `TryEmptyHandInteraction` record instance now, verified via `javap`) - blanket-replaced across
+  8 files.
+- `Block.getSoundType(BlockState, LevelReader, BlockPos, Entity)` -> `getSoundType(BlockState)` -
+  dropped all 3 context params. **Real, disclosed feature reduction** in `FluidVesselBlock` and
+  `ItemSiloBlock`: both used the removed `Entity` param to check a `"SilenceVesselSound"`/
+  `"SilenceVaultSound"` persistent-data flag (set by their respective Item classes during batch
+  placement) to play a quieter sound - this per-placing-entity conditional can no longer be applied
+  at this override point at all, so both now always return the normal (non-silenced) sound type.
+  The underlying "quieter in batch" UX feature would need a different hook (directly intercepting
+  the sound-play call) to restore - not attempted, clearly commented at both sites.
+
+### NOT YET DONE - flagged, not stubbed: FluidVesselRenderer and KineticBridgeRenderer need the same render-state rewrite
+Same root cause as the 4 kinetic renderers above (still on the old `renderSafe(...)` shape,
+`RenderType`/`PoseStack` vs `PoseStack.Pose` mismatches), but on **different base classes**
+(`SafeBlockEntityRenderer<T>` for `FluidVesselRenderer`, and `KineticBlockEntityRenderer<T>` with
+the WRONG single-type-argument arity for `KineticBridgeRenderer` - the same missing-second-type-arg
+bug the 4 already-fixed renderers had). Not fixed this session due to time - `SafeBlockEntityRenderer`'s
+real new shape hasn't been investigated yet (likely a similarly-real, similarly-mechanical fix
+once its base class is read the same way `KineticBlockEntityRenderer` was this session, but
+deferred rather than guessed). This is the next concrete pickup point for continuing `content/`
+work.
+
+### Cross-checked against real `./gradlew compileJava` again
+**504 unique errors / 91 files** (down from 532/91 at the start of this session - same file count
+since all this session's fixes landed inside already-erroring files rather than clearing whole new
+ones, which is expected this deep into the remaining list). javac-direct (both source trees):
+**614 unique errors / 118 files** (down from 670/125).
+
+## PROGRESS session 13: FluidVesselRenderer/KineticBridgeRenderer render-state rewrite + a critical javac-workaround methodology fix
+
+### METHODOLOGY FIX, IMPORTANT: the javac-direct verification method needs `-proc:none`
+While re-running the javac-direct method after fixing `KineticBridgeRenderer.java`, got a wildly
+different result (182 errors/56 files vs. the expected ~610/117) that was **not real** - reran the
+identical command and got the same wrong number twice (so not a fluke), then noticed the output
+contained lines like `error: Unable to locate obfuscation mapping for @Inject target stillValid` -
+**a Mixin annotation-processor diagnostic**, not a javac type-checking error. This means the Mixin
+AP (bundled via `sponge-mixin`/`mixinextras-fabric` on the classpath) was auto-discovered and
+auto-ran by plain `javac` (via the standard `ServiceLoader`-based annotation processor discovery
+mechanism, not anything special I configured), and it aborted the whole compilation early once it
+hit a mixin-target-resolution problem it couldn't handle outside Loom's real environment - meaning
+far fewer files ever got real type-checked, silently producing a misleadingly *low* error count.
+Confirmed by rerunning with `-proc:none` (disable annotation processing): count went back to
+~610/117, consistent with the established trend. **Every javac-direct invocation must include
+`-proc:none` from now on** (added to the standard recipe) - without it, the workaround can
+silently under-report by omitting most of the codebase from real checking, the opposite failure
+mode from the over-reporting (double-counted lines) bug found in session 9. This is now the third
+distinct methodology pitfall found in this workaround (double-counted lines, access-widener/mixin
+blind spots, and now this) - a reminder to sanity-check big count swings against the trend before
+trusting them, especially in either direction.
+
+### FluidVesselRenderer / KineticBridgeRenderer render-state rewrite (flagged in session 12, done)
+- **`KineticBridgeRenderer`**: was on the old `renderSafe(...)` shape with a wrong single-type-arg
+  `KineticBlockEntityRenderer<KineticBlockEntity>` (should be 2 args) and called a
+  `standardKineticRotationTransform(...)` helper that, like `kineticRotationTransform` from session
+  12's gearbox renderers, **doesn't exist anywhere** (confirmed absent from both this mod and the
+  real Create Fly sources - another stale pre-port leftover, not a new regression). Rewrote onto
+  the same `extractRenderState`/render-state pattern as the 4 gearbox renderers: a
+  `KineticBridgeRenderState` holding 2 `SuperByteBuffer` fields (`shaftHalf`, `fanInner`) plus their
+  individual light values, reusing the base class's own precomputed `angle`/`direction` fields for
+  the rotation (since this is a single-axis kinetic block, unlike the multi-directional gearboxes -
+  the base class's default single rotation is exactly right here, just applied to 2 buffers instead
+  of the base's single `model`). Verified compiling with **zero** errors.
+- **`FluidVesselRenderer`**: real base class is `SmartBlockEntityRenderer<T, S>` (`SafeBlockEntityRenderer`
+  renamed - verified via the real sources jar, package also moved to `client.foundation.blockEntity.
+  renderer`). This base class's architecture is **different in kind** from `KineticBlockEntityRenderer`
+  - no `CustomGeometryRenderer`-per-state callback pattern; instead you override `submit(S state,
+  PoseStack matrices, SubmitNodeCollector queue, CameraRenderState cameraState)` directly, which
+  receives a real `PoseStack` (unlike `extractRenderState`, which only gets a camera position) - so
+  the correct split is: `extractRenderState` captures raw data (fluid level, boiler gauge progress,
+  occlusion flags, dimensions, axis) into custom render-state fields, and `submit()` does the
+  actual `pushPose()/translate()/popPose()` transform + drawing, matching where a real `PoseStack`
+  is actually available. For custom-geometry drawing inside `submit()`, the real hook is
+  `SubmitNodeCollector.submitCustomGeometry(PoseStack, RenderType, CustomGeometryRenderer)`
+  (verified via `javap`) - used this for the boiler-gauge dial rendering, which is now fully fixed
+  (no capability dependency at all). **The fluid-box rendering itself is deliberately left
+  unfixed** - it's inseparable from NeoForge's own `FluidStack`/`FluidTank`/
+  `NeoForgeCatnipServices.FLUID_RENDERER`, none of which exist on Fabric, and is the same already-
+  tracked "~15 capability block entities -> Fabric Transfer API" priority item, not something to
+  improvise piecemeal here. Also found `BlockEntityRenderer.shouldRenderOffScreen()` dropped its
+  `T be` parameter (now a no-arg default method) - **minor, disclosed behavior change**: could no
+  longer return `true` only for the controller part of a multi-block vessel and `false` otherwise,
+  so it now always returns `true` (errs toward the old controller behavior, costs slightly less
+  strict view-frustum culling for non-controller parts - a negligible perf difference, not a
+  functional regression).
+
+### Status after this session
+javac-direct (both source trees, with the now-corrected `-proc:none` flag): **605 unique errors /
+117 files** (down from 610/117 - small reduction since `FluidVesselRenderer`'s remaining errors are
+all pre-existing/deferred fluid-capability ones, `KineticBridgeRenderer` fully cleared). Real
+`./gradlew compileJava` cross-check: still **504/91** (unchanged - both fixes this session were in
+`src/client`, which doesn't affect the main-sourceset-only `compileJava` count).
+
 ## Constraints / house rules
 - Don't add speculative abstractions or backwards-compat shims. Match the existing
   code's structure/intent as closely as Fabric + Create Fly allow.

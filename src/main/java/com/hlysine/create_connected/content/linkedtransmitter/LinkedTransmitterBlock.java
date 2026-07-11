@@ -83,6 +83,6 @@ public interface LinkedTransmitterBlock {
 
             return InteractionResult.sidedSuccess(level.isClientSide());
         }
-        return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        return InteractionResult.TRY_WITH_EMPTY_HAND;
     }
 }

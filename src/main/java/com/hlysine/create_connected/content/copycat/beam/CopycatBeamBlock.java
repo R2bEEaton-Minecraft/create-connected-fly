@@ -171,7 +171,7 @@ public class CopycatBeamBlock extends MigratingWaterloggedCopycatBlock {
     private static class PlacementHelper extends PoleHelper<Axis> {
 
         private PlacementHelper() {
-            super(CCBlocks.COPYCAT_BEAM::has, state -> state.getValue(AXIS), AXIS);
+            super(state -> state.is(CCBlocks.COPYCAT_BEAM), state -> state.getValue(AXIS), AXIS);
         }
 
         @Override

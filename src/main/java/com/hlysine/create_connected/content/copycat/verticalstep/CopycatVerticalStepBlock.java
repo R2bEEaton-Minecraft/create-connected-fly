@@ -217,7 +217,7 @@ public class CopycatVerticalStepBlock extends MigratingWaterloggedCopycatBlock {
     private static class PlacementHelper extends PoleHelper<Direction> {
 
         private PlacementHelper() {
-            super(CCBlocks.COPYCAT_VERTICAL_STEP::has, $ -> Axis.Y, FACING);
+            super(state -> state.is(CCBlocks.COPYCAT_VERTICAL_STEP), $ -> Axis.Y, FACING);
         }
 
         @Override

@@ -104,7 +104,7 @@ public class CrossConnectorBlock extends Block implements IWrenchable, IConnecti
                                                        @NotNull InteractionHand hand,
                                                        @NotNull BlockHitResult hitResult) {
         if (player.isShiftKeyDown() || !player.mayBuild())
-            return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.TRY_WITH_EMPTY_HAND;
 
         return tryEncase(state, level, pos, stack, player, hand, hitResult);
     }

@@ -139,10 +139,10 @@ public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock implements 
                                                        @NotNull Player player,
                                                        @NotNull InteractionHand hand,
                                                        @NotNull BlockHitResult hitResult) {
-        if (AllItems.WRENCH.isIn(stack))
-            return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        if (stack.is(AllItems.WRENCH))
+            return InteractionResult.TRY_WITH_EMPTY_HAND;
         if (stack.getItem() instanceof BlockItem blockItem) {
-            return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.TRY_WITH_EMPTY_HAND;
         }
 
         withBlockEntityDo(level, pos, be -> displayScreenHook.accept(be, player));
