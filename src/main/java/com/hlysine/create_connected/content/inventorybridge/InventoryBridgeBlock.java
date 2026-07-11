@@ -6,7 +6,6 @@ import com.zurrtum.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
-import net.minecraft.core.Vec3i;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -17,9 +16,8 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
-import net.neoforged.neoforge.capabilities.BlockCapability;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.minecraft.world.level.redstone.Orientation;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
 import org.jetbrains.annotations.NotNull;
 
 public class InventoryBridgeBlock extends Block implements IBE<InventoryBridgeBlockEntity>, IWrenchable {
@@ -45,14 +43,14 @@ public class InventoryBridgeBlock extends Block implements IBE<InventoryBridgeBl
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         BlockState state = defaultBlockState();
-        BlockCapability<IItemHandler, Direction> itemCap = Capabilities.ItemHandler.BLOCK;
 
+        // NeoForge's BlockCapability/Capabilities.ItemHandler.BLOCK lookup is gone - Fabric's
+        // ItemStorage.SIDED.find(level, pos, side) is the direct replacement (side=null here,
+        // matching the original's side-agnostic probe intent).
         Direction preferredFacing = null;
         for (Direction face : context.getNearestLookingDirections()) {
-            BlockEntity be = context.getLevel()
-                    .getBlockEntity(context.getClickedPos()
-                            .relative(face));
-            if (be != null && context.getLevel().getCapability(itemCap, be.getBlockPos(), null) != null) {
+            BlockPos neighborPos = context.getClickedPos().relative(face);
+            if (ItemStorage.SIDED.find(context.getLevel(), neighborPos, null) != null) {
                 preferredFacing = face;
                 break;
             }
@@ -70,16 +68,21 @@ public class InventoryBridgeBlock extends Block implements IBE<InventoryBridgeBl
         withBlockEntityDo(worldIn, pos, InventoryBridgeBlockEntity::updateConnectedInventory);
     }
 
+    // neighborChanged(state, level, pos, block, fromPos, isMoving) is gone - vanilla now passes an
+    // Orientation instead of the raw fromPos, with getFront() giving the equivalent "which direction
+    // did the change come from" info directly (no more manual delta->Direction.fromDelta() dance).
     @Override
-    public void neighborChanged(@NotNull BlockState pState, @NotNull Level pLevel, @NotNull BlockPos pPos, @NotNull Block pBlock, @NotNull BlockPos pFromPos, boolean pIsMoving) {
+    public void neighborChanged(
+            @NotNull BlockState pState, @NotNull Level pLevel, @NotNull BlockPos pPos,
+            @NotNull Block pBlock, @NotNull Orientation orientation, boolean pIsMoving
+    ) {
         withBlockEntityDo(pLevel, pPos, InventoryBridgeBlockEntity::updateConnectedInventory);
-        super.neighborChanged(pState, pLevel, pPos, pBlock, pFromPos, pIsMoving);
-        Vec3i diff = pFromPos.subtract(pPos);
-        Direction fromSide = Direction.fromDelta(diff.getX(), diff.getY(), diff.getZ());
+        super.neighborChanged(pState, pLevel, pPos, pBlock, orientation, pIsMoving);
+        Direction fromSide = orientation.getFront();
         if (fromSide == null)
-            pLevel.updateNeighborsAt(pPos, this);
+            pLevel.updateNeighborsAt(pPos, this, orientation);
         else
-            pLevel.updateNeighborsAtExceptFromFacing(pPos, this, fromSide);
+            pLevel.updateNeighborsAtExceptFromFacing(pPos, this, fromSide, orientation);
     }
 
     public static Direction getNegativeTarget(BlockState state) {

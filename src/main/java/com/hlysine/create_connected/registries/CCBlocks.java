@@ -442,8 +442,13 @@ public class CCBlocks {
         CCRegistrate.blockItem(ITEM_SILO, "item_silo", (b, p) -> new ItemSiloItem(b, p));
     }
 
+    // .lightLevel(...) replaces the old Block.getLightEmission(state, world, pos) override point,
+    // which no longer exists (see PORTING_NOTES.md session 14) - luminosity now lives on the
+    // BlockState itself via FluidVesselBlock.LIGHT_LEVEL, kept in sync by
+    // FluidVesselBlockEntity.updateStateLuminosity().
     public static final FluidVesselBlock FLUID_VESSEL = CCRegistrate.block("fluid_vessel", FluidVesselBlock::regular,
-            CCSharedProperties.copperMetal().noOcclusion().isRedstoneConductor((p1, p2, p3) -> true));
+            CCSharedProperties.copperMetal().noOcclusion().isRedstoneConductor((p1, p2, p3) -> true)
+                    .lightLevel(state -> state.getValue(FluidVesselBlock.LIGHT_LEVEL)));
     static {
         FeatureToggle.register(id("fluid_vessel"), FeatureCategory.LOGISTICS);
         BlockMovementChecks.registerAttachedCheck((state, world, pos, direction) -> {
@@ -457,7 +462,8 @@ public class CCBlocks {
     }
 
     public static final FluidVesselBlock CREATIVE_FLUID_VESSEL = CCRegistrate.block("creative_fluid_vessel", FluidVesselBlock::creative,
-            CCSharedProperties.copperMetal().noOcclusion().mapColor(MapColor.COLOR_PURPLE));
+            CCSharedProperties.copperMetal().noOcclusion().mapColor(MapColor.COLOR_PURPLE)
+                    .lightLevel(state -> state.getValue(FluidVesselBlock.LIGHT_LEVEL)));
     static {
         FeatureToggle.registerDependent(id("creative_fluid_vessel"), id("fluid_vessel"));
         CCRegistrate.blockItem(CREATIVE_FLUID_VESSEL, "creative_fluid_vessel", (b, p) -> new FluidVesselItem(b, p),

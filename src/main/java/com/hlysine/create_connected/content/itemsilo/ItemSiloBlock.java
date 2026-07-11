@@ -20,7 +20,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition.Builder;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.neoforged.neoforge.common.util.DeferredSoundType;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -47,20 +46,14 @@ public class ItemSiloBlock extends Block implements IWrenchable, IBE<ItemSiloBlo
         withBlockEntityDo(pLevel, pPos, ItemSiloBlockEntity::updateConnectivity);
     }
 
-    @Override
-    public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean pIsMoving) {
-        if (state.hasBlockEntity() && (state.getBlock() != newState.getBlock() || !newState.hasBlockEntity())) {
-            BlockEntity be = world.getBlockEntity(pos);
-            if (!(be instanceof ItemSiloBlockEntity vaultBE))
-                return;
-            ItemHelper.dropContents(world, pos, vaultBE.inventory);
-            world.removeBlockEntity(pos);
-            ConnectivityHandler.splitMulti(vaultBE);
-        }
-    }
+    // Block.onRemove(state, level, pos, newState, isMoving) doesn't exist anymore - the "drop
+    // contents/clean up on genuine removal" concern moved onto the block entity itself, via
+    // BlockEntity.preRemoveSideEffects(pos, state) (see ItemSiloBlockEntity), which vanilla only
+    // calls when the block entity is actually being discarded (equivalent to this override's own
+    // state.getBlock() != newState.getBlock() guard, now handled internally by the caller).
 
     public static boolean isVault(BlockState state) {
-        return CCBlocks.ITEM_SILO.has(state);
+        return state.is(CCBlocks.ITEM_SILO);
     }
 
     @Nullable
@@ -76,11 +69,13 @@ public class ItemSiloBlock extends Block implements IWrenchable, IBE<ItemSiloBlo
         return state.getValue(LARGE);
     }
 
-    // Vaults are less noisy when placed in batch
+    // Vaults are less noisy when placed in batch (now unused - see getSoundType() below;
+    // NeoForge's DeferredSoundType lazy-Supplier constructor doesn't exist on Fabric, but vanilla's
+    // own SoundType constructor takes SoundEvent constants directly anyway, no laziness needed here)
     public static final SoundType SILENCED_METAL =
-            new DeferredSoundType(0.1F, 1.5F, () -> SoundEvents.NETHERITE_BLOCK_BREAK, () -> SoundEvents.NETHERITE_BLOCK_STEP,
-                    () -> SoundEvents.NETHERITE_BLOCK_PLACE, () -> SoundEvents.NETHERITE_BLOCK_HIT,
-                    () -> SoundEvents.NETHERITE_BLOCK_FALL);
+            new SoundType(0.1F, 1.5F, SoundEvents.NETHERITE_BLOCK_BREAK, SoundEvents.NETHERITE_BLOCK_STEP,
+                    SoundEvents.NETHERITE_BLOCK_PLACE, SoundEvents.NETHERITE_BLOCK_HIT,
+                    SoundEvents.NETHERITE_BLOCK_FALL);
 
     // Real feature reduction, disclosed: vanilla's getSoundType(BlockState) no longer receives an
     // Entity/LevelReader/BlockPos context (see PORTING_NOTES.md), so the "quieter when placed in

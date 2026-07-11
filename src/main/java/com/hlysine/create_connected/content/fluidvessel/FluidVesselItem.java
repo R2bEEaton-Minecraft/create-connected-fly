@@ -5,7 +5,6 @@ import com.hlysine.create_connected.registries.CCBlocks;
 import com.zurrtum.create.api.connectivity.ConnectivityHandler;
 import com.zurrtum.create.content.equipment.symmetryWand.SymmetryWandItem;
 import com.zurrtum.create.content.fluids.tank.FluidTankBlockEntity;
-import com.zurrtum.create.foundation.block.IBE;
 import com.zurrtum.create.catnip.math.VecHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -17,13 +16,15 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.TypedEntityData;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.fluids.FluidStack;
+import com.zurrtum.create.infrastructure.fluids.FluidStack;
+
+import java.util.Optional;
 
 public class FluidVesselItem extends BlockItem {
 
@@ -46,23 +47,28 @@ public class FluidVesselItem extends BlockItem {
 		MinecraftServer minecraftserver = level.getServer();
 		if (minecraftserver == null)
 			return false;
-		CustomData blockEntityData = itemStack.get(DataComponents.BLOCK_ENTITY_DATA);
+		// DataComponents.BLOCK_ENTITY_DATA is now typed TypedEntityData<BlockEntityType<?>> (not the
+		// old untyped CustomData) - the block entity type travels as TypedEntityData's own `type`
+		// field instead of an "id" key baked into the raw tag, so BlockEntity.addEntityType()/
+		// CustomData.of() aren't needed anymore; TypedEntityData.of(type, tag) replaces both.
+		TypedEntityData<BlockEntityType<?>> blockEntityData = itemStack.get(DataComponents.BLOCK_ENTITY_DATA);
 		if (blockEntityData != null) {
-			CompoundTag nbt = blockEntityData.copyTag();
+			CompoundTag nbt = blockEntityData.getUnsafe().copy();
 			nbt.remove("Luminosity");
 			nbt.remove("Size");
 			nbt.remove("Height");
 			nbt.remove("Controller");
 			nbt.remove("LastKnownPos");
 			if (nbt.contains("TankContent")) {
-				FluidStack fluid = FluidStack.parseOptional(minecraftserver.registryAccess(), nbt.getCompoundOrEmpty("TankContent"));
+				// Create Fly's own FluidStack has no NeoForge-style parseOptional/saveOptional pair -
+				// fromNbt(registries, Optional<CompoundTag>)/toNbt(registries) round-trip the same way.
+				FluidStack fluid = FluidStack.fromNbt(minecraftserver.registryAccess(), Optional.of(nbt.getCompoundOrEmpty("TankContent")));
 				if (!fluid.isEmpty()) {
 					fluid.setAmount(Math.min(FluidTankBlockEntity.getCapacityMultiplier(), fluid.getAmount()));
-					nbt.put("TankContent", fluid.saveOptional(minecraftserver.registryAccess()));
+					nbt.put("TankContent", fluid.toNbt(minecraftserver.registryAccess()));
 				}
 			}
-			BlockEntity.addEntityType(nbt, ((IBE<?>) this.getBlock()).getBlockEntityType());
-			itemStack.set(DataComponents.BLOCK_ENTITY_DATA, CustomData.of(nbt));
+			itemStack.set(DataComponents.BLOCK_ENTITY_DATA, TypedEntityData.of(blockEntityData.type(), nbt));
 		}
 		return super.updateCustomBlockEntityTag(blockPos, level, player, itemStack, blockState);
 	}
@@ -142,10 +148,13 @@ public class FluidVesselItem extends BlockItem {
 				if (FluidVesselBlock.isVessel(blockState))
 					continue;
 				BlockPlaceContext context = BlockPlaceContext.at(ctx, offsetPos, face);
-				player.getPersistentData()
-						.putBoolean("SilenceVesselSound", true);
+				// Entity/Player.getPersistentData() is gone entirely (no Fabric replacement checked -
+				// see PORTING_NOTES.md), but the only reader of this "SilenceVesselSound" flag was
+				// FluidVesselBlock.getSoundType(), which already lost its Entity/LevelReader/BlockPos
+				// context in the same vanilla API migration and can no longer read any per-placement
+				// flag at all (see the disclosed comment there) - so this set/remove pair is now
+				// entirely dead code, not a feature that still needs a replacement mechanism.
 				super.place(context);
-				player.getPersistentData().remove("SilenceVesselSound");
 			}
 		}
 	}

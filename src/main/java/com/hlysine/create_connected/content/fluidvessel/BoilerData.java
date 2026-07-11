@@ -30,7 +30,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.neoforged.neoforge.fluids.FluidStack;
+import com.zurrtum.create.infrastructure.fluids.FluidStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -93,7 +93,7 @@ public class BoilerData extends com.zurrtum.create.content.fluids.tank.BoilerDat
         ticksUntilNextSample--;
         if (ticksUntilNextSample > 0)
             return;
-        int capacity = controller.getTankInventory().getCapacity();
+        int capacity = controller.getTankInventory().getMaxAmountPerStack();
         if (capacity == 0)
             return;
 
@@ -183,7 +183,10 @@ public class BoilerData extends com.zurrtum.create.content.fluids.tank.BoilerDat
         return actualHeat;
     }
 
-    @Override
+    // Not an override - real com.zurrtum.create.content.fluids.tank.BoilerData has no
+    // addToGoggleTooltip at all (Create Fly moved this to a separate FluidTankTooltipBehaviour
+    // client class instead); this mod's own BoilerData subclass adds it directly as a new method,
+    // called straight off the `boiler` field from FluidVesselBlockEntity.addToGoggleTooltip().
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking, int boilerSize) {
         if (!isActive())
             return false;
@@ -205,7 +208,7 @@ public class BoilerData extends com.zurrtum.create.content.fluids.tank.BoilerDat
 
         int boilerLevel = Math.min(activeHeat, Math.min(maxHeatForWater, maxHeatForSize));
         double totalSU = getEngineEfficiency(boilerSize) * 16 * Math.max(boilerLevel, attachedEngines)
-                * BlockStressValues.getCapacity(AllBlocks.STEAM_ENGINE.get());
+                * BlockStressValues.getCapacity(AllBlocks.STEAM_ENGINE);
 
         tooltip.add(CommonComponents.EMPTY);
 
@@ -341,9 +344,9 @@ public class BoilerData extends com.zurrtum.create.content.fluids.tank.BoilerDat
                     for (Direction d : Iterate.directions) {
                         BlockPos attachedPos = pos.relative(d);
                         BlockState attachedState = level.getBlockState(attachedPos);
-                        if (AllBlocks.STEAM_ENGINE.has(attachedState) && SteamEngineBlock.getFacing(attachedState) == d)
+                        if (attachedState.is(AllBlocks.STEAM_ENGINE) && SteamEngineBlock.getFacing(attachedState) == d)
                             attachedEngines++;
-                        if (AllBlocks.STEAM_WHISTLE.has(attachedState)
+                        if (attachedState.is(AllBlocks.STEAM_WHISTLE)
                                 && WhistleBlock.getAttachedDirection(attachedState)
                                 .getOpposite() == d)
                             attachedWhistles++;
@@ -387,7 +390,7 @@ public class BoilerData extends com.zurrtum.create.content.fluids.tank.BoilerDat
                     for (Direction d : Iterate.directions) {
                         BlockPos attachedPos = pos.relative(d);
                         BlockState attachedState = level.getBlockState(attachedPos);
-                        if (AllBlocks.STEAM_WHISTLE.has(attachedState)
+                        if (attachedState.is(AllBlocks.STEAM_WHISTLE)
                                 && WhistleBlock.getAttachedDirection(attachedState)
                                 .getOpposite() == d) {
                             if (level.getBlockEntity(attachedPos) instanceof WhistleBlockEntity wbe)
@@ -483,14 +486,16 @@ public class BoilerData extends com.zurrtum.create.content.fluids.tank.BoilerDat
 
     public class BoilerFluidHandler extends com.zurrtum.create.content.fluids.tank.BoilerData.BoilerFluidHandler {
 
+        // Real Create Fly's FluidInventory has no fill()/FluidAction concept (NeoForge-only API) -
+        // the base class already accumulates into its own private `fill` field via setStack() and
+        // flushes it on markDirty(); overriding setStack() to route straight into our own shadowed
+        // gatheredSupply field (see the class-level comment on that field) reproduces the same
+        // "gather insertions, sample on tick()" behavior without going through the base's flush path.
         @Override
-        public int fill(FluidStack resource, FluidAction action) {
-            if (!isFluidValid(0, resource))
-                return 0;
-            int amount = resource.getAmount();
-            if (action.execute())
-                gatheredSupply += amount;
-            return amount;
+        public void setStack(int slot, FluidStack stack) {
+            if (!isValid(slot, stack))
+                return;
+            gatheredSupply += stack.getAmount();
         }
 
     }

@@ -1,16 +1,15 @@
 package com.hlysine.create_connected.content.fluidvessel;
 
-import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.CreateConnected;
 import com.zurrtum.create.api.connectivity.ConnectivityHandler;
 import com.zurrtum.create.client.api.goggles.IHaveGoggleInformation;
 import com.zurrtum.create.content.fluids.tank.FluidTankBlockEntity;
 import com.zurrtum.create.foundation.blockEntity.IMultiBlockEntityContainer;
 import com.zurrtum.create.infrastructure.config.AllConfigs;
+import com.zurrtum.create.infrastructure.fluids.FluidStack;
 import com.zurrtum.create.catnip.animation.LerpedFloat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.network.chat.Component;
@@ -18,15 +17,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.FluidType;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
-import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 
 import org.jetbrains.annotations.Nullable;
 import java.util.List;
@@ -34,7 +24,6 @@ import java.util.List;
 import static com.hlysine.create_connected.content.fluidvessel.FluidVesselBlock.*;
 import static net.minecraft.core.Direction.Axis;
 
-@EventBusSubscriber(modid = CreateConnected.MODID)
 public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHaveGoggleInformation, IMultiBlockEntityContainer.Fluid {
 
     private static final int MAX_SIZE = 3;
@@ -52,41 +41,64 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
         refreshCapability();
     }
 
-    @SubscribeEvent
-    public static void registerCapabilities(RegisterCapabilitiesEvent event) {
-        event.registerBlockEntity(
-                Capabilities.FluidHandler.BLOCK,
-                CCBlockEntityTypes.FLUID_VESSEL,
-                (be, context) -> {
-                    if (be.fluidCapability == null)
-                        be.refreshCapability();
-                    return be.fluidCapability;
-                }
-        );
-        event.registerBlockEntity(
-                Capabilities.FluidHandler.BLOCK,
-                CCBlockEntityTypes.CREATIVE_FLUID_VESSEL,
-                (be, context) -> {
-                    if (be.fluidCapability == null)
-                        be.refreshCapability();
-                    return be.fluidCapability;
-                }
-        );
-    }
+    // NeoForge's RegisterCapabilitiesEvent-based capability registration is gone - both this type
+    // and CREATIVE_FLUID_VESSEL are now registered onto Fabric's FluidStorage.SIDED via
+    // CCTransfer.register(), following Create Fly's own AllTransfer.registerFluidSide() pattern
+    // (fluidCapability is exposed directly, same field this class already maintains).
 
     @Override
     protected FluidVesselTank createInventory() {
         return new FluidVesselTank(getCapacityMultiplier(), this::onFluidStackChanged);
     }
 
+    // refreshCapability()/handlerForCapability() are inherited unchanged from FluidTankBlockEntity -
+    // the base class's own implementation already does exactly this (including dispatching virtually
+    // into our own BoilerData.isActive()/createHandler() overrides via the shared `boiler` field), so
+    // no override is needed here anymore now that NeoForge's per-instance invalidateCapabilities()
+    // call (which these overrides used to also perform) no longer exists.
+
+    // Real FluidTankBlockEntity.updateConnectivity() is `protected` and declared in a different
+    // package (com.zurrtum.create.content.fluids.tank) than FluidVesselBlock (this mod's own
+    // package) - Create Fly's own FluidTankBlock can call it via method reference because it lives in
+    // the SAME package as FluidTankBlockEntity, but FluidVesselBlock cannot reach a same-package-only
+    // protected member from a different package. Widening visibility here (behavior unchanged, just
+    // delegates to super) is what lets FluidVesselBlock's onPlace() keep using the same
+    // `FluidVesselBlockEntity::updateConnectivity` method-reference idiom as upstream.
     @Override
-    protected void updateConnectivity() {
-        updateConnectivity = false;
+    public void updateConnectivity() {
+        super.updateConnectivity();
+    }
+
+    // Same story as updateConnectivity() above, for FluidVesselBlock.updateBoilerState()'s use of
+    // controllerBE.updateBoilerState() - already public in the base class, no change needed there.
+
+    // Real FluidTankBlockEntity.updateStateLuminosity() hardcodes com.zurrtum.create.content.fluids.
+    // tank.FluidTankBlock.LIGHT_LEVEL, which is a different BlockStateProperty instance than our own
+    // FluidVesselBlock.LIGHT_LEVEL (added specifically to mirror this - see FluidVesselBlock.java) -
+    // state.getValue()/setValue() with a property the state's own definition doesn't contain throws,
+    // so this must be overridden to target the right property for our own block hierarchy.
+    @Override
+    protected void updateStateLuminosity() {
         if (level.isClientSide())
             return;
-        if (!isController())
-            return;
-        ConnectivityHandler.formMulti(this);
+        int actualLuminosity = luminosity;
+        FluidVesselBlockEntity controllerBE = getControllerBE();
+        if (controllerBE == null || !controllerBE.window)
+            actualLuminosity = 0;
+        refreshBlockState();
+        BlockState state = getBlockState();
+        if (state.getValue(LIGHT_LEVEL) != actualLuminosity)
+            level.setBlock(worldPosition, state.setValue(LIGHT_LEVEL, actualLuminosity), 23);
+    }
+
+    // Moved here from FluidVesselBlock.onRemove(state, level, pos, newState, isMoving), which no
+    // longer exists as an overridable Block method - vanilla now calls this hook on the block entity
+    // itself only when it's genuinely being discarded (matching the old override's own
+    // state.getBlock() != newState.getBlock() guard, so no equivalent check is needed here).
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        ConnectivityHandler.splitMulti(this);
     }
 
     @Override
@@ -121,10 +133,14 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
         if (!hasLevel())
             return;
 
-        FluidType attributes = newFluidStack.getFluid()
-                .getFluidType();
-        int luminosity = (int) (attributes.getLightLevel(newFluidStack) / 1.2f);
-        boolean reversed = attributes.isLighterThanAir();
+        // Real vanilla Fluid has no NeoForge FluidType light-level/isLighterThanAir concept. Create
+        // Fly's own FluidTankBlockEntity.onFluidStackChanged works around the light level by reusing
+        // the fluid's legacy BlockState light emission; isLighterThanAir has no Fabric replacement at
+        // all yet (Create Fly's own upstream leaves this hardcoded false too - see FluidTankBlock.java/
+        // SpoutRenderer.java "TODO" comments in its own sources), so gas-type fluids would render as
+        // heavier-than-air - this mod ships none, so it's a no-op in practice.
+        int luminosity = (int) (newFluidStack.getFluid().defaultFluidState().createLegacyBlock().getLightEmission() / 1.2f);
+        boolean reversed = false;
         int maxY = (int) ((getFillState() * width) + 1);
         Axis axis = getAxis();
 
@@ -347,16 +363,6 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
         sendData();
     }
 
-    protected void refreshCapability() {
-        fluidCapability = handlerForCapability();
-        invalidateCapabilities();
-    }
-
-    protected IFluidHandler handlerForCapability() {
-        return isController() ? (boiler.isActive() ? boiler.createHandler() : tankInventory)
-                : ((getControllerBE() != null) ? getControllerBE().handlerForCapability() : new FluidTank(0));
-    }
-
     @Override
     public BlockPos getController() {
         return isController() ? worldPosition : controller;
@@ -391,8 +397,10 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
             return false;
         if (controllerBE.boiler.addToGoggleTooltip(tooltip, isPlayerSneaking, controllerBE.getTotalTankSize()))
             return true;
-        return containedFluidTooltip(tooltip, isPlayerSneaking,
-                level.getCapability(Capabilities.FluidHandler.BLOCK, controllerBE.getBlockPos(), null));
+        // NeoForge's level.getCapability() lookup is gone - fluidCapability is already the exact
+        // FluidInventory this block entity exposes (see CCTransfer.register()), so just read it
+        // directly instead of re-querying through a capability system.
+        return containedFluidTooltip(tooltip, isPlayerSneaking, controllerBE.fluidCapability);
     }
 
     @Override
@@ -423,12 +431,10 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
             height = view.getIntOr("Height", 0);
             tankInventory.setCapacity(getTotalTankSize() * getCapacityMultiplier());
 
-            // NeoForge's SmartFluidTank.readFromNBT still expects a raw CompoundTag - bridged via
-            // CompoundTag.CODEC. SmartFluidTank itself is part of the separate replacement item
-            // tracked in PORTING_NOTES.md (Create Fly no longer ships this exact class), not yet done.
-            tankInventory.readFromNBT(view.lookup(), view.read("TankContent", CompoundTag.CODEC).orElseGet(CompoundTag::new));
-            if (tankInventory.getSpace() < 0)
-                tankInventory.drain(-tankInventory.getSpace(), FluidAction.EXECUTE);
+            // Real com.zurrtum.create.foundation.fluid.FluidTank.read(view) reads its own "Fluid" key
+            // straight off the view via FluidStack.CODEC and clamps to capacity itself (see its
+            // source) - no raw CompoundTag bridging or manual overflow-drain needed anymore.
+            tankInventory.read(view);
         }
 
         boiler.read(view.childOrEmpty("Boiler"), width * width * height);
@@ -480,7 +486,7 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
         if (isController()) {
             view.putBoolean("Window", window);
             view.putString("WindowType", windowType.name());
-            view.store("TankContent", CompoundTag.CODEC, tankInventory.writeToNBT(view.lookup(), new CompoundTag()));
+            tankInventory.write(view);
             view.putInt("Size", width);
             view.putInt("Height", height);
         }

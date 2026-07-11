@@ -4,7 +4,6 @@ import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.ConnectedLang;
 import com.zurrtum.create.api.connectivity.ConnectivityHandler;
 import com.zurrtum.create.content.equipment.wrench.IWrenchable;
-import com.zurrtum.create.content.fluids.tank.CreativeFluidTankBlockEntity;
 import com.zurrtum.create.content.fluids.transfer.GenericItemEmptying;
 import com.zurrtum.create.content.fluids.transfer.GenericItemFilling;
 import com.zurrtum.create.foundation.advancement.AdvancementBehaviour;
@@ -12,6 +11,7 @@ import com.zurrtum.create.foundation.block.IBE;
 import com.zurrtum.create.foundation.blockEntity.ComparatorUtil;
 import com.zurrtum.create.foundation.fluid.FluidHelper;
 import com.zurrtum.create.foundation.fluid.FluidHelper.FluidExchange;
+import com.zurrtum.create.infrastructure.fluids.FluidInventory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -46,16 +46,14 @@ import net.minecraft.world.level.block.state.StateDefinition.Builder;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.common.util.DeferredSoundType;
-import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import com.zurrtum.create.infrastructure.fluids.FluidStack;
 
 public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVesselBlockEntity> {
 
@@ -63,6 +61,12 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
     public static final BooleanProperty NEGATIVE = BooleanProperty.create("negative");
     public static final EnumProperty<Axis> AXIS = BlockStateProperties.HORIZONTAL_AXIS;
     public static final EnumProperty<Shape> SHAPE = EnumProperty.create("shape", Shape.class);
+    // BlockBehaviour.Properties.lightLevel(ToIntFunction<BlockState>) (set in CCBlocks) can only see
+    // the BlockState, not the world/pos getLightEmission(BlockState, BlockGetter, BlockPos) used to
+    // receive - so the luminosity now has to live on the BlockState itself instead of being computed
+    // by querying the block entity at light-check time. Mirrors Create Fly's own real
+    // FluidTankBlock.LIGHT_LEVEL precedent exactly (same BlockStateProperties.LEVEL property).
+    public static final IntegerProperty LIGHT_LEVEL = BlockStateProperties.LEVEL;
 
     private final boolean creative;
 
@@ -86,7 +90,8 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
         registerDefaultState(defaultBlockState().setValue(POSITIVE, true)
                 .setValue(POSITIVE, true)
                 .setValue(AXIS, Axis.X)
-                .setValue(SHAPE, Shape.WINDOW));
+                .setValue(SHAPE, Shape.WINDOW)
+                .setValue(LIGHT_LEVEL, 0));
     }
 
     public static boolean isVessel(BlockState state) {
@@ -104,7 +109,7 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
 
     @Override
     protected void createBlockStateDefinition(Builder<Block, BlockState> p_206840_1_) {
-        p_206840_1_.add(POSITIVE, NEGATIVE, AXIS, SHAPE);
+        p_206840_1_.add(POSITIVE, NEGATIVE, AXIS, SHAPE, LIGHT_LEVEL);
     }
 
     @Override
@@ -125,16 +130,10 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
                         .getAxis());
     }
 
-    @Override
-    public int getLightEmission(BlockState state, BlockGetter world, BlockPos pos) {
-        FluidVesselBlockEntity vesselAt = ConnectivityHandler.partAt(getBlockEntityType(), world, pos);
-        if (vesselAt == null)
-            return 0;
-        FluidVesselBlockEntity controllerBE = vesselAt.getControllerBE();
-        if (controllerBE == null || !controllerBE.hasWindow())
-            return 0;
-        return vesselAt.getLuminosity();
-    }
+    // getLightEmission(BlockState, BlockGetter, BlockPos) no longer exists as an overridable method
+    // (see the LIGHT_LEVEL property comment above) - light is now sourced straight off the
+    // BlockState via CCBlocks' `.lightLevel(state -> state.getValue(LIGHT_LEVEL))`, kept in sync by
+    // FluidVesselBlockEntity.updateStateLuminosity().
 
     @Override
     public InteractionResult onWrenched(BlockState state, UseOnContext context) {
@@ -180,10 +179,12 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
         if (be == null)
             return InteractionResult.FAIL;
 
-        IFluidHandler vesselCapability = level.getCapability(Capabilities.FluidHandler.BLOCK, be.getBlockPos(), null);
+        // No more NeoForge capability lookup - be.fluidCapability is already the exact FluidInventory
+        // this block entity exposes (see FluidTankBlockEntity/CCTransfer.register()).
+        FluidInventory vesselCapability = be.fluidCapability;
         if (vesselCapability == null)
             return InteractionResult.TRY_WITH_EMPTY_HAND;
-        FluidStack prevFluidInVessel = vesselCapability.getFluidInTank(0)
+        FluidStack prevFluidInVessel = vesselCapability.getStack(0)
                 .copy();
 
         if (FluidHelper.tryEmptyItemIntoBE(level, player, hand, stack, be))
@@ -200,14 +201,16 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
 
         SoundEvent soundevent = null;
         BlockState fluidState = null;
-        FluidStack fluidInVessel = vesselCapability.getFluidInTank(0);
+        FluidStack fluidInVessel = vesselCapability.getStack(0);
 
         if (exchange == FluidExchange.ITEM_TO_TANK) {
             if (creative && !onClient) {
                 FluidStack fluidInItem = GenericItemEmptying.emptyItem(level, stack, true)
                         .getFirst();
-                if (!fluidInItem.isEmpty() && vesselCapability instanceof CreativeFluidTankBlockEntity.CreativeSmartFluidTank creativeVessel)
-                    creativeVessel.setContainedFluid(fluidInItem);
+                if (!fluidInItem.isEmpty() && vesselCapability instanceof CreativeFluidVesselTank) {
+                    vesselCapability.setStack(0, fluidInItem);
+                    vesselCapability.markDirty();
+                }
             }
 
             Fluid fluid = fluidInVessel.getFluid();
@@ -218,8 +221,10 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
 
         if (exchange == FluidExchange.TANK_TO_ITEM) {
             if (creative && !onClient)
-                if (vesselCapability instanceof CreativeFluidTankBlockEntity.CreativeSmartFluidTank creativeVessel)
-                    creativeVessel.setContainedFluid(FluidStack.EMPTY);
+                if (vesselCapability instanceof CreativeFluidVesselTank) {
+                    vesselCapability.setStack(0, FluidStack.EMPTY);
+                    vesselCapability.markDirty();
+                }
 
             Fluid fluid = prevFluidInVessel.getFluid();
             fluidState = fluid.defaultFluidState()
@@ -236,18 +241,19 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
             level.playSound(null, pos, soundevent, SoundSource.BLOCKS, .5f, pitch);
         }
 
-        if (!FluidStack.isSameFluidSameComponents(fluidInVessel, prevFluidInVessel)) {
+        if (!FluidStack.areFluidsAndComponentsEqual(fluidInVessel, prevFluidInVessel)) {
             if (be instanceof FluidVesselBlockEntity) {
                 FluidVesselBlockEntity controllerBE = be.getControllerBE();
                 if (controllerBE != null) {
                     if (fluidState != null && onClient) {
                         BlockParticleOption blockParticleData =
                                 new BlockParticleOption(ParticleTypes.BLOCK, fluidState);
-                        float fluidLevel = (float) fluidInVessel.getAmount() / vesselCapability.getTankCapacity(0);
+                        float fluidLevel = (float) fluidInVessel.getAmount() / vesselCapability.getMaxAmountPerStack();
 
-                        boolean reversed = fluidInVessel.getFluid()
-                                .getFluidType()
-                                .isLighterThanAir();
+                        // No Fabric equivalent to NeoForge's FluidType.isLighterThanAir() yet - see
+                        // FluidVesselBlockEntity.onFluidStackChanged() for the same hardcoded-false
+                        // reduction, matching Create Fly's own upstream TODO in FluidTankBlock.java.
+                        boolean reversed = false;
                         if (reversed)
                             fluidLevel = 1 - fluidLevel;
 
@@ -271,16 +277,11 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
         return InteractionResult.SUCCESS;
     }
 
-    @Override
-    public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (state.hasBlockEntity() && (state.getBlock() != newState.getBlock() || !newState.hasBlockEntity())) {
-            BlockEntity be = world.getBlockEntity(pos);
-            if (!(be instanceof FluidVesselBlockEntity vesselBE))
-                return;
-            world.removeBlockEntity(pos);
-            ConnectivityHandler.splitMulti(vesselBE);
-        }
-    }
+    // Block.onRemove(state, level, pos, newState, isMoving) doesn't exist anymore - the multi-block
+    // split-on-removal concern moved onto the block entity itself via
+    // BlockEntity.preRemoveSideEffects(pos, state) (see FluidVesselBlockEntity), which vanilla only
+    // calls when the block entity is actually being discarded (equivalent to this override's own
+    // state.getBlock() != newState.getBlock() guard, now handled internally by the caller).
 
     @Override
     public Class<FluidVesselBlockEntity> getBlockEntityClass() {
@@ -353,10 +354,12 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
         }
     }
 
-    // Vessels are less noisy when placed in batch
+    // Vessels are less noisy when placed in batch (now unused - see getSoundType() below;
+    // NeoForge's DeferredSoundType lazy-Supplier constructor doesn't exist on Fabric, but vanilla's
+    // own SoundType constructor takes SoundEvent constants directly anyway, no laziness needed here)
     public static final SoundType SILENCED_METAL =
-            new DeferredSoundType(0.1F, 1.5F, () -> SoundEvents.METAL_BREAK, () -> SoundEvents.METAL_STEP,
-                    () -> SoundEvents.METAL_PLACE, () -> SoundEvents.METAL_HIT, () -> SoundEvents.METAL_FALL);
+            new SoundType(0.1F, 1.5F, SoundEvents.METAL_BREAK, SoundEvents.METAL_STEP,
+                    SoundEvents.METAL_PLACE, SoundEvents.METAL_HIT, SoundEvents.METAL_FALL);
 
     // Real feature reduction, disclosed: vanilla's getSoundType(BlockState) no longer receives an
     // Entity/LevelReader/BlockPos context (see PORTING_NOTES.md), so the "quieter when placed in
