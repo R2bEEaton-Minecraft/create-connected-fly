@@ -297,12 +297,12 @@ public class CopycatSlabBlock extends MigratingWaterloggedCopycatBlock implement
     private static class PlacementHelper implements IPlacementHelper {
         @Override
         public Predicate<ItemStack> getItemPredicate() {
-            return CCBlocks.COPYCAT_SLAB::isIn;
+            return stack -> stack.is(CCBlocks.COPYCAT_SLAB.asItem());
         }
 
         @Override
         public Predicate<BlockState> getStatePredicate() {
-            return CCBlocks.COPYCAT_SLAB::has;
+            return state -> state.is(CCBlocks.COPYCAT_SLAB);
         }
 
         @Override

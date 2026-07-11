@@ -61,7 +61,7 @@ public class ParallelGearboxVisual extends KineticBlockEntityVisual<ParallelGear
     protected void updateSourceFacing() {
         if (blockEntity.hasSource()) {
             BlockPos source = blockEntity.source.subtract(pos);
-            sourceFacing = Direction.getNearest(source.getX(), source.getY(), source.getZ());
+            sourceFacing = Direction.getNearest(source.getX(), source.getY(), source.getZ(), Direction.NORTH);
         } else {
             sourceFacing = null;
         }

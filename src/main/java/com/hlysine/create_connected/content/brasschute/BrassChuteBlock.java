@@ -50,13 +50,13 @@ public class BrassChuteBlock extends ChuteBlock {
     protected InteractionResult retrieveItem(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                                  InteractionHand hand, BlockHitResult hitResult) {
         if (!stack.isEmpty())
-            return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.TRY_WITH_EMPTY_HAND;
         if (level.isClientSide())
             return InteractionResult.SUCCESS;
 
         return onBlockEntityUseItemOn(level, pos, be -> {
             if (be.getItem().isEmpty())
-                return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+                return InteractionResult.TRY_WITH_EMPTY_HAND;
             player.getInventory()
                     .placeItemBackInInventory(be.getItem());
             be.setItem(ItemStack.EMPTY);

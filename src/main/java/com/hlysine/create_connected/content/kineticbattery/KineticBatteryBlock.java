@@ -186,7 +186,7 @@ public class KineticBatteryBlock extends DirectionalKineticBlock implements IBE<
             return helper.getOffset(player, level, state, pos, hitResult)
                     .placeInWorld(level, (BlockItem) stack.getItem(), player, hand);
 
-        return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        return InteractionResult.TRY_WITH_EMPTY_HAND;
     }
 
     @SuppressWarnings("removal")

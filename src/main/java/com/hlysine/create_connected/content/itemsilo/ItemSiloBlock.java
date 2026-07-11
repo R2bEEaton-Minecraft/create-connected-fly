@@ -82,13 +82,13 @@ public class ItemSiloBlock extends Block implements IWrenchable, IBE<ItemSiloBlo
                     () -> SoundEvents.NETHERITE_BLOCK_PLACE, () -> SoundEvents.NETHERITE_BLOCK_HIT,
                     () -> SoundEvents.NETHERITE_BLOCK_FALL);
 
+    // Real feature reduction, disclosed: vanilla's getSoundType(BlockState) no longer receives an
+    // Entity/LevelReader/BlockPos context (see PORTING_NOTES.md), so the "quieter when placed in
+    // batch" per-placing-entity silencing via a "SilenceVaultSound" persistent-data flag can no
+    // longer be conditionally applied at this override point - always uses the normal sound now.
     @Override
-    public SoundType getSoundType(BlockState state, LevelReader world, BlockPos pos, Entity entity) {
-        SoundType soundType = super.getSoundType(state, world, pos, entity);
-        if (entity != null && entity.getPersistentData()
-                .contains("SilenceVaultSound"))
-            return SILENCED_METAL;
-        return soundType;
+    public SoundType getSoundType(BlockState state) {
+        return super.getSoundType(state);
     }
 
     @Override

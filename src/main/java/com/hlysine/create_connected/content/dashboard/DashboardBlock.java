@@ -97,7 +97,7 @@ public class DashboardBlock extends HorizontalDirectionalBlock implements IWrenc
                 });
                 return InteractionResult.SUCCESS;
             }
-            return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.TRY_WITH_EMPTY_HAND;
         }
 
         if (heldItem.getItem() instanceof final SignApplicator signApplicator && !(heldItem.getItem() instanceof HoneycombItem)) {
@@ -116,7 +116,7 @@ public class DashboardBlock extends HorizontalDirectionalBlock implements IWrenc
             return InteractionResult.SUCCESS;
         }
 
-        return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        return InteractionResult.TRY_WITH_EMPTY_HAND;
     }
 
     @Override

@@ -171,9 +171,9 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
         boolean onClient = level.isClientSide();
 
         if (stack.isEmpty())
-            return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.TRY_WITH_EMPTY_HAND;
         if (!player.isCreative() && !creative)
-            return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.TRY_WITH_EMPTY_HAND;
 
         FluidExchange exchange = null;
         FluidVesselBlockEntity be = ConnectivityHandler.partAt(getBlockEntityType(), level, pos);
@@ -182,7 +182,7 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
 
         IFluidHandler vesselCapability = level.getCapability(Capabilities.FluidHandler.BLOCK, be.getBlockPos(), null);
         if (vesselCapability == null)
-            return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.TRY_WITH_EMPTY_HAND;
         FluidStack prevFluidInVessel = vesselCapability.getFluidInTank(0)
                 .copy();
 
@@ -195,7 +195,7 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
             if (GenericItemEmptying.canItemBeEmptied(level, stack)
                     || GenericItemFilling.canItemBeFilled(level, stack))
                 return InteractionResult.SUCCESS;
-            return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.TRY_WITH_EMPTY_HAND;
         }
 
         SoundEvent soundevent = null;
@@ -358,12 +358,16 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
             new DeferredSoundType(0.1F, 1.5F, () -> SoundEvents.METAL_BREAK, () -> SoundEvents.METAL_STEP,
                     () -> SoundEvents.METAL_PLACE, () -> SoundEvents.METAL_HIT, () -> SoundEvents.METAL_FALL);
 
+    // Real feature reduction, disclosed: vanilla's getSoundType(BlockState) no longer receives an
+    // Entity/LevelReader/BlockPos context (see PORTING_NOTES.md), so the "quieter when placed in
+    // batch" per-placing-entity silencing via a "SilenceVesselSound" persistent-data flag
+    // (FluidVesselItem.java) can no longer be conditionally applied at this override point -
+    // always uses the normal (non-silenced) sound now. The batch-placement feature itself would
+    // need a different hook (e.g. intercepting the actual sound-play call directly) to restore;
+    // not attempted here.
     @Override
-    public SoundType getSoundType(BlockState state, LevelReader world, BlockPos pos, Entity entity) {
-        SoundType soundType = super.getSoundType(state, world, pos, entity);
-        if (entity != null && entity.getPersistentData().contains("SilenceVesselSound"))
-            return SILENCED_METAL;
-        return soundType;
+    public SoundType getSoundType(BlockState state) {
+        return super.getSoundType(state);
     }
 
     @Override
