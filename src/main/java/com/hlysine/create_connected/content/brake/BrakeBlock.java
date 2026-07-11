@@ -13,6 +13,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.redstone.Orientation;
 import org.jetbrains.annotations.NotNull;
 
 public class BrakeBlock extends AbstractEncasedShaftBlock implements IBE<BrakeBlockEntity> {
@@ -50,7 +51,7 @@ public class BrakeBlock extends AbstractEncasedShaftBlock implements IBE<BrakeBl
             Level worldIn,
             @NotNull BlockPos pos,
             @NotNull Block blockIn,
-            @NotNull BlockPos fromPos,
+            @NotNull Orientation orientation,
             boolean isMoving) {
         if (worldIn.isClientSide())
             return;

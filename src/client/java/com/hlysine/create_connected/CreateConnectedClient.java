@@ -2,6 +2,7 @@ package com.hlysine.create_connected;
 
 import com.hlysine.create_connected.config.CCConfigsClient;
 import com.hlysine.create_connected.content.contraption.jukebox.PlayContraptionJukeboxPacketClient;
+import com.hlysine.create_connected.content.fluidvessel.FluidVesselTooltipBehaviour;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryDisplaySourceRender;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryOverrides;
 import com.hlysine.create_connected.content.kineticbridge.KineticBridgeBlockItemClient;
@@ -10,10 +11,12 @@ import com.hlysine.create_connected.content.sequencedpulsegenerator.SequencedPul
 import com.hlysine.create_connected.content.sequencedpulsegenerator.SequencedPulseGeneratorBlockClient;
 import com.hlysine.create_connected.content.sequencedpulsegenerator.instructions.Instruction;
 import com.hlysine.create_connected.registries.CCBlockEntityRenders;
+import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCBlocks;
 import com.hlysine.create_connected.registries.CCDisplaySources;
 import com.hlysine.create_connected.registries.CCModels;
 import com.hlysine.create_connected.registries.CCPonderPlugin;
+import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
 import com.zurrtum.create.client.ponder.foundation.PonderIndex;
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.resources.language.I18n;
@@ -35,5 +38,6 @@ public class CreateConnectedClient implements ClientModInitializer {
         SequencedPulseGeneratorBlock.displayScreenHook = SequencedPulseGeneratorBlockClient::displayScreen;
         CCModels.register();
         PonderIndex.addPlugin(new CCPonderPlugin());
+        BlockEntityBehaviour.addClient(CCBlockEntityTypes.FLUID_VESSEL, FluidVesselTooltipBehaviour::new);
     }
 }

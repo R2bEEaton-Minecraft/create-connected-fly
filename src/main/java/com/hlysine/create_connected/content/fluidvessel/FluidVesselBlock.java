@@ -1,7 +1,6 @@
 package com.hlysine.create_connected.content.fluidvessel;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
-import com.hlysine.create_connected.ConnectedLang;
 import com.zurrtum.create.api.connectivity.ConnectivityHandler;
 import com.zurrtum.create.content.equipment.wrench.IWrenchable;
 import com.zurrtum.create.content.fluids.transfer.GenericItemEmptying;
@@ -331,7 +330,7 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
 
         @Override
         public String getSerializedName() {
-            return ConnectedLang.asId(name());
+            return name().toLowerCase(java.util.Locale.ROOT);
         }
 
         public Shape nonSingleVariant() {
@@ -350,7 +349,7 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
 
         @Override
         public String getSerializedName() {
-            return ConnectedLang.asId(name());
+            return name().toLowerCase(java.util.Locale.ROOT);
         }
     }
 

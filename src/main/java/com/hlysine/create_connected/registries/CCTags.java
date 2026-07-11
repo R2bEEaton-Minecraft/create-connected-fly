@@ -1,9 +1,7 @@
 package com.hlysine.create_connected.registries;
 
-import com.hlysine.create_connected.ConnectedLang;
 import com.hlysine.create_connected.CreateConnected;
 import com.hlysine.create_connected.compat.Mods;
-import com.zurrtum.create.catnip.lang.Lang;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
@@ -15,6 +13,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
+
+import java.util.Locale;
 
 import static com.hlysine.create_connected.registries.CCTags.NameSpace.*;
 
@@ -95,12 +95,15 @@ public class CCTags {
         }
 
         Items(NameSpace namespace, String path, boolean optional, boolean alwaysDatagen) {
-            Identifier id = Identifier.fromNamespaceAndPath(namespace.id, path == null ? ConnectedLang.asId(name()) : path);
-            if (optional) {
-                tag = optionalTag(BuiltInRegistries.ITEM, id);
-            } else {
-                tag = ItemTags.create(id);
-            }
+            // ConnectedLang (client-only, extends Create Fly's own client-only catnip Lang class) was
+            // being used from this common-code registries file - a real cross-boundary bug. Its
+            // asId() is trivially name.toLowerCase(Locale.ROOT) (see Create Fly's own
+            // client.catnip.lang.Lang.asId()), inlined here instead of pulling in any Lang class.
+            Identifier id = Identifier.fromNamespaceAndPath(namespace.id, path == null ? name().toLowerCase(Locale.ROOT) : path);
+            // ItemTags.create(Identifier) (the old "non-optional" branch) is gone - it was just a
+            // thin wrapper around TagKey.create(registry.key(), id), identical to what optionalTag()
+            // already does directly, so both branches converge onto the same call now.
+            tag = optionalTag(BuiltInRegistries.ITEM, id);
             this.alwaysDatagen = alwaysDatagen;
         }
 
@@ -143,12 +146,11 @@ public class CCTags {
         }
 
         Fluids(NameSpace namespace, String path, boolean optional, boolean alwaysDatagen) {
-            Identifier id = Identifier.fromNamespaceAndPath(namespace.id, path == null ? Lang.asId(name()) : path);
-            if (optional) {
-                tag = optionalTag(BuiltInRegistries.FLUID, id);
-            } else {
-                tag = FluidTags.create(id);
-            }
+            Identifier id = Identifier.fromNamespaceAndPath(namespace.id, path == null ? name().toLowerCase(Locale.ROOT) : path);
+            // FluidTags.create(Identifier) (the old "non-optional" branch) is gone - it was just a
+            // thin wrapper around TagKey.create(registry.key(), id), identical to what optionalTag()
+            // already does directly, so both branches converge onto the same call now.
+            tag = optionalTag(BuiltInRegistries.FLUID, id);
             this.alwaysDatagen = alwaysDatagen;
         }
 
