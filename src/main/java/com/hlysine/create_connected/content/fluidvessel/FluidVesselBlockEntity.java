@@ -2,7 +2,6 @@ package com.hlysine.create_connected.content.fluidvessel;
 
 import com.hlysine.create_connected.CreateConnected;
 import com.zurrtum.create.api.connectivity.ConnectivityHandler;
-import com.zurrtum.create.client.api.goggles.IHaveGoggleInformation;
 import com.zurrtum.create.content.fluids.tank.FluidTankBlockEntity;
 import com.zurrtum.create.foundation.blockEntity.IMultiBlockEntityContainer;
 import com.zurrtum.create.infrastructure.config.AllConfigs;
@@ -12,19 +11,23 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
 import org.jetbrains.annotations.Nullable;
-import java.util.List;
 
 import static com.hlysine.create_connected.content.fluidvessel.FluidVesselBlock.*;
 import static net.minecraft.core.Direction.Axis;
 
-public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHaveGoggleInformation, IMultiBlockEntityContainer.Fluid {
+// com.zurrtum.create.client.api.goggles.IHaveGoggleInformation is client-only (real Create Fly's own
+// FluidTankBlockEntity doesn't implement it either) - a real cross-boundary bug in the original port
+// of this file. Goggle tooltip logic moved to a new client-only FluidVesselTooltipBehaviour
+// (src/client/java), registered via BlockEntityBehaviour.CLIENT_REGISTRY in
+// CreateConnectedClient.onInitializeClient(), mirroring Create Fly's own FluidTankTooltipBehaviour/
+// AllBlockEntityBehaviours pattern exactly.
+public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IMultiBlockEntityContainer.Fluid {
 
     private static final int MAX_SIZE = 3;
     private static final int SYNC_RATE = 8;
@@ -390,18 +393,8 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
         return null;
     }
 
-    @Override
-    public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-        FluidVesselBlockEntity controllerBE = getControllerBE();
-        if (controllerBE == null)
-            return false;
-        if (controllerBE.boiler.addToGoggleTooltip(tooltip, isPlayerSneaking, controllerBE.getTotalTankSize()))
-            return true;
-        // NeoForge's level.getCapability() lookup is gone - fluidCapability is already the exact
-        // FluidInventory this block entity exposes (see CCTransfer.register()), so just read it
-        // directly instead of re-querying through a capability system.
-        return containedFluidTooltip(tooltip, isPlayerSneaking, controllerBE.fluidCapability);
-    }
+    // addToGoggleTooltip moved to the client-only FluidVesselTooltipBehaviour (see the class-level
+    // comment above) - IHaveGoggleInformation/containedFluidTooltip aren't available here anymore.
 
     @Override
     protected void read(ValueInput view, boolean clientPacket) {

@@ -1,12 +1,13 @@
 package com.hlysine.create_connected.mixin.nestedschematics;
 
-import com.hlysine.create_connected.ConnectedLang;
 import com.hlysine.create_connected.config.CServer;
 import com.zurrtum.create.foundation.utility.FilesHelper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.Locale;
 
 @Mixin(value = FilesHelper.class, remap = false)
 public class FilesHelperMixin {
@@ -17,7 +18,9 @@ public class FilesHelperMixin {
     )
     private static void slug(String name, CallbackInfoReturnable<String> cir) {
         if (CServer.SchematicsNestingDepth.get() > 0) {
-            cir.setReturnValue(ConnectedLang.asId(name)
+            // ConnectedLang (client-only) was being used from this common-code mixin - a real
+            // cross-boundary bug. Its asId() is trivially name.toLowerCase(Locale.ROOT).
+            cir.setReturnValue(name.toLowerCase(Locale.ROOT)
                     .replaceAll("[^\\w/\\\\]+", "_")
                     .replaceAll("[/\\\\]+", "/"));
         }

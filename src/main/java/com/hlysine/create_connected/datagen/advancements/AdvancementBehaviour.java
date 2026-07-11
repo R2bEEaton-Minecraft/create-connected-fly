@@ -14,7 +14,6 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.common.util.FakePlayer;
 
 import java.util.*;
 
@@ -40,7 +39,7 @@ public class AdvancementBehaviour extends BlockEntityBehaviour<SmartBlockEntity>
     }
 
     public void setOwner(UUID id) {
-        Player player = getWorld().getPlayerByUUID(id);
+        Player player = getLevel().getPlayerInAnyDimension(id);
         if (player == null)
             return;
         playerId = id;
@@ -90,7 +89,7 @@ public class AdvancementBehaviour extends BlockEntityBehaviour<SmartBlockEntity>
     private Player getOwner() {
         if (playerId == null)
             return null;
-        return getWorld().getPlayerByUUID(playerId);
+        return getLevel().getPlayerInAnyDimension(playerId);
     }
 
     @Override
@@ -127,7 +126,7 @@ public class AdvancementBehaviour extends BlockEntityBehaviour<SmartBlockEntity>
         AdvancementBehaviour behaviour = BlockEntityBehaviour.get(worldIn, pos, TYPE);
         if (behaviour == null)
             return;
-        if (placer instanceof FakePlayer)
+        if (com.zurrtum.create.api.entity.FakePlayerHandler.has(placer))
             return;
         if (placer instanceof ServerPlayer)
             behaviour.setOwner(placer.getUUID());

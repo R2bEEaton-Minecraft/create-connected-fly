@@ -4,6 +4,7 @@ import com.hlysine.create_connected.registries.CCBlocks;
 import com.zurrtum.create.catnip.data.Iterate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -23,9 +24,11 @@ public class CopycatCatwalkItem extends BlockItem {
         super(CCBlocks.COPYCAT_BOARD, builder);
     }
 
+    // Item.getDescriptionId() is now final - overriding getName(ItemStack) instead achieves the
+    // same "always this fixed translation key" custom-name behavior.
     @Override
-    public @NotNull String getDescriptionId() {
-        return "item.create_connected.copycat_catwalk";
+    public @NotNull Component getName(@NotNull ItemStack stack) {
+        return Component.translatable("item.create_connected.copycat_catwalk");
     }
 
     @Override

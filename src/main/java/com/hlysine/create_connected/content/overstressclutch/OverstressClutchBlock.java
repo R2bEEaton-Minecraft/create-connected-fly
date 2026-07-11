@@ -1,7 +1,6 @@
 package com.hlysine.create_connected.content.overstressclutch;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
-import com.hlysine.create_connected.ConnectedLang;
 import com.hlysine.create_connected.datagen.advancements.AdvancementBehaviour;
 import com.hlysine.create_connected.datagen.advancements.CCAdvancements;
 import com.zurrtum.create.content.equipment.wrench.IWrenchable;
@@ -24,7 +23,10 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.redstone.Orientation;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Locale;
 
 public class OverstressClutchBlock extends AbstractEncasedShaftBlock implements IWrenchable, IBE<OverstressClutchBlockEntity> {
     public static final EnumProperty<ClutchState> STATE = EnumProperty.create("state", ClutchState.class);
@@ -49,9 +51,9 @@ public class OverstressClutchBlock extends AbstractEncasedShaftBlock implements 
                                 @NotNull Level pLevel,
                                 @NotNull BlockPos pPos,
                                 @NotNull Block pBlock,
-                                @NotNull BlockPos pFromPos,
+                                @NotNull Orientation orientation,
                                 boolean pIsMoving) {
-        super.neighborChanged(pState, pLevel, pPos, pBlock, pFromPos, pIsMoving);
+        super.neighborChanged(pState, pLevel, pPos, pBlock, orientation, pIsMoving);
         boolean flag = pState.getValue(POWERED);
         boolean flag1 = pLevel.getBestNeighborSignal(pPos) > 0;
         if (flag != flag1) {
@@ -123,7 +125,7 @@ public class OverstressClutchBlock extends AbstractEncasedShaftBlock implements 
 
         @Override
         public @NotNull String getSerializedName() {
-            return ConnectedLang.asId(name());
+            return name().toLowerCase(Locale.ROOT);
         }
     }
 }

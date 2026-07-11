@@ -1879,6 +1879,174 @@ count - **this priority item (capability block entities -> Fabric Transfer API) 
 complete**, modulo the one remaining disclosed follow-up above (InventoryBridgeFilterSlot's
 render-position hookup is unwired - the `.lightLevel(...)` wiring was also completed this session).
 
+## PROGRESS session 15: datagen/advancements + CCTags + CopycatBlockMixin cleanup, then a major methodology finding
+
+### The 3 coordinator-named items, all fixed
+- **`net.minecraft.advancements.critereon` -> `criterion`**: a simple vanilla package rename
+  (confirmed via the actual jar's contents - `critereon` was a long-standing Mojang mapping typo,
+  finally corrected to `criterion`). Fixed via a blanket find/replace across `CCAdvancement.java`/
+  `CriterionTriggerBase.java`/`SimpleCCTrigger.java`. Several *other* real API changes surfaced once
+  that package-rename was out of the way and needed separate fixes: `Create.asResource(...)` never
+  existed in real Create Fly (`com.zurrtum.create.Create` has no such helper - it was the *original*
+  NeoForge Create's own internal datagen convenience, never mapped 1:1) - inlined via `Create.MOD_ID`
+  directly. `ServerPlayer`/`Entity.getServer()` doesn't exist - real access is
+  `serverPlayer.level().getServer()` (`ServerPlayer.level()` already returns `ServerLevel`, which has
+  `getServer()`). `ItemPredicate.Builder.of(TagKey)` gained a required leading `HolderGetter<Item>`
+  param - used `BuiltInRegistries.acquireBootstrapRegistrationLookup(BuiltInRegistries.ITEM)` (this
+  particular overload, `whenItemCollected(TagKey<Item>)`, turned out unused anywhere in the mod, so a
+  live `HolderLookup.Provider` thread-through wasn't worth plumbing in just for it).
+  `ItemTags.create(Identifier)`/`FluidTags.create(Identifier)` convenience factories are gone -
+  both were thin wrappers around `TagKey.create(registry.key(), id)`, which `CCTags.java`'s own
+  `optionalTag()` helper already does directly, so the old "optional vs non-optional" branch in
+  `CCTags.Items`/`CCTags.Fluids`'s constructors now converges onto the same call either way.
+  `NeoForge`'s `net.neoforged.neoforge.common.util.FakePlayer` (used in `AdvancementBehaviour.
+  trackOwner()` to skip awarding automation-placed blocks) has a real, ready-made Create Fly
+  replacement: `com.zurrtum.create.api.entity.FakePlayerHandler.has(player)` (a multiloader-aware
+  helper checking both Fabric API's own `FakePlayer` and Create Fly's `FakePlayerEntity`) - found by
+  grepping the real sources jar for existing `FakePlayer` handling rather than guessing at one.
+  `Level.getPlayerByUUID(UUID)` (used in `AdvancementBehaviour.setOwner()`/`getOwner()`) doesn't exist
+  - real replacement `getPlayerInAnyDimension(UUID)`, confirmed via exhaustive `javap` (NOT via the
+  intermediary mapping tiny file, which claimed `method_18470` maps to `getPlayerByUUID` - that
+  mapping is evidently stale/wrong for this specific method relative to the actual resolved jar,
+  a first for this port; trust `javap` on the real jar over the mapping file when they conflict).
+  Also fixed a wrong accessor unrelated to the rename: `getWorld()` doesn't exist on
+  `BlockEntityBehaviour` at all - real accessor is `getLevel()` (confirmed against Create Fly's own
+  real `AdvancementBehaviour.getOwner()`, which uses `getLevel()...getPlayerByUUID` - so *that*
+  specific method name mismatch was already correctly diagnosed via `javap`, just the intermediary
+  mapping file disagreed).
+- **`CCTags.java`'s bad import**: turned out to be two separate bugs, not one. (1)
+  `com.zurrtum.create.catnip.lang.Lang` doesn't exist (real path is `com.zurrtum.create.catnip.lang`
+  only for a *client* `Lang` class, not a common one) - `Lang.asId(String)` is trivially
+  `name.toLowerCase(Locale.ROOT)`, inlined directly rather than importing anything. (2) The file was
+  ALSO importing `com.hlysine.create_connected.ConnectedLang` (this mod's own class, but **client-only,
+  `src/client/java`**) from this common-sourceset `registries/` file - a real cross-boundary bug (see
+  the big methodology finding below), fixed the same way.
+- **`CopycatBlockMixin.java`**: confirmed (again, matching the existing "Create: Copycats+: no Fabric
+  1.21.11 build" finding already in this document) that `@Mixin({CopycatSlabBlock.class,
+  CopycatBoardBlock.class})` can't compile at all when those addon classes don't exist on the
+  classpath, since `.class` literals require compile-time resolution. Fixed via Sponge Mixin's own
+  `@Pseudo` annotation + string-form `targets = {...}` (resolves the target by name at
+  mixin-application time instead, silently no-ops if the class isn't present) - this is Mixin's
+  documented mechanism for exactly this "optional cross-mod compat mixin, target may not exist"
+  case, not a workaround improvised for this port. No `_disabled_pending_*` file-renaming scheme was
+  used or found anywhere in this codebase (the coordinator's suggested naming wasn't an established
+  pattern here) - the existing convention for unavailable addons is "reduce the compat file to a
+  documented no-op" (see the "External soft-dependency mods" section above), and `@Pseudo` is the
+  mixin-specific variant of that same idea.
+
+### MAJOR METHODOLOGY FINDING: the javac-direct workaround has a blind spot in the *other* direction too
+All three fixes above were quick. But the real `./gradlew compileJava` cross-check afterward showed
+**234 errors, not the expected ~0** - and critically, a `FluidVesselBlockEntity.java:5: error: package
+com.zurrtum.create.client.api.goggles does not exist` that the javac-direct method had **never once
+flagged across 14 sessions**. Root cause: the javac-direct workaround compiles `src/main/java` and
+`src/client/java` **together on one combined classpath** (this was always the documented design, to
+work around Loom's real split-sourceset compilation being unavailable to a raw javac invocation) -
+which means a `src/main/java` file that mistakenly imports a **client-only** Create Fly/mod class
+compiles just fine under the workaround (both source trees' symbols are simultaneously visible), but
+fails for real under `./gradlew compileJava` (which only sees `src/main/java` plus `src/main`'s own
+real dependency classpath, correctly excluding client-only classes). This is the exact mirror image
+of the *first* cross-boundary bug found in session 14 (`InventoryBridgeBlockEntity` using client-only
+`FilteringBehaviour`) - except that one was caught because it also happened to reference a
+nonexistent method, forcing closer inspection; **this class of bug (main imports client, and the
+import target's API otherwise looks plausible) apparently produces ZERO signal from the javac-direct
+method, full stop.** This is now the **fourth** distinct methodology pitfall in this workaround
+(after: double-counted Gradle console lines, the access-widener/mixin blind spot, and the Mixin
+annotation-processor under-reporting bug) - and probably the most consequential, since it means the
+605/117 -> 353/~85 error-count narrative tracked via javac-direct across sessions 13-14 was **only
+ever a subset of the true error surface** for any given session; **real `./gradlew compileJava` must
+be treated as the authoritative count from now on, with javac-direct used only as a faster
+same-session iteration aid, never as the basis for a "this priority item is done" claim on its own.**
+Found and fixed 5 more instances of this same bug this session (`FluidVesselBlock`/
+`FluidVesselBlockEntity`/`CreativeFluidVesselBlockEntity` all importing/implementing client-only
+`IHaveGoggleInformation`/`ConnectedLang`; `KineticBatteryBlockEntity` importing client-only
+`ScrollOptionBehaviour`/`CreateLang` - the last one **not yet fixed**, see below; `OverstressClutchBlock`/
+`FilesHelperMixin` importing client-only `ConnectedLang`).
+
+### `FluidVesselBlockEntity`'s goggle-tooltip hook-extraction (fixed, following the real Create Fly reference pattern exactly)
+Real Create Fly's own `FluidTankBlockEntity` (common-sourceset) does **not** implement
+`IHaveGoggleInformation` at all - the interface is client-only for a reason: goggle tooltip gathering
+happens through `com.zurrtum.create.client.content.equipment.goggles.GoggleOverlayRenderer`, which
+looks up a **client-registered `TooltipBehaviour`** via `BlockEntityBehaviour.get(world, pos,
+TooltipBehaviour.TYPE)` - NOT via `instanceof IHaveGoggleInformation` on the block entity itself. The
+real `FluidTankTooltipBehaviour` (client-only, `implements IHaveGoggleInformation`) is registered per
+block-entity-type via `BlockEntityBehaviour.CLIENT_REGISTRY`/the generic-safe static helper
+`BlockEntityBehaviour.addClient(type, factory)`, called from `com.zurrtum.create.client.
+AllBlockEntityBehaviours.register()` (Create Fly's own client entrypoint registration, analogous to
+`addBehaviours()` but client-only and keyed by type rather than per-instance). Mirrored this exactly:
+removed `implements IHaveGoggleInformation` and the `addToGoggleTooltip(...)` method body from
+`FluidVesselBlockEntity` (moved to a new `src/client/java` `FluidVesselTooltipBehaviour extends
+TooltipBehaviour<FluidVesselBlockEntity> implements IHaveGoggleInformation`), and registered it via
+`BlockEntityBehaviour.addClient(CCBlockEntityTypes.FLUID_VESSEL, FluidVesselTooltipBehaviour::new)`
+in `CreateConnectedClient.onInitializeClient()`. `CreativeFluidVesselBlockEntity`'s override (which
+always returned `false`, i.e. "no goggle info") needed no client counterpart at all - simply not
+registering a tooltip behaviour for `CREATIVE_FLUID_VESSEL` achieves the identical "instanceof check
+is never true, so no info shown" outcome for free.
+
+### NOT YET DONE: `KineticBatteryBlockEntity`'s `ScrollOptionBehaviour`/`CreateLang` cross-boundary issues
+Investigated but not fixed this session (ran out of time/scope for this round) - flagged clearly here
+rather than silently left broken. `KineticBatteryBlockEntity` declares `protected
+ScrollOptionBehaviour<WindmillBearingBlockEntity.RotationDirection> movementDirection;` (client-only
+type) as an instance field, constructed unconditionally in the common-sourceset `addBehaviours()`
+override - a deeper architectural mismatch than the goggle-tooltip case, not a simple hook-extraction:
+- Real Create Fly's own `WindmillBearingBlockEntity` (the class whose `RotationDirection` enum this
+  field reuses) uses `com.zurrtum.create.foundation.blockEntity.behaviour.scrollValue.
+  ServerScrollOptionBehaviour<RotationDirection>` (common-sourceset, constructor
+  `(Class<E>, SmartBlockEntity)` only - no label/no value-box-transform params at all) for the actual
+  stored-value logic, added in its own common `addBehaviours()` exactly like any other behaviour.
+- The client `ScrollOptionBehaviour<T>` (which our file currently references) is `abstract`, can't be
+  instantiated directly at all, and has a completely different constructor shape (`Class<E>,
+  Function<T, INamedIconOptions>, Component label, SmartBlockEntity, ValueBoxTransform`) - it's a
+  **rendering wrapper** around a `ServerScrollOptionBehaviour` instance (accessed via its own
+  inherited `behaviour` field), registered the same `BlockEntityBehaviour.addClient(...)` way as the
+  tooltip behaviour above, not instantiated inline in `addBehaviours()` at all.
+- This means our own file's existing `new ScrollOptionBehaviour<>(RotationDirection.class,
+  ConnectedLang.translateDirect(...), this, new KineticBatteryValueBox(3))` call was **never a valid
+  shape against the real API to begin with** (wrong param count/types, and it's abstract) - not just
+  a cross-boundary issue. Fixing this properly requires: (1) switching the field to
+  `ServerScrollOptionBehaviour<RotationDirection>` in the common `addBehaviours()` (dropping the
+  label/value-box args entirely, they're not applicable there), (2) writing a new concrete client
+  subclass of the abstract `ScrollOptionBehaviour<RotationDirection>` (needs a `Function<RotationDirection,
+  INamedIconOptions>` icon getter and a `createBoard(...)` override - `RotationDirection` would need
+  to implement `INamedIconOptions` or be adapted), and (3) registering that client subclass via
+  `BlockEntityBehaviour.addClient(CCBlockEntityTypes.KINETIC_BATTERY, ...)`. The rest of the file's
+  many `ConnectedLang`/`CreateLang` calls (building a goggle-style tooltip/status display, judging by
+  the method bodies) likely belong in the SAME client-only companion or a sibling `TooltipBehaviour`,
+  not fixed piecemeal here - this whole file needs a dedicated pass, flagged as the next concrete
+  pickup point rather than attempted in fragments.
+
+### Wider discovery: real compileJava reveals ~200 more content/ errors than the javac-direct count ever showed
+Once the 3 named items + the `FluidVesselBlockEntity` cross-boundary fix landed, real
+`./gradlew compileJava` still showed **216, then 210 errors** after additionally fixing every
+remaining `neighborChanged(..., BlockPos fromPos, ...)` -> `Orientation` holdout found via grep
+(`BrakeBlock`, `CopycatFenceGateBlock`, `InvertedClutchBlock`, `OverstressClutchBlock` - the pattern
+already established in session 14 for `InventoryBridgeBlock`/`InventoryAccessPortBlock`;
+`CopycatFenceGateBlock` additionally needed `BlockStateBase.handleNeighborChanged(...)`'s own matching
+`Orientation` param swap) and every `Item.getDescriptionId()` override (**now `final` on `Item`,
+confirmed via `javap` - cannot be overridden at all anymore**; fixed 6 files -
+`VerticalBrassGearboxItem`/`CopycatBoxItem`/`CopycatCatwalkItem`/`ChargedKineticBatteryItem`/
+`VerticalParallelGearboxItem`/`VerticalSixWayGearboxItem` - by overriding `getName(ItemStack)`
+instead, returning `Component.translatable(sameFixedKey)`, which is the intended modern replacement
+for "this item always displays under one fixed unrelated-to-block translation key").
+**This ~200-error remainder is a substantially larger scope than the 3 coordinator-named files** -
+spanning many more `content/` files with a mix of: more `Orientation`-shaped signature drift (not yet
+fully swept), private-access errors that may or may not be genuine (some are the already-documented
+access-widener false-positive class, needs re-verification per file since the javac-direct workaround
+can no longer be blindly trusted as the arbiter - see the methodology finding above), constructor
+signature mismatches (`AnalogLeverBlockEntity`/`BracketedKineticBlockEntity` base class constructors
+now take different params), a `name clash` generics-erasure error (`LinkedAnalogLeverBlockEntity.
+addBehaviours(List<BlockEntityBehaviour>)` vs the raw-typed inherited one), and likely more
+cross-boundary main-imports-client bugs following the exact pattern found this session. **Not
+attempted further this session** - this is now understood to be a large, multi-session "finish the
+content/ triage" item in its own right, distinct from (and larger than) what the "~278 errors, 3 named
+files" framing suggested going in. Flagged clearly rather than either quietly abandoning it or
+grinding through all ~200 remaining errors without surfacing the scope change first.
+
+### Status after this session
+Real `./gradlew compileJava`: **210 errors** (down from 278 at the start of this session - a
+68-error reduction, despite the scope turning out much larger than anticipated). javac-direct was
+not re-run as the primary metric this session per the methodology finding above, but was used
+locally to confirm each individual fix compiled before moving to the next.
+
 ## Constraints / house rules
 - Don't add speculative abstractions or backwards-compat shims. Match the existing
   code's structure/intent as closely as Fabric + Create Fly allow.

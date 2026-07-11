@@ -2,9 +2,8 @@ package com.hlysine.create_connected.datagen.advancements;
 
 import com.hlysine.create_connected.CreateConnected;
 import com.zurrtum.create.Create;
-import com.zurrtum.create.foundation.advancement.CreateAdvancement;
 import net.minecraft.advancements.*;
-import net.minecraft.advancements.critereon.*;
+import net.minecraft.advancements.criterion.*;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -23,7 +22,10 @@ import java.util.function.UnaryOperator;
 
 public class CCAdvancement implements Awardable {
 
-    static final Identifier BACKGROUND = Create.asResource("textures/gui/advancements.png");
+    // Create.asResource(...) never existed in real Create Fly (com.zurrtum.create.Create has no such
+    // helper) - it was the original NeoForge Create's own internal datagen convenience, never
+    // 1:1-mapped. Inlined directly via Create.MOD_ID instead.
+    static final Identifier BACKGROUND = Identifier.fromNamespaceAndPath(Create.MOD_ID, "textures/gui/advancements.png");
     static final String LANG = "advancement." + CreateConnected.MODID + ".";
     static final String SECRET_SUFFIX = "\n§7(Hidden Advancement)";
 
@@ -65,7 +67,9 @@ public class CCAdvancement implements Awardable {
     public boolean isAlreadyAwardedTo(Player player) {
         if (!(player instanceof ServerPlayer sp))
             return true;
-        AdvancementHolder advancement = sp.getServer()
+        // ServerPlayer/Entity have no getServer() anymore - real access is via the level
+        // (ServerPlayer.level() already returns ServerLevel, which does have getServer()).
+        AdvancementHolder advancement = sp.level().getServer()
                 .getAdvancements()
                 .get(CreateConnected.asResource(id));
         if (advancement == null)
@@ -182,8 +186,14 @@ public class CCAdvancement implements Awardable {
         }
 
         CCAdvancement.Builder whenItemCollected(TagKey<Item> tag) {
+            // ItemPredicate.Builder.of(TagKey) gained a required leading HolderGetter<Item> param -
+            // acquireBootstrapRegistrationLookup is the real datagen-time source for one (this
+            // overload is unused anywhere in this mod currently, so a live HolderLookup.Provider
+            // threaded through from save() wasn't worth plumbing in just for this).
             return externalTrigger(InventoryChangeTrigger.TriggerInstance
-                    .hasItems(ItemPredicate.Builder.item().of(tag).build()));
+                    .hasItems(ItemPredicate.Builder.item()
+                            .of(net.minecraft.core.registries.BuiltInRegistries.acquireBootstrapRegistrationLookup(net.minecraft.core.registries.BuiltInRegistries.ITEM), tag)
+                            .build()));
         }
 
         CCAdvancement.Builder awardedForFree() {
