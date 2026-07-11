@@ -1,19 +1,12 @@
 package com.hlysine.create_connected.content.brasschute;
 
-import com.hlysine.create_connected.registries.CCBlockEntityTypes;
-import com.hlysine.create_connected.CreateConnected;
 import com.hlysine.create_connected.mixin.brasschute.ChuteBlockEntityAccessor;
 import com.zurrtum.create.content.logistics.chute.ChuteBlockEntity;
 import com.zurrtum.create.content.logistics.chute.ChuteItemHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 
-@EventBusSubscriber(modid = CreateConnected.MODID)
 public class BrassChuteBlockEntity extends ChuteBlockEntity {
     public BrassChuteBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -28,12 +21,8 @@ public class BrassChuteBlockEntity extends ChuteBlockEntity {
         return ((ChuteBlockEntityAccessor) this).getItemHandler();
     }
 
-    @SubscribeEvent
-    public static void registerCapabilities(RegisterCapabilitiesEvent event) {
-        event.registerBlockEntity(
-                Capabilities.ItemHandler.BLOCK,
-                CCBlockEntityTypes.BRASS_CHUTE,
-                (be, context) -> be.itemHandler()
-        );
-    }
+    // NeoForge's RegisterCapabilitiesEvent registration is gone - this type is registered onto
+    // Fabric's ItemStorage.SIDED via CCTransfer.register() instead (ChuteItemHandler already
+    // implements Create Fly's own ItemInventory/vanilla Container, so it plugs straight into
+    // InventoryStorage.of() the same way Create Fly's own CHUTE registration does in AllTransfer).
 }

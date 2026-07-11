@@ -1,20 +1,18 @@
 package com.hlysine.create_connected.content.itemsilo;
 
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
-import com.hlysine.create_connected.CreateConnected;
 import com.zurrtum.create.api.connectivity.ConnectivityHandler;
 import com.zurrtum.create.api.packager.InventoryIdentifier;
-import com.zurrtum.create.foundation.ICapabilityProvider;
 import com.zurrtum.create.foundation.blockEntity.IMultiBlockEntityContainer;
 import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
 import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
-import com.zurrtum.create.foundation.blockEntity.behaviour.inventory.VersionedInventoryWrapper;
-import com.zurrtum.create.foundation.mixin.accessor.ItemStackHandlerAccessor;
 import com.zurrtum.create.infrastructure.config.AllConfigs;
+import com.zurrtum.create.infrastructure.items.CombinedInvWrapper;
+import com.zurrtum.create.infrastructure.items.ItemStackHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.Container;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.Clearable;
@@ -24,21 +22,19 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.IItemHandlerModifiable;
-import net.neoforged.neoforge.items.ItemStackHandler;
-import net.neoforged.neoforge.items.wrapper.CombinedInvWrapper;
 
 import java.util.List;
 
-@EventBusSubscriber(modid = CreateConnected.MODID)
 public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlockEntityContainer.Inventory, Clearable {
 
-    protected ICapabilityProvider<IItemHandler> itemCapability = null;
+    // NeoForge's ICapabilityProvider<IItemHandler> lazy/invalidatable wrapper doesn't exist in real
+    // Create Fly at all (confirmed absent from the sources jar - see PORTING_NOTES.md). itemCapability
+    // is now just the plain Container this block entity exposes directly, registered onto Fabric's
+    // ItemStorage.SIDED via CCTransfer.register() (InventoryStorage.of(itemCapability, side)).
+    // Fabric's own BlockApiCache handles staleness/revalidation at the querying side, so the old
+    // "isRemoved() guard inside a lazily-resolved provider" ceremony isn't needed anymore either -
+    // initCapability() is simply re-run (cheaply, since it early-returns once cached) on every query.
+    protected Container itemCapability = null;
     protected InventoryIdentifier invId;
 
     protected ItemStackHandler inventory;
@@ -52,10 +48,14 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
     public ItemSiloBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
 
+        // Real Create Fly's own ItemStackHandler has no onContentsChanged(int) hook to override
+        // (unlike the old NeoForge one) - overriding setItem() directly gets the same "notified on
+        // every slot write" behavior, since Container's mixed-in insert/extract/merge logic also
+        // routes all its mutations through setItem().
         inventory = new ItemStackHandler(AllConfigs.server().logistics.vaultCapacity.get()) {
             @Override
-            protected void onContentsChanged(int slot) {
-                super.onContentsChanged(slot);
+            public void setItem(int slot, ItemStack stack) {
+                super.setItem(slot, stack);
                 updateComparators();
                 level.blockEntityChanged(worldPosition);
             }
@@ -65,19 +65,9 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
         length = 1;
     }
 
-    @SubscribeEvent
-    public static void registerCapabilities(RegisterCapabilitiesEvent event) {
-        event.registerBlockEntity(
-                Capabilities.ItemHandler.BLOCK,
-                CCBlockEntityTypes.ITEM_SILO,
-                (be, context) -> {
-                    be.initCapability();
-                    if (be.itemCapability == null)
-                        return null;
-                    return be.itemCapability.getCapability();
-                }
-        );
-    }
+    // NeoForge's RegisterCapabilitiesEvent registration is gone - this type is registered onto
+    // Fabric's ItemStorage.SIDED via CCTransfer.register() (be.initCapability(); return
+    // be.itemCapability;, matching Create Fly's own AllTransfer.registerItemSide() pattern).
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour<?>> behaviours) {
@@ -107,6 +97,17 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
                 }
             }
         }
+    }
+
+    // Moved here from ItemSiloBlock.onRemove(state, level, pos, newState, isMoving), which no longer
+    // exists as an overridable Block method - vanilla now calls this hook on the block entity itself
+    // only when it's genuinely being discarded (matching the old override's own
+    // state.getBlock() != newState.getBlock() guard, so no equivalent check is needed here).
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        com.zurrtum.create.foundation.item.ItemHelper.dropContents(level, pos, inventory);
+        ConnectivityHandler.splitMulti(this);
     }
 
     @Override
@@ -166,7 +167,6 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
         }
 
         itemCapability = null;
-        invalidateCapabilities();
         setChanged();
         sendData();
     }
@@ -179,7 +179,6 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
             return;
         this.controller = controller;
         itemCapability = null;
-        invalidateCapabilities();
         setChanged();
         sendData();
     }
@@ -208,10 +207,9 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
         }
 
         if (!clientPacket) {
-            // NeoForge's ItemStackHandler.deserializeNBT still expects a raw CompoundTag - bridged
-            // via CompoundTag.CODEC here; ItemStackHandler itself is part of the separate NeoForge
-            // Capabilities -> Fabric Transfer API rewrite (see PORTING_NOTES.md), not yet done.
-            inventory.deserializeNBT(view.lookup(), view.read("Inventory", CompoundTag.CODEC).orElseGet(CompoundTag::new));
+            // Real Create Fly's own ItemStackHandler.read(ValueInput) reads its own "Inventory" key
+            // straight off the view (no raw CompoundTag/deserializeNBT bridging needed anymore).
+            inventory.read(view);
             return;
         }
 
@@ -238,7 +236,7 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
 
         if (!clientPacket) {
             view.putString("StorageType", "CombinedInv");
-            view.store("Inventory", CompoundTag.CODEC, inventory.serializeNBT(view.lookup()));
+            inventory.write(view);
         }
     }
 
@@ -252,31 +250,36 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
         return this.invId;
     }
 
-    public void applyInventoryToBlock(ItemStackHandler handler) {
-        for (int i = 0; i < inventory.getSlots(); i++)
-            inventory.setStackInSlot(i, i < handler.getSlots() ? handler.getStackInSlot(i) : ItemStack.EMPTY);
+    // Public entry point for CCTransfer.register()'s ItemStorage.SIDED lookup - initCapability()
+    // itself stays private since only this class's own controller/non-controller recursion needs it.
+    public Container getItemCapability() {
+        initCapability();
+        return itemCapability;
     }
 
+    public void applyInventoryToBlock(ItemStackHandler handler) {
+        for (int i = 0; i < inventory.getContainerSize(); i++)
+            inventory.setItem(i, i < handler.getContainerSize() ? handler.getItem(i) : ItemStack.EMPTY);
+    }
+
+    // Same caching shape as before, minus the NeoForge-only lazy ICapabilityProvider/
+    // VersionedInventoryWrapper machinery (neither exists in real Create Fly) - itemCapability is
+    // reset to null (by setController()/removeController()/notifyMultiUpdated(), same trigger points
+    // as before) whenever it needs recomputing, and this just early-returns once it's already cached.
     private void initCapability() {
-        if (itemCapability != null && itemCapability.getCapability() != null)
+        if (itemCapability != null)
             return;
         if (!isController()) {
             ItemSiloBlockEntity controllerBE = getControllerBE();
             if (controllerBE == null)
                 return;
             controllerBE.initCapability();
-            itemCapability = ICapabilityProvider.of(() -> {
-                if (controllerBE.isRemoved())
-                    return null;
-                if (controllerBE.itemCapability == null)
-                    return null;
-                return controllerBE.itemCapability.getCapability();
-            });
+            itemCapability = controllerBE.itemCapability;
             invId = controllerBE.invId;
             return;
         }
 
-        IItemHandlerModifiable[] invs = new IItemHandlerModifiable[length * radius * radius];
+        Container[] invs = new Container[length * radius * radius];
         for (int yOffset = 0; yOffset < length; yOffset++) {
             for (int xOffset = 0; xOffset < radius; xOffset++) {
                 for (int zOffset = 0; zOffset < radius; zOffset++) {
@@ -289,7 +292,7 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
             }
         }
 
-        itemCapability = ICapabilityProvider.of(new VersionedInventoryWrapper(new CombinedInvWrapper(invs)));
+        itemCapability = new CombinedInvWrapper(invs);
 
         // build an identifier encompassing all component vaults
         BlockPos farCorner = worldPosition.offset(radius, length, radius);
@@ -313,7 +316,6 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
             level.setBlock(getBlockPos(), state.setValue(ItemSiloBlock.LARGE, radius > 2), 6);
         }
         itemCapability = null;
-        invalidateCapabilities();
         setChanged();
     }
 
@@ -360,7 +362,9 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
 
     @Override
     public void clearContent() {
-        ((ItemStackHandlerAccessor) inventory).create$getStacks().clear();
+        // com.zurrtum.create.foundation.mixin.accessor.ItemStackHandlerAccessor never existed in
+        // real Create Fly - its own ItemStackHandler.getStacks() is already a plain public method.
+        inventory.getStacks().clear();
     }
 }
 

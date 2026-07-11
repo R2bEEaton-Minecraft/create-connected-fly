@@ -2,6 +2,7 @@ package com.hlysine.create_connected.content.fluidvessel;
 
 
 import com.hlysine.create_connected.registries.CCMountedStorageTypes;
+import com.zurrtum.create.AllClientHandle;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.zurrtum.create.api.contraption.storage.SyncedMountedStorage;
@@ -17,8 +18,8 @@ import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
+import com.zurrtum.create.infrastructure.fluids.FluidStack;
+import com.zurrtum.create.foundation.fluid.FluidTank;
 import org.jetbrains.annotations.Nullable;
 
 public class FluidVesselMountedStorage extends WrapperMountedFluidStorage<FluidVesselMountedStorage.Handler> implements SyncedMountedStorage {
@@ -52,7 +53,7 @@ public class FluidVesselMountedStorage extends WrapperMountedFluidStorage<FluidV
     }
 
     public int getCapacity() {
-        return this.wrapped.getCapacity();
+        return this.wrapped.getMaxAmountPerStack();
     }
 
     @Override
@@ -67,13 +68,16 @@ public class FluidVesselMountedStorage extends WrapperMountedFluidStorage<FluidV
 
     @Override
     public void afterSync(Contraption contraption, BlockPos localPos) {
-        BlockEntity be = contraption.getBlockEntityClientSide(localPos);
+        // Contraption.getBlockEntityClientSide(pos) doesn't exist - real Create Fly routes this
+        // through the AllClientHandle multiloader service-locator singleton instead (see its own
+        // FluidTankMountedStorage.afterSync() for the identical reference pattern).
+        BlockEntity be = AllClientHandle.INSTANCE.getBlockEntityClientSide(contraption, localPos);
         if (!(be instanceof FluidTankBlockEntity tank))
             return;
 
         FluidTank inv = tank.getTankInventory();
         inv.setFluid(this.getFluid());
-        float fillLevel = inv.getFluidAmount() / (float) inv.getCapacity();
+        float fillLevel = inv.getFluid().getAmount() / (float) inv.getMaxAmountPerStack();
         if (tank.getFluidLevel() == null) {
             tank.setFluidLevel(LerpedFloat.linear().startWithValue(fillLevel));
         }
@@ -83,12 +87,14 @@ public class FluidVesselMountedStorage extends WrapperMountedFluidStorage<FluidV
     public static FluidVesselMountedStorage fromTank(FluidTankBlockEntity tank) {
         // tank has update callbacks, make an isolated copy
         FluidTank inventory = tank.getTankInventory();
-        return new FluidVesselMountedStorage(inventory.getCapacity(), inventory.getFluid().copy());
+        return new FluidVesselMountedStorage(inventory.getMaxAmountPerStack(), inventory.getFluid().copy());
     }
 
     public static FluidVesselMountedStorage fromLegacy(HolderLookup.Provider registries, CompoundTag nbt) {
         int capacity = nbt.getIntOr("Capacity", 0);
-        FluidStack fluid = FluidStack.parseOptional(registries, nbt);
+        // Create Fly's own FluidStack has no NeoForge-style parseOptional(registries, tag) - the
+        // direct-Tag overload of fromNbt returns Optional<FluidStack> for the same top-level parse.
+        FluidStack fluid = FluidStack.fromNbt(registries, nbt).orElse(FluidStack.EMPTY);
         return new FluidVesselMountedStorage(capacity, fluid);
     }
 
@@ -101,7 +107,7 @@ public class FluidVesselMountedStorage extends WrapperMountedFluidStorage<FluidV
         }
 
         @Override
-        protected void onContentsChanged() {
+        public void markDirty() {
             this.onChange.run();
         }
     }

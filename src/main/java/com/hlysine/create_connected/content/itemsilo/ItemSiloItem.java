@@ -3,7 +3,6 @@ package com.hlysine.create_connected.content.itemsilo;
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.zurrtum.create.api.connectivity.ConnectivityHandler;
 import com.zurrtum.create.content.equipment.symmetryWand.SymmetryWandItem;
-import com.zurrtum.create.foundation.block.IBE;
 import com.zurrtum.create.catnip.math.VecHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -16,11 +15,11 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.TypedEntityData;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class ItemSiloItem extends BlockItem {
@@ -44,15 +43,17 @@ public class ItemSiloItem extends BlockItem {
         MinecraftServer minecraftserver = level.getServer();
         if (minecraftserver == null)
             return false;
-        CustomData blockEntityData = itemStack.get(DataComponents.BLOCK_ENTITY_DATA);
+        // DataComponents.BLOCK_ENTITY_DATA is now typed TypedEntityData<BlockEntityType<?>> (not the
+        // old untyped CustomData) - the block entity type travels as TypedEntityData's own `type`
+        // field instead of an "id" key baked into the raw tag (see FluidVesselItem for the same fix).
+        TypedEntityData<BlockEntityType<?>> blockEntityData = itemStack.get(DataComponents.BLOCK_ENTITY_DATA);
         if (blockEntityData != null) {
-            CompoundTag nbt = blockEntityData.copyTag();
+            CompoundTag nbt = blockEntityData.getUnsafe().copy();
             nbt.remove("Length");
             nbt.remove("Size");
             nbt.remove("Controller");
             nbt.remove("LastKnownPos");
-            BlockEntity.addEntityType(nbt, ((IBE<?>) this.getBlock()).getBlockEntityType());
-            itemStack.set(DataComponents.BLOCK_ENTITY_DATA, CustomData.of(nbt));
+            itemStack.set(DataComponents.BLOCK_ENTITY_DATA, TypedEntityData.of(blockEntityData.type(), nbt));
         }
         return super.updateCustomBlockEntityTag(blockPos, level, player, itemStack, blockState);
     }
@@ -124,11 +125,12 @@ public class ItemSiloItem extends BlockItem {
                 if (ItemSiloBlock.isVault(blockState))
                     continue;
                 BlockPlaceContext context = BlockPlaceContext.at(ctx, offsetPos, face);
-                player.getPersistentData()
-                        .putBoolean("SilenceVaultSound", true);
+                // Entity/Player.getPersistentData() is gone entirely - the only reader of this
+                // "SilenceVaultSound" flag was ItemSiloBlock.getSoundType(), which already lost its
+                // Entity/LevelReader/BlockPos context in the same vanilla API migration and can no
+                // longer read any per-placement flag at all (see its disclosed comment), so this
+                // set/remove pair is dead code now, not a feature needing a replacement mechanism.
                 super.place(context);
-                player.getPersistentData()
-                        .remove("SilenceVaultSound");
             }
         }
     }

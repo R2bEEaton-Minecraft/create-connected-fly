@@ -5,9 +5,7 @@ import com.zurrtum.create.client.foundation.blockEntity.behaviour.CenteredSideVa
 import com.zurrtum.create.client.flywheel.lib.transform.TransformStack;
 import com.zurrtum.create.catnip.math.AngleHelper;
 import com.zurrtum.create.catnip.math.VecHelper;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -17,8 +15,10 @@ public class InventoryBridgeFilterSlot extends CenteredSideValueBoxTransform {
         super((state, d) -> state.getValue(InventoryBridgeBlock.AXIS) == d.getAxis());
     }
 
+    // ValueBoxTransform.getLocalOffset()/rotate() dropped their LevelAccessor/BlockPos context
+    // params entirely (now BlockState-only) - see PORTING_NOTES.md's wider vanilla API migration.
     @Override
-    public Vec3 getLocalOffset(LevelAccessor level, BlockPos pos, BlockState state) {
+    public Vec3 getLocalOffset(BlockState state) {
         Vec3 location = getSouthLocation();
         if (getSide() == Direction.UP) {
             location = new Vec3(location.x, 1 - location.y, location.z);
@@ -29,8 +29,8 @@ public class InventoryBridgeFilterSlot extends CenteredSideValueBoxTransform {
     }
 
     @Override
-    public void rotate(LevelAccessor level, BlockPos pos, BlockState state, PoseStack ms) {
-        super.rotate(level, pos, state, ms);
+    public void rotate(BlockState state, PoseStack ms) {
+        super.rotate(state, ms);
         if (getSide() == Direction.UP)
             TransformStack.of(ms)
                     .rotateZDegrees(180);

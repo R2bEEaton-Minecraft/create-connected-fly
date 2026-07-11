@@ -1,7 +1,5 @@
 package com.hlysine.create_connected.content.inventoryaccessport;
 
-import com.hlysine.create_connected.registries.CCBlockEntityTypes;
-import com.hlysine.create_connected.CreateConnected;
 import com.zurrtum.create.content.redstone.DirectedDirectionalBlock;
 import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
 import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
@@ -9,17 +7,13 @@ import com.zurrtum.create.foundation.blockEntity.behaviour.inventory.CapManipula
 import com.zurrtum.create.foundation.blockEntity.behaviour.inventory.InvManipulationBehaviour;
 import com.zurrtum.create.catnip.math.BlockFace;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.items.IItemHandler;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -27,16 +21,17 @@ import java.util.function.Supplier;
 
 import static com.hlysine.create_connected.content.inventoryaccessport.InventoryAccessPortBlock.ATTACHED;
 
-@EventBusSubscriber(modid = CreateConnected.MODID)
 public class InventoryAccessPortBlockEntity extends SmartBlockEntity {
-    protected IItemHandler itemCapability;
+    protected Container itemCapability;
     private InvManipulationBehaviour observedInventory;
     private boolean powered;
 
     public InventoryAccessPortBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
 
-        itemCapability = null;
+        // No more lazy NeoForge capability invalidation to guard against - InventoryAccessHandler
+        // just wraps live lookups on every call, so there's nothing stale to ever need refreshing.
+        itemCapability = new InventoryAccessHandler();
         powered = false;
     }
 
@@ -46,18 +41,9 @@ public class InventoryAccessPortBlockEntity extends SmartBlockEntity {
         updateConnectedInventory();
     }
 
-    @SubscribeEvent
-    public static void registerCapabilities(RegisterCapabilitiesEvent event) {
-        event.registerBlockEntity(
-                Capabilities.ItemHandler.BLOCK,
-                CCBlockEntityTypes.INVENTORY_ACCESS_PORT,
-                (be, context) -> {
-                    if (be.itemCapability == null)
-                        be.refreshCapability();
-                    return be.itemCapability;
-                }
-        );
-    }
+    // NeoForge's RegisterCapabilitiesEvent registration is gone - this type is registered onto
+    // Fabric's ItemStorage.SIDED via CCTransfer.register() (InventoryStorage.of(itemCapability, side),
+    // matching Create Fly's own AllTransfer.registerItemSide() pattern).
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour<?>> behaviours) {
@@ -73,6 +59,11 @@ public class InventoryAccessPortBlockEntity extends SmartBlockEntity {
     public @Nullable BlockState getAttachedBlock() {
         if (!isAttached()) return null;
         return level.getBlockState(observedInventory.getTarget().getConnectedPos());
+    }
+
+    // Public entry point for CCTransfer.register()'s ItemStorage.SIDED lookup.
+    public Container getItemCapability() {
+        return itemCapability;
     }
 
     public void updateConnectedInventory() {
@@ -101,18 +92,19 @@ public class InventoryAccessPortBlockEntity extends SmartBlockEntity {
         tag.putBoolean("Powered", powered);
     }
 
-    private IItemHandler getConnectedItemHandler() {
+    private Container getConnectedItemHandler() {
         if (powered) return null;
-        IItemHandler handler = observedInventory.getInventory();
+        Container handler = observedInventory.getInventory();
         if (handler instanceof WrappedItemHandler) return null;
         return handler;
     }
 
-    private void refreshCapability() {
-        itemCapability = new InventoryAccessHandler();
-        invalidateCapabilities();
-    }
-
+    // NeoForge's IItemHandler (getSlots/getStackInSlot/insertItem/extractItem/getSlotLimit/
+    // isItemValid) is gone - this now implements plain vanilla Container. Create Fly's own
+    // ContainerMixin mixes its BaseInventory extension methods (insert/extract/count/etc, the same
+    // ones InvManipulationBehaviour itself uses) into the Container interface directly, so only the
+    // raw slot primitives need implementing here - insert/extract-with-remainder logic for callers
+    // comes free via those inherited default methods, it doesn't need reimplementing by hand.
     private class InventoryAccessHandler implements WrappedItemHandler {
 
         private final ThreadLocal<Boolean> recursionGuard = ThreadLocal.withInitial(() -> false);
@@ -126,50 +118,93 @@ public class InventoryAccessPortBlockEntity extends SmartBlockEntity {
         }
 
         @Override
-        public int getSlots() {
+        public int getContainerSize() {
             return preventRecursion(() -> {
-                IItemHandler handler = getConnectedItemHandler();
-                return handler == null ? 0 : handler.getSlots();
+                Container handler = getConnectedItemHandler();
+                return handler == null ? 0 : handler.getContainerSize();
             }, 0);
         }
 
         @Override
-        public @NotNull ItemStack getStackInSlot(int i) {
+        public boolean isEmpty() {
             return preventRecursion(() -> {
-                IItemHandler handler = getConnectedItemHandler();
-                return handler == null ? ItemStack.EMPTY : handler.getStackInSlot(i);
+                Container handler = getConnectedItemHandler();
+                return handler == null || handler.isEmpty();
+            }, true);
+        }
+
+        @Override
+        public ItemStack getItem(int slot) {
+            return preventRecursion(() -> {
+                Container handler = getConnectedItemHandler();
+                return handler == null ? ItemStack.EMPTY : handler.getItem(slot);
             }, ItemStack.EMPTY);
         }
 
         @Override
-        public @NotNull ItemStack insertItem(int i, @NotNull ItemStack itemStack, boolean b) {
+        public ItemStack removeItem(int slot, int amount) {
             return preventRecursion(() -> {
-                IItemHandler handler = getConnectedItemHandler();
-                return handler == null ? itemStack : handler.insertItem(i, itemStack, b);
-            }, itemStack);
-        }
-
-        @Override
-        public @NotNull ItemStack extractItem(int i, int i1, boolean b) {
-            return preventRecursion(() -> {
-                IItemHandler handler = getConnectedItemHandler();
-                return handler == null ? ItemStack.EMPTY : handler.extractItem(i, i1, b);
+                Container handler = getConnectedItemHandler();
+                return handler == null ? ItemStack.EMPTY : handler.removeItem(slot, amount);
             }, ItemStack.EMPTY);
         }
 
         @Override
-        public int getSlotLimit(int i) {
+        public ItemStack removeItemNoUpdate(int slot) {
             return preventRecursion(() -> {
-                IItemHandler handler = getConnectedItemHandler();
-                return handler == null ? 0 : handler.getSlotLimit(i);
-            }, 0);
+                Container handler = getConnectedItemHandler();
+                return handler == null ? ItemStack.EMPTY : handler.removeItemNoUpdate(slot);
+            }, ItemStack.EMPTY);
         }
 
         @Override
-        public boolean isItemValid(int i, @NotNull ItemStack itemStack) {
+        public void setItem(int slot, ItemStack stack) {
+            preventRecursion(() -> {
+                Container handler = getConnectedItemHandler();
+                if (handler != null)
+                    handler.setItem(slot, stack);
+                return null;
+            }, null);
+        }
+
+        @Override
+        public int getMaxStackSize() {
             return preventRecursion(() -> {
-                IItemHandler handler = getConnectedItemHandler();
-                return handler != null && handler.isItemValid(i, itemStack);
+                Container handler = getConnectedItemHandler();
+                return handler == null ? 64 : handler.getMaxStackSize();
+            }, 64);
+        }
+
+        @Override
+        public void setChanged() {
+            preventRecursion(() -> {
+                Container handler = getConnectedItemHandler();
+                if (handler != null)
+                    handler.setChanged();
+                return null;
+            }, null);
+        }
+
+        @Override
+        public boolean stillValid(Player player) {
+            return false;
+        }
+
+        @Override
+        public void clearContent() {
+            preventRecursion(() -> {
+                Container handler = getConnectedItemHandler();
+                if (handler != null)
+                    handler.clearContent();
+                return null;
+            }, null);
+        }
+
+        @Override
+        public boolean canPlaceItem(int slot, ItemStack stack) {
+            return preventRecursion(() -> {
+                Container handler = getConnectedItemHandler();
+                return handler != null && handler.canPlaceItem(slot, stack);
             }, false);
         }
     }

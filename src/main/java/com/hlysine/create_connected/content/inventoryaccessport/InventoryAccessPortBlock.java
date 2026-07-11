@@ -9,7 +9,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -18,13 +17,13 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.neoforged.neoforge.capabilities.BlockCapability;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.common.extensions.IBlockExtension;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.minecraft.world.level.redstone.Orientation;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
 import org.jetbrains.annotations.NotNull;
 
-public class InventoryAccessPortBlock extends DirectedDirectionalBlock implements IBE<InventoryAccessPortBlockEntity>, IWrenchable, IBlockExtension {
+// NeoForge's IBlockExtension marker interface doesn't exist on Fabric and had no overridden methods
+// actually consumed from it here - dropped from the implements clause entirely.
+public class InventoryAccessPortBlock extends DirectedDirectionalBlock implements IBE<InventoryAccessPortBlockEntity>, IWrenchable {
 
     public static BooleanProperty ATTACHED = BlockStateProperties.ATTACHED;
 
@@ -41,14 +40,14 @@ public class InventoryAccessPortBlock extends DirectedDirectionalBlock implement
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         BlockState state = defaultBlockState();
-        BlockCapability<IItemHandler, Direction> itemCap = Capabilities.ItemHandler.BLOCK;
 
+        // NeoForge's BlockCapability/Capabilities.ItemHandler.BLOCK lookup is gone - Fabric's
+        // ItemStorage.SIDED.find(level, pos, side) is the direct replacement (side=null here,
+        // matching the original's side-agnostic probe intent).
         Direction preferredFacing = null;
         for (Direction face : context.getNearestLookingDirections()) {
-            BlockEntity be = context.getLevel()
-                    .getBlockEntity(context.getClickedPos()
-                            .relative(face));
-            if (be != null && context.getLevel().getCapability(itemCap, be.getBlockPos(), null) != null) {
+            BlockPos neighborPos = context.getClickedPos().relative(face);
+            if (ItemStorage.SIDED.find(context.getLevel(), neighborPos, null) != null) {
                 preferredFacing = face;
                 break;
             }
@@ -73,9 +72,17 @@ public class InventoryAccessPortBlock extends DirectedDirectionalBlock implement
         withBlockEntityDo(worldIn, pos, InventoryAccessPortBlockEntity::updateConnectedInventory);
     }
 
+    // NeoForge's IBlockExtension.onNeighborChange(state, LevelReader, pos, neighborPos) doesn't exist
+    // on Fabric - vanilla's own neighborChanged(state, level, pos, block, orientation, isMoving) is
+    // the real hook available here and fires for the same "a neighbor changed" trigger, so this just
+    // moves the same update call onto it instead (the orientation-based "which neighbor" detail isn't
+    // needed since updateConnectedInventory() re-scans regardless of which side triggered it).
     @Override
-    public void onNeighborChange(@NotNull BlockState state, @NotNull LevelReader level, @NotNull BlockPos pos, @NotNull BlockPos neighbor) {
-        super.onNeighborChange(state, level, pos, neighbor);
+    public void neighborChanged(
+            @NotNull BlockState state, @NotNull Level level, @NotNull BlockPos pos,
+            @NotNull Block neighborBlock, @NotNull Orientation orientation, boolean movedByPiston
+    ) {
+        super.neighborChanged(state, level, pos, neighborBlock, orientation, movedByPiston);
         withBlockEntityDo(level, pos, InventoryAccessPortBlockEntity::updateConnectedInventory);
     }
 
