@@ -19,7 +19,8 @@ import com.zurrtum.create.catnip.data.Iterate;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -79,7 +80,7 @@ public class BoilerData extends com.zurrtum.create.content.fluids.tank.BoilerDat
         configLevelCap = CServer.VesselMaxLevel.get();
 
         Level level = controller.getLevel();
-        if (level.isClientSide) {
+        if (level.isClientSide()) {
             pools.values().forEach(p -> p.play(level));
             gauge.tickChaser();
             float current = gauge.getValue(1);
@@ -122,7 +123,7 @@ public class BoilerData extends com.zurrtum.create.content.fluids.tank.BoilerDat
             super.updateOcclusion(base);
             return;
         }
-        if (!controller.getLevel().isClientSide)
+        if (!controller.getLevel().isClientSide())
             return;
         if (attachedEngines + attachedWhistles == 0)
             return;
@@ -449,25 +450,23 @@ public class BoilerData extends com.zurrtum.create.content.fluids.tank.BoilerDat
     }
 
     @Override
-    public CompoundTag write() {
-        CompoundTag nbt = new CompoundTag();
-        nbt.putFloat("Supply", waterSupply);
-        nbt.putInt("ActiveHeat", activeHeat);
-        nbt.putBoolean("PassiveHeat", passiveHeat);
-        nbt.putInt("Engines", attachedEngines);
-        nbt.putInt("Whistles", attachedWhistles);
-        nbt.putBoolean("Update", needsHeatLevelUpdate);
-        return nbt;
+    public void write(ValueOutput view) {
+        view.putFloat("Supply", waterSupply);
+        view.putInt("ActiveHeat", activeHeat);
+        view.putBoolean("PassiveHeat", passiveHeat);
+        view.putInt("Engines", attachedEngines);
+        view.putInt("Whistles", attachedWhistles);
+        view.putBoolean("Update", needsHeatLevelUpdate);
     }
 
     @Override
-    public void read(CompoundTag nbt, int boilerSize) {
-        waterSupply = nbt.getFloat("Supply");
-        activeHeat = nbt.getInt("ActiveHeat");
-        passiveHeat = nbt.getBoolean("PassiveHeat");
-        attachedEngines = nbt.getInt("Engines");
-        attachedWhistles = nbt.getInt("Whistles");
-        needsHeatLevelUpdate = nbt.getBoolean("Update");
+    public void read(ValueInput view, int boilerSize) {
+        waterSupply = view.getFloatOr("Supply", 0f);
+        activeHeat = view.getIntOr("ActiveHeat", 0);
+        passiveHeat = view.getBooleanOr("PassiveHeat", false);
+        attachedEngines = view.getIntOr("Engines", 0);
+        attachedWhistles = view.getIntOr("Whistles", 0);
+        needsHeatLevelUpdate = view.getBooleanOr("Update", false);
         Arrays.fill(supplyOverTime, (int) waterSupply);
 
         int forBoilerSize = getMaxHeatLevelForBoilerSize(boilerSize);

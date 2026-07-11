@@ -1,42 +1,25 @@
 package com.hlysine.create_connected.registries;
 
-import com.hlysine.create_connected.CreateConnected;
 import com.hlysine.create_connected.content.contraption.jukebox.PlayContraptionJukeboxPacket;
 import com.hlysine.create_connected.content.sequencedpulsegenerator.ConfigureSequencedPulseGeneratorPacket;
-import com.zurrtum.create.catnip.net.base.BasePacketPayload;
-import com.zurrtum.create.catnip.net.base.CatnipPacketRegistry;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 
-import java.util.Locale;
-
-public enum CCPackets implements BasePacketPayload.PacketTypeProvider {
-    CONFIGURE_SEQUENCER(ConfigureSequencedPulseGeneratorPacket.class, ConfigureSequencedPulseGeneratorPacket.STREAM_CODEC),
-    PLAY_CONTRAPTION_JUKEBOX(PlayContraptionJukeboxPacket.class, PlayContraptionJukeboxPacket.STREAM_CODEC);
-
-    private final CatnipPacketRegistry.PacketType<?> type;
-
-    <T extends BasePacketPayload> CCPackets(Class<T> clazz, StreamCodec<? super RegistryFriendlyByteBuf, T> codec) {
-        String name = this.name().toLowerCase(Locale.ROOT);
-        this.type = new CatnipPacketRegistry.PacketType<>(
-                new CustomPacketPayload.Type<>(CreateConnected.asResource(name)),
-                clazz, codec
-        );
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public <T extends CustomPacketPayload> CustomPacketPayload.Type<T> getType() {
-        return (CustomPacketPayload.Type<T>) this.type.type();
-    }
-
+// Create Fly's own com.zurrtum.create.catnip.net.base.* networking base classes
+// (BasePacketPayload/CatnipPacketRegistry/ClientboundPacketPayload/BlockEntityConfigurationPacket)
+// don't exist at all in this version (verified: absent from the sources jar entirely, not just
+// relocated) - this mod's packets are now plain vanilla CustomPacketPayload records registered
+// directly via Fabric's PayloadTypeRegistry, matching the pattern config/SyncConfigBase.java used
+// in session 1. The server-bound ConfigureSequencedPulseGeneratorPacket's receiver is registered
+// here (main, both sides need the payload type registered); the client-bound
+// PlayContraptionJukeboxPacket's receiver is registered client-side (see
+// content/contraption/jukebox/PlayContraptionJukeboxPacketClient.java).
+public class CCPackets {
     public static void register() {
-        CatnipPacketRegistry packetRegistry = new CatnipPacketRegistry(CreateConnected.MODID, 1);
-        for (CCPackets packet : CCPackets.values()) {
-            packetRegistry.registerPacket(packet.type);
-        }
-        packetRegistry.registerAllPackets();
+        PayloadTypeRegistry.playS2C().register(PlayContraptionJukeboxPacket.TYPE, PlayContraptionJukeboxPacket.STREAM_CODEC);
+        PayloadTypeRegistry.playC2S().register(ConfigureSequencedPulseGeneratorPacket.TYPE, ConfigureSequencedPulseGeneratorPacket.STREAM_CODEC);
+
+        ServerPlayNetworking.registerGlobalReceiver(ConfigureSequencedPulseGeneratorPacket.TYPE, (payload, context) ->
+                payload.handle(context.player()));
     }
 }
-

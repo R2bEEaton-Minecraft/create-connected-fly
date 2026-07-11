@@ -260,15 +260,18 @@ public class CCBlocks {
     public static final KineticBatteryBlock KINETIC_BATTERY =
             CCRegistrate.block("kinetic_battery", KineticBatteryBlock::new, CCSharedProperties.stone().noOcclusion().mapColor(MapColor.TERRACOTTA_BROWN)
                     .component(CCDataComponents.KINETIC_BATTERY_CHARGE, 0.0));
+    public static final KineticBatteryBlockItem KINETIC_BATTERY_ITEM =
+            CCRegistrate.blockItem(KINETIC_BATTERY, "kinetic_battery", (b, p) -> new KineticBatteryBlockItem(b, p),
+                    new net.minecraft.world.item.Item.Properties().component(CCDataComponents.KINETIC_BATTERY_CHARGE, 0.0));
     static {
         CStress.setCapacity(KINETIC_BATTERY, 32.0);
         CStress.setImpact(KINETIC_BATTERY, 64.0);
         FeatureToggle.register(id("kinetic_battery"), FeatureCategory.KINETIC);
         DisplaySource.BY_BLOCK.add(KINETIC_BATTERY, CCDisplaySources.KINETIC_BATTERY);
-        KineticBatteryBlockItem kineticBatteryItem = CCRegistrate.blockItem(KINETIC_BATTERY, "kinetic_battery", (b, p) -> new KineticBatteryBlockItem(b, p),
-                new net.minecraft.world.item.Item.Properties().component(CCDataComponents.KINETIC_BATTERY_CHARGE, 0.0));
-        // registerModelOverrides()/KineticBatteryOverrides model additions are client-only
-        // rendering, deferred to client conversion (see PORTING_NOTES.md)
+        // KineticBatteryOverrides.registerModelOverridesClient(KINETIC_BATTERY_ITEM) is called from
+        // CreateConnectedClient.onInitializeClient() instead of here - it's client-only rendering
+        // (ItemProperties.register), can't be reached from this main-sourceset class per Loom's
+        // split source sets (see PORTING_NOTES.md).
     }
 
     public static final SequencedPulseGeneratorBlock SEQUENCED_PULSE_GENERATOR =

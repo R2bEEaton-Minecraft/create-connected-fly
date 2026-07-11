@@ -17,14 +17,13 @@ import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
 import com.zurrtum.create.client.foundation.blockEntity.behaviour.scrollValue.ScrollOptionBehaviour;
 import com.zurrtum.create.client.foundation.utility.CreateLang;
 import joptsimple.internal.Strings;
-import com.zurrtum.create.catnip.codecs.CatnipCodecUtils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponentPatch;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -54,7 +53,7 @@ public class KineticBatteryBlockEntity extends GeneratingKineticBlockEntity impl
     }
 
     @Override
-    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+    public void addBehaviours(List<BlockEntityBehaviour<?>> behaviours) {
         super.addBehaviours(behaviours);
         movementDirection = new ScrollOptionBehaviour<>(WindmillBearingBlockEntity.RotationDirection.class,
                 ConnectedLang.translateDirect("battery.rotation_direction"),
@@ -291,23 +290,23 @@ public class KineticBatteryBlockEntity extends GeneratingKineticBlockEntity impl
     }
 
     @Override
-    protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
-        super.read(compound, registries, clientPacket);
-        batteryLevel = compound.getFloat("batteryLevel");
-        queuedSync = compound.getBoolean("queuedSync");
-        consumedStress = compound.getFloat("consumedStress");
-        applyMinStress = compound.getBoolean("applyMinStress");
-        componentPatch = CatnipCodecUtils.decode(DataComponentPatch.CODEC, registries, compound.getCompound("Components")).orElse(DataComponentPatch.EMPTY);
+    protected void read(ValueInput view, boolean clientPacket) {
+        super.read(view, clientPacket);
+        batteryLevel = view.getFloatOr("batteryLevel", 0f);
+        queuedSync = view.getBooleanOr("queuedSync", false);
+        consumedStress = view.getFloatOr("consumedStress", 0f);
+        applyMinStress = view.getBooleanOr("applyMinStress", false);
+        componentPatch = view.read("Components", DataComponentPatch.CODEC).orElse(DataComponentPatch.EMPTY);
     }
 
     @Override
-    protected void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
-        super.write(compound, registries, clientPacket);
-        compound.putDouble("batteryLevel", batteryLevel);
-        compound.putBoolean("queuedSync", queuedSync);
-        compound.putFloat("consumedStress", consumedStress);
-        compound.putBoolean("applyMinStress", applyMinStress);
-        compound.put("Components", CatnipCodecUtils.encode(DataComponentPatch.CODEC, registries, componentPatch).orElse(new CompoundTag()));
+    protected void write(ValueOutput view, boolean clientPacket) {
+        super.write(view, clientPacket);
+        view.putDouble("batteryLevel", batteryLevel);
+        view.putBoolean("queuedSync", queuedSync);
+        view.putFloat("consumedStress", consumedStress);
+        view.putBoolean("applyMinStress", applyMinStress);
+        view.store("Components", DataComponentPatch.CODEC, componentPatch);
     }
 
     @Override

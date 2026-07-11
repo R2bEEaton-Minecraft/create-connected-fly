@@ -1,8 +1,7 @@
 package com.hlysine.create_connected.content.kineticbattery;
 
-import com.hlysine.create_connected.ConnectedLang;
+import com.hlysine.create_connected.CreateConnected;
 import com.hlysine.create_connected.registries.CCDataComponents;
-import com.zurrtum.create.catnip.platform.CatnipServices;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
@@ -11,7 +10,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.block.Block;
 
+import java.text.NumberFormat;
 import java.util.List;
+import java.util.Locale;
 
 import static com.hlysine.create_connected.content.kineticbattery.KineticBatteryBlockEntity.*;
 
@@ -45,22 +46,17 @@ public class KineticBatteryBlockItem extends BlockItem {
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
         super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
         double batteryLevel = getBatteryLevel(stack);
-        ConnectedLang.builder().add(ConnectedLang.translateDirect("battery.charge")
-                        .withStyle(ChatFormatting.GRAY)
-                        .append(" ")
-                        .append(barComponent(0, getCrudeBatteryLevel(batteryLevel, 20), 20)))
-                .addTo(tooltipComponents);
-        ConnectedLang.builder().space()
-                .add(ConnectedLang.number(batteryLevel / 3600 / 20).style(ChatFormatting.BLUE))
-                .add(ConnectedLang.text(" / ").style(ChatFormatting.GRAY))
-                .add(ConnectedLang.number(getMaxBatteryLevel() / 3600 / 20)
-                        .add(Component.literal(" "))
-                        .add(ConnectedLang.translate("generic.unit.su_hours"))
-                        .style(ChatFormatting.DARK_GRAY))
-                .addTo(tooltipComponents);
-    }
+        tooltipComponents.add(Component.translatable(CreateConnected.MODID + ".battery.charge")
+                .withStyle(ChatFormatting.GRAY)
+                .append(" ")
+                .append(barComponent(0, getCrudeBatteryLevel(batteryLevel, 20), 20)));
 
-    public void registerModelOverrides() {
-        CatnipServices.PLATFORM.executeOnClientOnly(() -> () -> KineticBatteryOverrides.registerModelOverridesClient(this));
+        NumberFormat format = NumberFormat.getNumberInstance(Locale.ROOT);
+        tooltipComponents.add(Component.literal(" ")
+                .append(Component.literal(format.format(batteryLevel / 3600 / 20)).withStyle(ChatFormatting.BLUE))
+                .append(Component.literal(" / ").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(format.format(getMaxBatteryLevel() / 3600 / 20) + " ")
+                        .append(Component.translatable(CreateConnected.MODID + ".generic.unit.su_hours"))
+                        .withStyle(ChatFormatting.DARK_GRAY)));
     }
 }

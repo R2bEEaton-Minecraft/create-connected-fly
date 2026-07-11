@@ -66,7 +66,7 @@ public interface LinkedTransmitterBlock {
             level.setBlock(pos, newState, Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_ALL);
             level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(player, newState));
             level.levelEvent(player, 3003, pos, 0);
-            return InteractionResult.sidedSuccess(level.isClientSide);
+            return InteractionResult.sidedSuccess(level.isClientSide());
         }
         if (stack.is(ItemTags.AXES) && state.getValue(BlockStateProperties.LOCKED)) {
             level.playSound(player, pos, SoundEvents.AXE_WAX_OFF, SoundSource.BLOCKS, 1.0F, 1.0F);
@@ -81,7 +81,7 @@ public interface LinkedTransmitterBlock {
                 stack.hurtAndBreak(1, player, LivingEntity.getSlotForHand(hand));
             }
 
-            return InteractionResult.sidedSuccess(level.isClientSide);
+            return InteractionResult.sidedSuccess(level.isClientSide());
         }
         return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }

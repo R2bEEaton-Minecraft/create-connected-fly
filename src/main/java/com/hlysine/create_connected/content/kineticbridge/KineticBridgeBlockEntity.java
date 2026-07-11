@@ -22,7 +22,7 @@ public class KineticBridgeBlockEntity extends KineticBlockEntity {
     }
 
     @Override
-    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+    public void addBehaviours(List<BlockEntityBehaviour<?>> behaviours) {
         super.addBehaviours(behaviours);
         stressMultiplier = new ServerStressImpactScrollValueBehaviour(this);
         stressMultiplier.between(0, 2048);

@@ -64,6 +64,18 @@ tasks.withType(JavaCompile).configureEach {
     it.options.compilerArgs << "-Xmaxerrs" << "5000"
 }
 
+// NOTE: while compileJava has errors, `./gradlew compileClientJava` cannot give real signal for
+// src/client/java - compileClientJava hard-depends on compileJava's compiled output, so Gradle
+// fail-fasts on the compileJava failure before compileClientJava ever runs, and every previous
+// "client compile" check during this port was actually just re-showing compileJava's own failure.
+// A from-scratch JavaCompile task (source = both sourceSets, classpath = client's) was tried as a
+// workaround but - for reasons not fully root-caused - still silently omits diagnostics for a
+// subset of src/client/java files even though Gradle's own sourceSets.client.java.files correctly
+// lists them as inputs. The one method verified to actually surface real src/client/java errors is
+// a direct `javac` invocation outside Gradle entirely - see PORTING_NOTES.md "compileClientJava
+// anomaly, part 2" for the exact recipe (resolve sourceSets.client.compileClasspath.asPath once,
+// then run javac -Xmaxerrs 5000 against both source trees together).
+
 java {
     // Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
     // if it is present.

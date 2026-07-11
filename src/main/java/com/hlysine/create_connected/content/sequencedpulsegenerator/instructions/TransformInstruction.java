@@ -1,6 +1,5 @@
 package com.hlysine.create_connected.content.sequencedpulsegenerator.instructions;
 
-import com.hlysine.create_connected.registries.CCGuiTextures;
 import com.hlysine.create_connected.content.sequencedpulsegenerator.SequencedPulseGeneratorBlockEntity;
 import net.minecraft.nbt.CompoundTag;
 
@@ -10,7 +9,7 @@ public class TransformInstruction extends Instruction {
     public TransformInstruction(int transform, int constant) {
         super(
                 "transform",
-                CCGuiTextures.SEQUENCER_INSTRUCTION,
+                "SEQUENCER_INSTRUCTION",
                 new ParameterConfig(
                         0,
                         9,
@@ -61,7 +60,7 @@ public class TransformInstruction extends Instruction {
 
     @Override
     public void readState(CompoundTag nbt) {
-        input = nbt.getInt("Input");
+        input = nbt.getIntOr("Input", 0);
     }
 
     @Override

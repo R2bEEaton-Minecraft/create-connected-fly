@@ -155,7 +155,7 @@ public class LinkedLeverBlock extends LeverBlock implements IBE<LinkedTransmitte
     }
 
     public void updateTransmittedSignal(Level worldIn, BlockPos pos) {
-        if (worldIn.isClientSide)
+        if (worldIn.isClientSide())
             return;
 
         BlockState state = worldIn.getBlockState(pos);

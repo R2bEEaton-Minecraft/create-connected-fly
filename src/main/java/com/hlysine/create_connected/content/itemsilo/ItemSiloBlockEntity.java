@@ -11,13 +11,12 @@ import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
 import com.zurrtum.create.foundation.blockEntity.behaviour.inventory.VersionedInventoryWrapper;
 import com.zurrtum.create.foundation.mixin.accessor.ItemStackHandlerAccessor;
 import com.zurrtum.create.infrastructure.config.AllConfigs;
-import com.zurrtum.create.catnip.nbt.NBTHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.Clearable;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
@@ -81,7 +80,7 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
     }
 
     @Override
-    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+    public void addBehaviours(List<BlockEntityBehaviour<?>> behaviours) {
     }
 
     protected void updateConnectivity() {
@@ -174,7 +173,7 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
 
     @Override
     public void setController(BlockPos controller) {
-        if (level.isClientSide && !isVirtual())
+        if (level.isClientSide() && !isVirtual())
             return;
         if (controller.equals(this.controller))
             return;
@@ -191,30 +190,28 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
     }
 
     @Override
-    protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
-        super.read(compound, registries, clientPacket);
+    protected void read(ValueInput view, boolean clientPacket) {
+        super.read(view, clientPacket);
 
         BlockPos controllerBefore = controller;
         int prevSize = radius;
         int prevLength = length;
 
-        updateConnectivity = compound.contains("Uninitialized");
+        updateConnectivity = view.getBooleanOr("Uninitialized", false);
 
-        lastKnownPos = null;
-        if (compound.contains("LastKnownPos"))
-            lastKnownPos = NBTHelper.readBlockPos(compound, "LastKnownPos");
-
-        controller = null;
-        if (compound.contains("Controller"))
-            controller = NBTHelper.readBlockPos(compound, "Controller");
+        lastKnownPos = view.read("LastKnownPos", BlockPos.CODEC).orElse(null);
+        controller = view.read("Controller", BlockPos.CODEC).orElse(null);
 
         if (isController()) {
-            radius = compound.getInt("Size");
-            length = compound.getInt("Length");
+            radius = view.getIntOr("Size", 0);
+            length = view.getIntOr("Length", 0);
         }
 
         if (!clientPacket) {
-            inventory.deserializeNBT(registries, compound.getCompound("Inventory"));
+            // NeoForge's ItemStackHandler.deserializeNBT still expects a raw CompoundTag - bridged
+            // via CompoundTag.CODEC here; ItemStackHandler itself is part of the separate NeoForge
+            // Capabilities -> Fabric Transfer API rewrite (see PORTING_NOTES.md), not yet done.
+            inventory.deserializeNBT(view.lookup(), view.read("Inventory", CompoundTag.CODEC).orElseGet(CompoundTag::new));
             return;
         }
 
@@ -225,23 +222,23 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
     }
 
     @Override
-    protected void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
+    protected void write(ValueOutput view, boolean clientPacket) {
         if (updateConnectivity)
-            compound.putBoolean("Uninitialized", true);
+            view.putBoolean("Uninitialized", true);
         if (lastKnownPos != null)
-            compound.put("LastKnownPos", NbtUtils.writeBlockPos(lastKnownPos));
+            view.store("LastKnownPos", BlockPos.CODEC, lastKnownPos);
         if (!isController())
-            compound.put("Controller", NbtUtils.writeBlockPos(controller));
+            view.store("Controller", BlockPos.CODEC, controller);
         if (isController()) {
-            compound.putInt("Size", radius);
-            compound.putInt("Length", length);
+            view.putInt("Size", radius);
+            view.putInt("Length", length);
         }
 
-        super.write(compound, registries, clientPacket);
+        super.write(view, clientPacket);
 
         if (!clientPacket) {
-            compound.putString("StorageType", "CombinedInv");
-            compound.put("Inventory", inventory.serializeNBT(registries));
+            view.putString("StorageType", "CombinedInv");
+            view.store("Inventory", CompoundTag.CODEC, inventory.serializeNBT(view.lookup()));
         }
     }
 

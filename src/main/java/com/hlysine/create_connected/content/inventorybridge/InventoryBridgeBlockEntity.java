@@ -11,9 +11,9 @@ import com.zurrtum.create.foundation.blockEntity.behaviour.inventory.CapManipula
 import com.zurrtum.create.foundation.blockEntity.behaviour.inventory.InvManipulationBehaviour;
 import com.zurrtum.create.catnip.math.BlockFace;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -70,7 +70,7 @@ public class InventoryBridgeBlockEntity extends SmartBlockEntity {
     }
 
     @Override
-    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+    public void addBehaviours(List<BlockEntityBehaviour<?>> behaviours) {
         CapManipulationBehaviourBase.InterfaceProvider towardBlockFacing1 =
                 (w, p, s) -> new BlockFace(p, InventoryBridgeBlock.getNegativeTarget(s));
         CapManipulationBehaviourBase.InterfaceProvider towardBlockFacing2 =
@@ -129,14 +129,14 @@ public class InventoryBridgeBlockEntity extends SmartBlockEntity {
     }
 
     @Override
-    protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        super.read(tag, registries, clientPacket);
-        powered = tag.getBoolean("Powered");
+    protected void read(ValueInput tag, boolean clientPacket) {
+        super.read(tag, clientPacket);
+        powered = tag.getBooleanOr("Powered", false);
     }
 
     @Override
-    protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        super.write(tag, registries, clientPacket);
+    protected void write(ValueOutput tag, boolean clientPacket) {
+        super.write(tag, clientPacket);
         tag.putBoolean("Powered", powered);
     }
 

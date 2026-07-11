@@ -4,8 +4,9 @@ import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
 import com.zurrtum.create.foundation.blockEntity.behaviour.BehaviourType;
 import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -17,7 +18,7 @@ import net.neoforged.neoforge.common.util.FakePlayer;
 
 import java.util.*;
 
-public class AdvancementBehaviour extends BlockEntityBehaviour {
+public class AdvancementBehaviour extends BlockEntityBehaviour<SmartBlockEntity> {
 
     public static final BehaviourType<AdvancementBehaviour> TYPE = new BehaviourType<>();
 
@@ -93,17 +94,16 @@ public class AdvancementBehaviour extends BlockEntityBehaviour {
     }
 
     @Override
-    public void write(CompoundTag nbt, HolderLookup.Provider registries, boolean clientPacket) {
-        super.write(nbt, registries, clientPacket);
+    public void write(ValueOutput view, boolean clientPacket) {
+        super.write(view, clientPacket);
         if (playerId != null)
-            nbt.putUUID("Owner", playerId);
+            view.store("Owner", UUIDUtil.CODEC, playerId);
     }
 
     @Override
-    public void read(CompoundTag nbt, HolderLookup.Provider registries, boolean clientPacket) {
-        super.read(nbt, registries, clientPacket);
-        if (nbt.contains("Owner"))
-            playerId = nbt.getUUID("Owner");
+    public void read(ValueInput view, boolean clientPacket) {
+        super.read(view, clientPacket);
+        playerId = view.read("Owner", UUIDUtil.CODEC).orElse(null);
     }
 
     @Override
@@ -133,8 +133,8 @@ public class AdvancementBehaviour extends BlockEntityBehaviour {
             behaviour.setOwner(placer.getUUID());
     }
 
-    public static void registerAwardables(SmartBlockEntity be, List<BlockEntityBehaviour> behaviours, CCAdvancement... advancements) {
-        for (BlockEntityBehaviour behaviour : behaviours) {
+    public static void registerAwardables(SmartBlockEntity be, List<BlockEntityBehaviour<?>> behaviours, CCAdvancement... advancements) {
+        for (BlockEntityBehaviour<?> behaviour : behaviours) {
             if (behaviour instanceof AdvancementBehaviour ab) {
                 ab.add(advancements);
                 return;

@@ -2,9 +2,8 @@ package com.hlysine.create_connected.content.copycat.beam;
 
 import com.zurrtum.create.client.infrastructure.model.CopycatModel;
 import com.zurrtum.create.client.foundation.model.BakedModelHelper;
-import com.zurrtum.create.foundation.model.BakedQuadHelper;
 import com.zurrtum.create.catnip.data.Iterate;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
@@ -75,8 +74,7 @@ public class CopycatBeamModel extends CopycatModel {
                     if (columnShiftNormal.equals(direction.getNormal()))
                         continue;
 
-                    quads.add(BakedQuadHelper.cloneWithCustomGeometry(quad,
-                            BakedModelHelper.cropAndMove(quad.getVertices(), quad.getSprite(), bb1, offset)));
+                    quads.add(BakedModelHelper.cropAndMove(quad, bb1, offset));
                 }
 
             }

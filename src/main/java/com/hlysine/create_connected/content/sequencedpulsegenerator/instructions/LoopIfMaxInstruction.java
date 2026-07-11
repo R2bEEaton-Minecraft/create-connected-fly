@@ -1,6 +1,5 @@
 package com.hlysine.create_connected.content.sequencedpulsegenerator.instructions;
 
-import com.hlysine.create_connected.registries.CCGuiTextures;
 import com.hlysine.create_connected.content.sequencedpulsegenerator.SequencedPulseGeneratorBlockEntity;
 import net.minecraft.nbt.CompoundTag;
 
@@ -9,7 +8,7 @@ public class LoopIfMaxInstruction extends Instruction {
     public LoopIfMaxInstruction(int target) {
         super(
                 "loop_if_max",
-                CCGuiTextures.SEQUENCER_DELAY,
+                "SEQUENCER_DELAY",
                 new ParameterConfig(
                         0,
                         15,

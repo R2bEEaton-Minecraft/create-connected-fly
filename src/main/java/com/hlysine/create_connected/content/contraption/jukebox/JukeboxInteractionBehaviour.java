@@ -4,9 +4,12 @@ import com.zurrtum.create.api.behaviour.interaction.MovingInteractionBehaviour;
 import com.zurrtum.create.content.contraptions.AbstractContraptionEntity;
 import com.zurrtum.create.content.contraptions.Contraption;
 import com.zurrtum.create.catnip.levelWrappers.WrappedLevel;
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
@@ -16,7 +19,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -78,18 +80,18 @@ public class JukeboxInteractionBehaviour extends MovingInteractionBehaviour {
 
             @Override
             public void levelEvent(@Nullable Player player, int type, BlockPos pos, int data) {
-                if (type == 1010 || type == 1011)
-                    PacketDistributor.sendToPlayersInDimension(
-                            (ServerLevel) contraptionEntity.level(),
-                            new PlayContraptionJukeboxPacket(dimension().location(),
-                                    contraptionEntity.getId(),
-                                    contraptionPos,
-                                    pos,
-                                    data,
-                                    type == 1010,
-                                    silent
-                            )
+                if (type == 1010 || type == 1011) {
+                    PlayContraptionJukeboxPacket payload = new PlayContraptionJukeboxPacket(dimension().location(),
+                            contraptionEntity.getId(),
+                            contraptionPos,
+                            pos,
+                            data,
+                            type == 1010,
+                            silent
                     );
+                    for (ServerPlayer serverPlayer : PlayerLookup.world((ServerLevel) contraptionEntity.level()))
+                        ServerPlayNetworking.send(serverPlayer, payload);
+                }
             }
         });
         action.accept(be);

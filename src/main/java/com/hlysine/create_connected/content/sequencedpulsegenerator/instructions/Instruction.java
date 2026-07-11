@@ -1,11 +1,7 @@
 package com.hlysine.create_connected.content.sequencedpulsegenerator.instructions;
 
-import com.hlysine.create_connected.registries.CCGuiTextures;
-import com.hlysine.create_connected.ConnectedLang;
 import com.hlysine.create_connected.CreateConnected;
 import com.hlysine.create_connected.content.sequencedpulsegenerator.SequencedPulseGeneratorBlockEntity;
-import com.zurrtum.create.client.foundation.blockEntity.behaviour.scrollValue.ScrollValueBehaviour;
-import net.minecraft.client.resources.language.I18n;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
@@ -16,6 +12,17 @@ import java.util.function.Function;
 
 import static com.hlysine.create_connected.content.sequencedpulsegenerator.SequencedPulseGeneratorBlockEntity.INSTRUCTION_CAPACITY;
 
+// Moved from src/client/java to main: this class holds real server-side gameplay state
+// (tick()/transformOutput()/NBT read-write) alongside a few display-only concerns
+// (background/getLangKey/getOptions) that used to depend on client-only
+// CCGuiTextures/ConnectedLang/I18n. Those are now handled as follows instead of pulling in
+// client-only types here: `background` is now an opaque Object (the client Screen casts it back
+// to CCGuiTextures - see SequencedPulseGeneratorScreen), lang-key helpers use plain
+// Component.translatable (which is not client-only, only *rendering* Components is), and
+// I18n.exists's "does this mod have a custom key" check goes through i18nExistsHook (populated by
+// CreateConnectedClient.onInitializeClient()). ScrollValueBehaviour.StepContext (a plain data
+// holder with zero client dependencies of its own, just nested in a client-only class) is
+// replaced by this class's own StepContext record.
 public abstract class Instruction {
     private static final Map<String, Instruction> INSTRUCTION_MAP = new LinkedHashMap<>();
 
@@ -23,8 +30,10 @@ public abstract class Instruction {
         INSTRUCTION_MAP.put(instruction.instructionId, instruction);
     }
 
+    public static Function<String, Boolean> i18nExistsHook = key -> false;
+
     private final String instructionId;
-    private final CCGuiTextures background;
+    private final Object background;
     public final @Nullable ParameterConfig paramConfig;
     public final boolean hasSignal;
     public final boolean terminal;
@@ -33,7 +42,7 @@ public abstract class Instruction {
     private int signal = 0;
 
     public Instruction(String instructionId,
-                       CCGuiTextures background,
+                       Object background,
                        @Nullable ParameterConfig paramConfig,
                        boolean hasSignal,
                        boolean terminal) {
@@ -56,7 +65,7 @@ public abstract class Instruction {
         return INSTRUCTION_MAP.values().stream().toList().get(ordinal).copy();
     }
 
-    public CCGuiTextures getBackground() {
+    public Object getBackground() {
         return background;
     }
 
@@ -119,14 +128,14 @@ public abstract class Instruction {
     }
 
     public static Instruction deserializeParams(CompoundTag nbt) {
-        String id = nbt.getString("ID");
+        String id = nbt.getStringOr("ID", "");
         Instruction instance = create(id);
         if (instance == null) return null;
         if (instance.hasSignal) {
-            instance.signal = nbt.getInt("Signal");
+            instance.signal = nbt.getIntOr("Signal", 0);
         }
         if (instance.paramConfig != null) {
-            instance.param = nbt.getInt("Value");
+            instance.param = nbt.getIntOr("Value", 0);
         }
         return instance;
     }
@@ -156,8 +165,12 @@ public abstract class Instruction {
         }
     }
 
+    private static String asId(String name) {
+        return name.toLowerCase(Locale.ROOT);
+    }
+
     public String getLangKey() {
-        return "gui.sequenced_pulse_generator.instruction." + ConnectedLang.asId(instructionId);
+        return "gui.sequenced_pulse_generator.instruction." + asId(instructionId);
     }
 
     public String getDescriptiveLangKey() {
@@ -166,14 +179,14 @@ public abstract class Instruction {
 
     public String getParamLangKey() {
         String key = getLangKey() + ".param";
-        if (I18n.exists(CreateConnected.MODID + "." + key))
+        if (i18nExistsHook.apply(CreateConnected.MODID + "." + key))
             return key;
         return "gui.sequenced_pulse_generator.param";
     }
 
     public String getSignalLangKey() {
         String key = getLangKey() + ".signal";
-        if (I18n.exists(CreateConnected.MODID + "." + key))
+        if (i18nExistsHook.apply(CreateConnected.MODID + "." + key))
             return key;
         return "gui.sequenced_pulse_generator.signal";
     }
@@ -181,31 +194,34 @@ public abstract class Instruction {
     public static List<Component> getOptions() {
         List<Component> options = new ArrayList<>();
         for (Instruction value : INSTRUCTION_MAP.values())
-            options.add(ConnectedLang.translateDirect(value.getDescriptiveLangKey()));
+            options.add(Component.translatable(CreateConnected.MODID + "." + value.getDescriptiveLangKey()));
         return options;
+    }
+
+    public record StepContext(int currentValue, boolean forward, boolean shift, boolean control) {
     }
 
     public record ParameterConfig(int minValue,
                                   int maxValue,
-                                  @Nullable Function<ScrollValueBehaviour.StepContext, Integer> stepFunction,
+                                  @Nullable Function<StepContext, Integer> stepFunction,
                                   int shiftStepValue,
                                   int defaultValue,
                                   @Nullable Function<Integer, Component> formatter) {
-        public static final Function<ScrollValueBehaviour.StepContext, Integer> timeStep = context -> {
-            int v = context.currentValue;
-            if (!context.forward)
+        public static final Function<StepContext, Integer> timeStep = context -> {
+            int v = context.currentValue();
+            if (!context.forward())
                 v--;
             if (v < 20)
-                return context.shift ? 20 : 1;
-            return context.shift ? 100 : 20;
+                return context.shift() ? 20 : 1;
+            return context.shift() ? 100 : 20;
         };
         public static final Function<Integer, Component> timeFormat = value -> {
             if (value >= 20) return Component.literal((value / 20) + "s");
             return Component.literal(value + "t");
         };
         public static final Function<Integer, Component> booleanFormat = value -> value == 1
-                ? ConnectedLang.translate("gui.sequenced_pulse_generator.on").component()
-                : ConnectedLang.translate("gui.sequenced_pulse_generator.off").component();
+                ? Component.translatable(CreateConnected.MODID + ".gui.sequenced_pulse_generator.on")
+                : Component.translatable(CreateConnected.MODID + ".gui.sequenced_pulse_generator.off");
         public static final Function<Integer, Component> transformFormat = value -> Component.literal(switch (value) {
             case 0 -> "I+C";
             case 1 -> "I-C";

@@ -823,6 +823,433 @@ fraction of it will hit the same "client-only-in-a-shared-class" issue described
 the hook-extraction (or architecture-investigation, per the CrankWheel example) treatment file by
 file, not just import-path fixes.
 
+## PROGRESS session 7: networking rewrite, the 4 flagged files, CrankWheelRenderer, and a major new API-drift discovery (ValueInput/ValueOutput)
+
+### Networking: real vanilla replacement for Create Fly's now-entirely-gone packet base classes
+Confirmed via search that `com.zurrtum.create.catnip.net.base.*` (BasePacketPayload,
+CatnipPacketRegistry, ClientboundPacketPayload) and
+`com.zurrtum.create.foundation.networking.BlockEntityConfigurationPacket` are **not just
+relocated - they don't exist anywhere in the real 6.0.9-5 sources jar**. Replaced with plain
+vanilla `net.minecraft.network.protocol.common.custom.CustomPacketPayload` +
+`net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry` (`.playS2C()`/`.playC2S()`) +
+`ServerPlayNetworking`/`net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking`.
+- `registries/CCPackets.java`: now just calls `PayloadTypeRegistry.playS2C()/.playC2S().register(...)`
+  and `ServerPlayNetworking.registerGlobalReceiver(...)` for the one C2S packet.
+- `content/contraption/jukebox/PlayContraptionJukeboxPacket.java` (S2C): moved to main, rewritten
+  as a `record ... implements CustomPacketPayload`, kept its own 7-arg `composite()` StreamCodec
+  helper (vanilla only ships up to 6-arg). `handle()` moved out entirely to a new client-only
+  `PlayContraptionJukeboxPacketClient.java` registered via `ClientPlayNetworking`.
+  `JukeboxInteractionBehaviour.java`'s send-side: NeoForge's
+  `PacketDistributor.sendToPlayersInDimension` -> loop `PlayerLookup.world((ServerLevel) level)`
+  + `ServerPlayNetworking.send(player, payload)`.
+- `content/sequencedpulsegenerator/ConfigureSequencedPulseGeneratorPacket.java` (C2S): rewritten
+  as a plain record with `handle(ServerPlayer)` inlining the distance-check/block-entity-lookup
+  that `BlockEntityConfigurationPacket` used to provide (MAX_RANGE=16, same as original).
+
+### `Instruction.java` (sequenced pulse generator instructions) - moved to main, client deps stripped
+Had to live in main (real tick()/NBT gameplay state) but its public API leaked several
+client-only types. Fixed by: `background` field changed from `CCGuiTextures` (client enum) to
+opaque `Object` (string-literal based; the client `SequencedPulseGeneratorScreen` casts back via
+`CCGuiTextures.valueOf((String) instruction.getBackground())`); lang-key helpers use plain
+`Component.translatable(...)` instead of `ConnectedLang`; added
+`public static Function<String, Boolean> i18nExistsHook` (populated from
+`CreateConnectedClient.onInitializeClient()` with `I18n::exists`) replacing a direct
+`I18n.exists()` call; and a new mod-owned `Instruction.StepContext` record replaces the
+client-only `ScrollValueBehaviour.StepContext` it used to reference. 12 subclass files bulk-fixed
+via sed to drop the `CCGuiTextures` import and use string literals instead.
+
+### `KineticBatteryDisplaySource.java` - split following Create Fly's *real* DisplaySourceRender pattern
+Verified (by decompiling the real sources jar) that Create Fly itself moved `initConfigurationWidgets`
+entirely OUT of `DisplaySource` (the main-safe base class) into a client-only
+`com.zurrtum.create.client.api.behaviour.display.DisplaySourceRender` interface, attached per-instance
+via a public `DisplaySource.attachRender` field (see real `KineticStressDisplaySource` +
+`KineticStressDisplaySourceRender` + `AllDisplaySourceRenders.register(source, factory)` for the
+reference). Followed the same real pattern here instead of inventing our own: `KineticBatteryDisplaySource`
+(main) keeps only the gameplay text logic (and had its `ConnectedLang`-based `formatNumeric` body
+rewritten to plain `Component`/`java.text.NumberFormat`, matching how real
+`KineticStressDisplaySource.formatNumeric` itself avoids `CreateLang`); a new client-only
+`KineticBatteryDisplaySourceRender extends SingleLineDisplaySourceRender` holds the
+`ModularGuiLineBuilder`/`ConnectedLang`-based UI method; wired via
+`CCDisplaySources.KINETIC_BATTERY.attachRender = new KineticBatteryDisplaySourceRender();` in
+`CreateConnectedClient.onInitializeClient()` (no need for a full `AllDisplaySourceRenders`-style
+helper class just for one custom source).
+
+### `LinkWildcardNetworkHandler.java` - moved to main, two real fixes
+- `com.zurrtum.create.client.content.redstone.link.LinkBehaviour` (client-only) -> real Create Fly's
+  own `RedstoneLinkNetworkHandler.updateNetworkOf` uses `com.zurrtum.create.content.redstone.link.
+  ServerLinkBehaviour` (main-safe, same `newPosition`/`isListening`/`setReceivedStrength` shape) for
+  this exact same `instanceof` check - verified in the real sources jar, so swapping to
+  `ServerLinkBehaviour` matches Create Fly's own pattern, not a workaround.
+- `net.neoforged...@EventBusSubscriber`/`@SubscribeEvent`/`LevelEvent.Load`/`Unload` (NeoForge,
+  gone) -> Fabric API's `net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents.LOAD`/`UNLOAD`,
+  registered from a new `LinkWildcardNetworkHandler.register()` called in
+  `CreateConnected.onInitialize()`. `fabric-lifecycle-events-v1` comes transitively via the
+  `fabric-api` umbrella dependency already declared, no new dependency needed.
+- **Real feature loss, disclosed, not silently dropped**: the file also had a `withinRange` special
+  case for compatibility with the "Sable" mod (`dev.ryanhcode.sable`, sub-level/moving-structure
+  physics) via `SableCompanion`/`SubLevelAccess` - **but there was no `sable` dependency declared
+  anywhere in this project's build.gradle at all**, and WebSearch confirmed Sable's newest release
+  only targets MC 1.21.1, with no 1.21.11 build to depend on. Real compat is currently impossible
+  to reinstate (not merely skipped), so `withinRange` now falls back to the plain distance check -
+  which is exactly what the original code already did whenever Sable's helper returned no sub-level
+  for a position anyway. Revisit if/when Sable ships a 1.21.11 build.
+
+### `CrankWheelRenderer` (client) - written, following the real `HandCrankRenderer` shape
+Fetched the original NeoForge `CrankWheelBlockEntity.getRenderedHandle()`/`tickAudio()` bodies from
+the upstream repo (github.com/hlysine/create_connected) since they'd already been deleted from
+`CrankWheelBlockEntity.java` in a prior session. Wrote
+`src/client/java/.../crankwheel/CrankWheelRenderer.java extends HandCrankRenderer`, overriding the
+one-arg `getRenderedHandle(BlockState)` instance method (that's where Create Fly moved it - it's a
+renderer method now, not a block-entity method) with the same large/small-cog handle-model choice
+as the original. `tickAudio()`'s cranking sound (`AllSoundEvents.CRANKING`) has **no replacement
+written yet** - Create Fly moved kinetic audio to a client-only `KineticAudioBehaviour` registered
+via `BlockEntityBehaviour.CLIENT_REGISTRY`, which this mod hasn't wired up anywhere yet (bigger
+side-quest, still deferred, not silently dropped - the sound just doesn't play yet).
+Registered via a new minimal `registries/CCBlockEntityRenders.java` (client-only) calling
+`BlockEntityRendererRegistry.register(CCBlockEntityTypes.CRANK_WHEEL, CrankWheelRenderer::new)` +
+`SimpleBlockEntityVisualizer.builder(...).factory(CrankWheelVisual::new).skipVanillaRender(be ->
+false).apply()` (`skipVanillaRender=false` mirrors real Create Fly's own `AllBlockEntityRenders.
+normal(...)` helper - keep the vanilla-renderer fallback alive for when Flywheel visualization
+isn't supported; `CrankWheelVisual`, the Flywheel-backed normal path, already existed from an
+earlier session and needed no changes). Also had to move `registries/CCPartialModels.java` from
+main to `src/client/java` - it was in main but imports `com.zurrtum.create.client.flywheel.lib.
+model.baked.PartialModel` (client-only baked-model type), a cross-sourceset violation that was
+silently broken (only client-side files ever consumed it anyway).
+
+### MAJOR FINDING: MC 1.21.11 replaced CompoundTag single-arg getters with Optional, AND replaced BlockEntity's write/read(CompoundTag,...) with a Codec-based ValueInput/ValueOutput view entirely
+While fixing the above, `./gradlew compileJava` surfaced that `CompoundTag.getInt(String)` /
+`getString(String)` / `getBoolean(String)` / `getFloat(String)` / `getLong(String)` /
+`getDouble(String)` / `getByte(String)` / `getCompound(String)` / `getList(String, int)` (the old
+"default value built in, or throws/returns 0/empty" 1-or-2-arg forms this whole codebase was
+written against) **no longer exist in that shape** - verified via `javap` against the actual
+resolved `minecraft-common` mapped jar (`~/.gradle/caches/fabric-loom/minecraftMaven/...`, NOT a
+guess). The single-arg getters now return `Optional<T>`; the old "give me 0/""/false/empty if
+missing" behavior is now a **separate**, differently-named method: `getIntOr(key, default)`,
+`getStringOr(key, default)`, `getBooleanOr(key, default)`, `getFloatOr`, `getLongOr`, `getDoubleOr`,
+`getByteOr`, `getCompoundOrEmpty(key)`, `getListOrEmpty(key)` (this last one also dropped the
+tag-type-ID second argument entirely). Bulk-fixed via a `perl -pi -e` sweep across all 20 then-
+affected files (`.getInt("X")` -> `.getIntOr("X", 0)`, etc.) - safe and behavior-preserving because
+vanilla's old single-arg getters already defaulted to exactly those same values (0/""/false) when
+the key was absent, so `getXOr(key, oldDefault)` is an exact semantic match, not a workaround.
+
+**Bigger and separate finding, only partly addressed**: `SmartBlockEntity`'s abstract
+`write`/`read` methods changed signature from `(CompoundTag, HolderLookup.Provider, boolean)` to
+`(ValueOutput, boolean)` / `(ValueInput, boolean)` respectively (verified via the real sources
+jar - `com.zurrtum.create.foundation.blockEntity.SmartBlockEntity.write/read`). `ValueOutput`/
+`ValueInput` (`net.minecraft.world.level.storage.ValueOutput`/`ValueInput`) are a new Codec-based
+view API - `putInt`/`putString`/etc. work basically the same, but reading uses the same
+`getXOr`/`getX->Optional` split as `CompoundTag`, and there's no raw "put a whole ListTag" - instead
+use `view.list(key, someCodec)` (returns a `TypedOutputList<T>` with `.add(T)`) on write and
+`view.listOrEmpty(key, someCodec)` (returns `Iterable<T>`) on read; `CompoundTag.CODEC` exists and
+is the bridge for "I still want to store one CompoundTag per list entry" (used for `Instructions` -
+see `SequencedPulseGeneratorBlockEntity.write/read` for the worked example). Also discovered in the
+same pass: `addBehaviours(List<BlockEntityBehaviour>)` must be
+`addBehaviours(List<BlockEntityBehaviour<?>>)` (raw type -> now genuinely generic in Create Fly),
+and `Level.isClientSide` is now a **private field** - must call `level.isClientSide()` (method).
+
+**Only `SequencedPulseGeneratorBlockEntity.java` (+ its `AdvancementBehaviour.registerAwardables`
+call site's parameter type) has been converted to this new shape so far.** This is very likely a
+**mod-wide** change affecting most/all block entities that override `write`/`read` - a full audit
+(`grep -rn "protected void write(CompoundTag\|protected void read(CompoundTag" src/main`) has NOT
+been done yet. Treat this as a high-priority, probably-large item for the next session: any
+BlockEntity conversion work in `content/` should check for this pattern and fix it the same way,
+not just chase the `getInt`/`getString`/etc. symptom in isolation.
+
+### Revised honest status (end of session 7)
+`./gradlew compileJava`: down to **2000 errors across 113 unique files** (from 2564/132 at the
+start of this session) after: the 4 originally-flagged files (`PlayContraptionJukeboxPacket`,
+`KineticBatteryDisplaySource`, `LinkWildcardNetworkHandler`, `Instruction` + its 12 subclasses),
+`SequencedPulseGeneratorBlockEntity`'s ValueInput/ValueOutput conversion, the mod-wide
+`getInt`/`getString`/`getBoolean`/etc. -> `getXOr`/`getXxxOrEmpty` sweep (20 files), and
+`CrankWheelRenderer` + its registration wiring. `compileClientJava` also re-checked with the
+uncapped view: **2000 errors across 113 files** too (coincidentally close to the main count, but a
+different file set - mostly the same underlying causes reflected from both sides of files that
+live in `src/main` but get compiled against the client classpath's restrictions, e.g. `ponder/`'s
+entirely-unconverted `com.zurrtum.create.ponder.api.*`/`foundation.ponder.*` imports, and
+`CrankWheelBlock`/`CrankWheelItem`'s own separate `updateShape`/`rotate`/`placeInWorld` signature
+mismatches - not investigated this session, out of scope for the CrankWheel task at hand). None of
+this session's new/moved files (`CrankWheelRenderer`, `CCBlockEntityRenders`, `CCPartialModels`,
+`CrankWheelVisual`, all four originally-flagged files) appear in either error list - verified
+clean by grepping the uncapped compile output for their filenames specifically, not just trusting
+a smaller overall count.
+
+## PROGRESS session 8: full ValueInput/ValueOutput audit (the mod-wide finding from session 7)
+
+Ran `grep -rln "protected void write(CompoundTag\|protected void read(CompoundTag" src/main` per the
+coordinator's explicit instruction to close out session 7's flagged finding. Got 9 hits:
+`DashboardBlockEntity`, `FluidVesselBlockEntity`, `InventoryAccessPortBlockEntity`,
+`InventoryBridgeBlockEntity`, `ItemSiloBlockEntity`, `KineticBatteryBlockEntity`,
+`KineticBridgeDestinationBlockEntity`, `LinkedTransmitterBlockEntity`,
+`OverstressClutchBlockEntity`. Converted all 9 to `(ValueOutput/ValueInput view, boolean
+clientPacket)`, plus fixed the same-session-discovered `addBehaviours(List<BlockEntityBehaviour>)`
+-> `List<BlockEntityBehaviour<?>>` and `level.isClientSide` -> `level.isClientSide()` in each where
+present.
+
+**Two more hits the grep pattern missed, found only because the compiler still flagged them as
+having no matching supertype method** (grep only matched `protected/public void write/read
+(CompoundTag ...)` exactly - these two had a different old shape):
+- `content/fluidvessel/BoilerData.java`: its old shape was `public CompoundTag write()` (no args,
+  returns the tag) / `public void read(CompoundTag nbt, int boilerSize)` - not the
+  `write(CompoundTag, HolderLookup.Provider, boolean)` shape the grep looked for. Real Create Fly's
+  own `com.zurrtum.create.content.fluids.tank.BoilerData` (the class ours extends) now has
+  `write(ValueOutput view)` / `read(ValueInput view, int boilerSize)` - converted to match exactly
+  (both had stray `@Override` annotations already failing to compile, confirming this was a real,
+  not cosmetic, bug). `FluidVesselBlockEntity`'s call sites updated to
+  `boiler.write(view.child("Boiler"))` / `boiler.read(view.childOrEmpty("Boiler"), ...)` - this
+  `child`/`childOrEmpty` nested-view pattern is exactly what real Create Fly's own
+  `FluidTankBlockEntity.write/read` does for its own `boiler` field (verified in the sources jar),
+  not an invented shape.
+- `datagen/advancements/AdvancementBehaviour.java`: extends `BlockEntityBehaviour<T>` (not
+  `SmartBlockEntity` directly) - `BlockEntityBehaviour.write/read` changed the same way
+  (`ValueOutput/ValueInput`, no `HolderLookup.Provider` param - use `view.lookup()` if needed).
+  Also fixed the raw-type `extends BlockEntityBehaviour` -> `extends
+  BlockEntityBehaviour<SmartBlockEntity>` (was silently raw before). One extra real finding:
+  `CompoundTag.putUUID`/`getUUID` **no longer exist at all** in 1.21.11 (verified via `javap`) -
+  the replacement is `net.minecraft.core.UUIDUtil.CODEC` via `view.store(key, UUIDUtil.CODEC,
+  uuid)` / `view.read(key, UUIDUtil.CODEC)`.
+
+**Lesson for any future occurrence of this pattern**: don't trust a single grep shape to find every
+instance - the safest signal is actually just compiling and looking for "method does not override
+or implement a method from a supertype" / "cannot find symbol" pointing at a real supertype method,
+since subclasses can have drifted to non-matching overload shapes (extra/missing params, different
+return type) that a narrow grep won't catch.
+
+**Files where the write/read conversion alone doesn't make the file compile clean** (expected,
+explicitly out of scope for this pass - tracked as separate, already-known later priorities):
+`FluidVesselBlockEntity`/`FluidVesselBlock`/`FluidVesselMountedStorage`/`FluidVesselItem` (NeoForge
+`Capabilities`/`IFluidHandler`/`FluidStack`/`FluidType` + the now-nonexistent `SmartFluidTank` +
+the client-only `IHaveGoggleInformation` interface implemented from main - all separate,
+already-tracked items), `ItemSiloBlockEntity` (NeoForge `ItemStackHandler`/`IItemHandler`/
+`IItemHandlerModifiable`/`CombinedInvWrapper` + `Capabilities`), `InventoryAccessPortBlockEntity`/
+`InventoryBridgeBlockEntity` (NeoForge `Capabilities`/`IItemHandler`), `KineticBatteryBlockEntity`
+(client-only `ScrollOptionBehaviour`/`ConnectedLang`/`CreateLang` used directly from main - a
+Server/Client behaviour-split issue like the ones fixed in earlier sessions, not yet done for this
+class). For these, the write/read bodies were bridged with `view.read/store(key, CompoundTag.CODEC,
+...)` (or `BlockPos.CODEC` for positions, plain `putString`/`getStringOr` for one enum instead of
+`NBTHelper.readEnum`/`writeEnum` which stayed CompoundTag-based and unaffected) so the NBT shape is
+already correct and ready to go the moment the capability/behaviour-split work lands - verified via
+compiling that no *new* write/read-shaped errors exist in any of these files anymore, only the
+pre-existing, separately-tracked ones.
+
+### Status after this pass
+`./gradlew compileJava` and `compileClientJava` (uncapped): **1850 errors across 111 unique files**
+(down from 2000/113 at the start of this session). `grep -rln "protected void write(CompoundTag\|
+protected void read(CompoundTag" src/main` now returns **zero** hits - the mod-wide audit is
+complete for that exact shape; the two additional non-matching-shape cases found by compiling
+(`BoilerData`, `AdvancementBehaviour`) are also fixed.
+
+## PROGRESS session 9: CatnipServices/SmartFluidTank/BakedQuadHelper replacements, and an important error-log reliability finding
+
+### IMPORTANT CORRECTION: every error count reported in sessions 6-8 was 2x the real number
+Discovered this session that Gradle prints each javac diagnostic **twice** in `compileJava`/
+`compileClientJava` console output (once as the primary message, once again re-indented by 2
+spaces in a trailing recap section) - so `grep -c "error:"` was silently counting every error
+twice all along. The unique-file counts (via `grep -oE "F:[^:]+\.java" | sort -u | wc -l`) were
+NOT affected (already deduplicated) and remain trustworthy. **Take every past "N errors" figure
+in this document and divide by 2** for the true count (e.g. session 8's "1850 errors/111 files"
+was really ~925 unique errors/111 files). This doesn't change any relative progress trend, just
+the absolute scale - flagging it so nobody re-derives a wrong number from a stale absolute count.
+
+### `CatnipServices.PLATFORM.executeOnClientOnly(...)` - doesn't exist in Create Fly at all, and wouldn't have helped anyway
+Two call sites (`KineticBatteryBlockItem.registerModelOverrides()`,
+`SequencedPulseGeneratorBlock.useItemOn/useWithoutItem`) used this NeoForge/Fabric platform-
+abstraction guard to "safely" call client-only code from shared code. Confirmed via the sources
+jar that `com.zurrtum.create.catnip.platform.CatnipServices` doesn't exist in Create Fly 6.0.9-5 -
+single-platform Fabric mods don't need it. Even if it did exist, per the session 6 correction
+(Loom's split source sets are a **compile-time** restriction, not runtime), a runtime-only guard
+could never have made a client-only reference legal in a main-sourceset file anyway. Fixed both
+via the established hook-extraction pattern:
+- `KineticBatteryBlockItem.registerModelOverrides()` deleted entirely; `CCBlocks.java` now exposes
+  `KINETIC_BATTERY_ITEM` as a public static field (previously a local var inside a static block)
+  so `CreateConnectedClient.onInitializeClient()` can call
+  `KineticBatteryOverrides.registerModelOverridesClient(CCBlocks.KINETIC_BATTERY_ITEM)` directly.
+  Also found and fixed `KineticBatteryBlockItem.appendHoverText` using `ConnectedLang` (client-only)
+  directly from this main-sourceset `BlockItem` - rewrote using plain
+  `Component.translatable(MODID + ".key")` + `java.text.NumberFormat`, same pattern as session 7's
+  `KineticBatteryDisplaySource` fix. Note `barComponent()`/`bars()` in `KineticBatteryBlockEntity`
+  were already plain-`Component`-based (main-safe), so only the `ConnectedLang` calls needed fixing.
+- `SequencedPulseGeneratorBlock`'s `displayScreen(be, player)` (opens a client `Screen`, marked with
+  the now-meaningless `@OnlyIn(Dist.CLIENT)`) extracted to new
+  `SequencedPulseGeneratorBlockClient.displayScreen(...)` (client), connected via a new
+  `public static BiConsumer<SequencedPulseGeneratorBlockEntity, Player> displayScreenHook`
+  populated in `CreateConnectedClient.onInitializeClient()`.
+
+### `SmartFluidTank` - Create Fly dropped it; real replacement is `foundation.fluid.FluidTank` + per-use-case `markDirty()` override
+`com.zurrtum.create.foundation.fluid.SmartFluidTank` (the old "FluidTank with an update callback
+constructor" convenience class) doesn't exist in Create Fly 6.0.9-5 at all. Its real replacement,
+`com.zurrtum.create.foundation.fluid.FluidTank`, only takes a plain `(int capacity)` constructor -
+no callback parameter. Verified via the real `CreativeFluidTankBlockEntity.CreativeFluidTankInventory`
+(a nested class in Create Fly's own equivalent block entity) that the actual modern pattern is to
+subclass `FluidTank` and override `markDirty()` to invoke the callback, not pass a callback into
+the constructor. Added two new mod-owned classes matching that real pattern:
+- `content/fluidvessel/FluidVesselTank extends FluidTank` - `markDirty()` invokes a
+  `Consumer<FluidStack>` passed into its constructor (this mod's non-creative tank).
+- `content/fluidvessel/CreativeFluidVesselTank extends FluidVesselTank` - mirrors the real
+  `CreativeFluidTankInventory`'s always-full/infinite insert-extract overrides (copied the exact
+  same method bodies, just renamed to fit this mod's class hierarchy - the original nested class
+  isn't accessible from outside `CreativeFluidTankBlockEntity`, so a distinct copy was necessary,
+  not reusable).
+`FluidVesselBlockEntity`/`CreativeFluidVesselBlockEntity`'s `createInventory()` now return these
+instead of the non-existent `SmartFluidTank`/`CreativeFluidTankBlockEntity.CreativeSmartFluidTank`.
+**Deliberately did NOT touch** `FluidVesselBlock.java`'s `IFluidHandler vesselCapability`-typed code
+(NeoForge `Capabilities`/`IFluidHandler`/`FluidStack` throughout, including
+`CreativeFluidTankBlockEntity.CreativeSmartFluidTank` instanceof-checks in the fluid-exchange
+interaction logic) - that's inseparable from the full NeoForge-Capabilities-to-Fabric-Transfer-API
+rewrite (the coordinator's separate, later "~15 capability block entities" priority item), and
+partially converting just the tank field type without doing that whole rewrite would only have
+been possible by leaving the surrounding capability code just as broken as it already was (verified
+no new errors introduced, no errors fixed there either - correctly deferred, not silently dropped).
+
+### `BakedQuadHelper` - moved/renamed to client-only `BakedModelHelper`, with a simplified signature (BakedQuad is now a record)
+`com.zurrtum.create.foundation.model.BakedQuadHelper` doesn't exist; the real modern equivalent is
+`com.zurrtum.create.client.foundation.model.BakedModelHelper` (client-only - baked model quad
+manipulation is inherently client-side, makes sense it moved to `client.*`). Its `cropAndMove`
+method's signature is also **simpler** than the old NeoForge-era shape our 5 affected files
+(`CopycatBeamModel`, `CopycatBlockModel`, `ISimpleCopycatModel`, `CopycatSlabModel`,
+`CopycatVerticalStepModel` - all client-only) were already calling it with
+(`cropAndMove(quad.getVertices(), quad.getSprite(), aabb, vec3)` then wrapped in
+`BakedQuadHelper.cloneWithCustomGeometry(quad, ...)`): the real signature is simply
+`cropAndMove(BakedQuad quad, AABB crop, Vec3 move) -> BakedQuad`, doing the crop+move+clone in one
+call - no separate `cloneWithCustomGeometry` wrapping step needed at all. (`BakedQuad` itself is
+now a Java record in this MC version - verified via `BakedModelHelper`'s own real source using
+`.comp_XXXX()` record-accessor names - which is also presumably why the old mutable-array-based
+"clone for safety" pattern isn't needed anymore.) Fixed all 5 files: replaced
+`BakedQuadHelper.cloneWithCustomGeometry(quad, BakedModelHelper.cropAndMove(quad.getVertices(), quad.getSprite(), aabb, vec3))`
+with the single call `BakedModelHelper.cropAndMove(quad, aabb, vec3)` everywhere, and
+`CopycatBlockModel`'s plain `BakedQuadHelper.clone(quad)` (no cropping, just a defensive copy) with
+directly reusing the same quad instances (`new ArrayList<>(templateQuads)`) since immutable records
+have no aliasing-mutation risk to guard against anymore. **Note**: these 5 files were apparently
+already half-converted by an earlier, unverified session (already importing/calling
+`BakedModelHelper.cropAndMove` under the *old* multi-arg signature) - a reminder that "imports the
+right class" doesn't mean "compiles" without actually checking the call signature too.
+
+### UNRESOLVED ENVIRONMENT QUIRK - flagging for future sessions, don't re-trust blindly
+While fixing the 5 `BakedQuadHelper`/copycat model files above, discovered that **none of them ever
+appear in `compileClientJava`'s error output, regardless of their actual content** - verified this
+by deliberately appending unambiguous garbage (`BADSYNTAX!!!` outside any class body, which must be
+a syntax error in any Java file) directly into `CopycatBlockModel.java` and recompiling with
+`--rerun --no-build-cache`: the error output was **byte-for-byte identical** before and after,
+with zero mentions of that file. This is not explained by anything found this session (not
+Gradle's build cache, not `--rerun`, not `clean`) - the file is a normal `.java` file in
+`src/client/java` matching the same directory convention as every other file that DOES show up in
+errors. **Practical implication: don't fully trust "this file has zero errors in the compile log"
+for files under `content/copycat/` (and possibly elsewhere) as proof the file actually compiles -
+verify those specific files by another means (e.g. a real IDE, or invoking `javac` directly outside
+Gradle) before relying on their apparent clean status.** This doesn't invalidate the overall error/
+file-count trend (which is dominated by the hundreds of files that DO reliably show up), just this
+one specific pocket of files. Worth a future session's time to actually root-cause if it recurs
+elsewhere, since it undermines the "verify by compiling" methodology this whole project depends on.
+
+### Status after this session
+`./gradlew compileJava`: **896 unique errors across 110 files** (down from 925/111 - see the 2x
+counting correction above; genuine file-count progress: 111->110, and several individual symbol
+errors resolved within files that still have other, separately-tracked issues, so the true
+error-count delta is larger than the file-count delta suggests). `compileClientJava` reported
+identically (896/110) but per the quirk above, treat the copycat-model-file portion of that number
+with caution.
+
+## Session 9 continued: root-caused the compileClientJava anomaly - REAL ROOT CAUSE FOUND
+
+### Root cause: `compileClientJava` has never actually run once, this entire port
+`compileClientJava` depends on `compileJava` succeeding (it needs main's compiled `.class` output
+on its classpath). Gradle fail-fasts on the first task failure by default. Since `compileJava` has
+had real errors every single session so far, **every previous `./gradlew compileClientJava`
+invocation in this entire porting project just re-printed compileJava's own failure and never
+actually attempted to compile a single file under `src/client/java`** - confirmed conclusively via
+`./gradlew compileClientJava --continue`, whose task-execution log shows only `:compileJava
+FAILED` and no `:compileClientJava` line at all (skipped-as-a-dependency-of-a-failed-task, standard
+Gradle behavior, not a bug). Every past "client errors: N" figure in this document for any session
+was actually just `compileJava`'s own error list under a different task name - verified by diffing
+file paths in the output (100% `src/main/...`, zero `src/client/...`, every time).
+
+### The workaround that gives a real signal: direct `javac`, bypassing Gradle's task graph entirely
+Resolved the real client compile classpath once via a temporary Gradle task
+(`sourceSets.client.compileClasspath.asPath`), then ran `javac` directly against **both** source
+trees together (`find src/main/java src/client/java -name "*.java" > sources.txt`, then
+`javac -Xmaxerrs 5000 -encoding UTF-8 -cp "<resolved classpath>" -d <scratch dir> @sources.txt`).
+This does NOT enforce Loom's split-source-set restriction (main can't see client symbols) since
+both roots are compiled together as one unit - that check still only comes from the real
+`compileJava`/`compileClientJava` tasks once `compileJava` is clean - but it reliably surfaces
+every real compile error in `src/client/java` for the first time in this project's history.
+**Note**: attempting to encode this same recipe as a proper Gradle `JavaCompile` task (source =
+both sourceSets, classpath = client's, `options.fork = true`) was tried and, for reasons NOT fully
+root-caused despite real effort, still silently dropped diagnostics for a chunk of client files
+even though `sourceSets.client.java.files` correctly listed them as registered inputs - some
+interaction between Gradle's JavaCompile wrapping and this specific project/environment that
+plain command-line `javac` doesn't have. Given time constraints this session, the recommended
+verification method going forward is the **raw javac command**, not a Gradle task - re-derive the
+classpath string whenever dependencies change (it's stable otherwise) and keep the two file-list +
+javac commands above as the standard "real client verification" recipe. A comment pointing at this
+section was left in `build.gradle` in place of the (removed, non-working) task attempt.
+
+### MAJOR FINDING enabled by finally seeing real client errors: `RenderType` moved packages in MC 1.21.11
+`net.minecraft.client.renderer.RenderType` no longer exists at that path - verified directly via
+`javap`/`unzip -l` against the real resolved `minecraft-clientOnly` mapped jar: the class moved to
+**`net.minecraft.client.renderer.rendertype.RenderType`** (new subpackage; a sibling `RenderTypes`
+class also lives there now). This is pure vanilla MC API drift, unrelated to Create Fly, and would
+have silently broken the client build the moment `compileClientJava` ever got a chance to run -
+completely invisible until this session's investigation. Fixed the import across all **17**
+affected files (`grep -rl "^import net.minecraft.client.renderer.RenderType;"` found them all;
+verified zero remaining references to the old package afterward).
+
+### Other real bugs found and fixed via the new verification method (all previously invisible)
+- `level.isClientSide` (private field, must be `level.isClientSide()` - the same MC 1.21.11 API
+  change documented in earlier sessions) had **14 more occurrences** than previously known, in files
+  that had never been checked because they only ever appeared in the never-run client compile or
+  were coincidentally past the point earlier capped views stopped: `BrakeBlock`, `BrassChuteBlock`,
+  `EncasedCrossConnectorBlock`, `BoilerData`, `FluidVesselBlock`, `InvertedClutchBlock`,
+  `KineticBatteryBlock`, `LinkedAnalogLeverBlockEntity`, `LinkedButtonBlock`, `LinkedLeverBlock`,
+  `LinkedTransmitterBlock`, `LinkedTransmitterItem`, `OverstressClutchBlock`, `ShearPinBlock`.
+- `addBehaviours(List<BlockEntityBehaviour>)` raw-type -> `List<BlockEntityBehaviour<?>>` (the same
+  fix pattern from the session 8 audit) had 5 more occurrences: `BrakeBlockEntity`,
+  `CentrifugalClutchBlockEntity`, `FreewheelClutchBlockEntity`, `KineticBridgeBlockEntity`,
+  `ShearPinBlockEntity`.
+- `javax.annotation.Nullable` (stale JSR-305, not reliably on the Fabric classpath - same fix
+  pattern as session-1/6's `@Nonnull` cleanup) -> `org.jetbrains.annotations.Nullable`, 5 files:
+  `ContraptionMusicManager`, `FluidVesselBlockEntity`, `ItemSiloBlock`, `CriterionTriggerBase`,
+  `SimpleCCTrigger`.
+- `CCBlockEntityRenders.java` (this session's own new file, from earlier in session 9): the
+  `BlockEntityRendererRegistry.register(CCBlockEntityTypes.CRANK_WHEEL, CrankWheelRenderer::new)`
+  call has a real generic-inference bug - explicit `<E,S>` type witnesses on the call don't work
+  because `create()`'s return type (`BlockEntityRenderer<T,S>`) is invariant in the provider's own
+  type params, and `CrankWheelRenderer` implements `BlockEntityRenderer<HandCrankBlockEntity,...>`
+  not `BlockEntityRenderer<CrankWheelBlockEntity,...>` - explicit witnesses forced the wrong target
+  type. Fixed by assigning the method reference to an explicitly-typed local variable
+  (`BlockEntityRendererProvider<HandCrankBlockEntity, HandCrankRenderer.HandCrankRenderState>
+  crankWheelRendererFactory = CrankWheelRenderer::new;`) instead, which lets javac's simpler
+  variable-assignment inference succeed where the generic-method-call inference couldn't. Good
+  reminder that even code written this same session needs this new verification method, not just
+  old code.
+
+### BIG FINDING, NOT YET ACTED ON - `CopycatModel`'s entire API was rewritten in Create Fly 1.21.11
+While investigating the `ModelData`/`RenderType` errors in the copycat model files
+(`CopycatBeamModel`, `CopycatBlockModel`, `CopycatBoardModel`, `CopycatFenceModel`,
+`CopycatFenceGateModel`, `CopycatSlabModel`, `CopycatStairsModel`, `CopycatVerticalStepModel`,
+`CopycatWallModel`, `ISimpleCopycatModel` - 10 files), decompiled the real
+`com.zurrtum.create.client.infrastructure.model.CopycatModel` (their shared base class) and found
+it's been **completely rewritten** for MC's new "unbaked model parts" rendering pipeline
+(`WrapperBlockStateModel`, `addPartsWithInfo(...)` returning a `List<BlockModelPart>`-shaped type,
+no more `getQuads`/`ModelData`/`RenderType`-parametrized `getCroppedQuads` at all). This is **not**
+a simple import-path or signature fix like the other findings above - it's a full architectural
+rewrite of how copycat blocks assemble their borrowed-material quads, on the scale of the
+`ValueInput`/`ValueOutput` finding from session 8, possibly larger (10 files, each with nontrivial
+crop/rotate/assemble geometry logic). **Deliberately not attempted this session** - flagging
+prominently as the single biggest known remaining item in `content/`, to be scoped and tackled
+as its own dedicated pass (this mod's copycat block quad-cropping logic itself, e.g. the beam/slab/
+vertical-step crop math already fixed via `BakedModelHelper.cropAndMove` this session, is probably
+still adaptable to the new API shape - it's the outer `getCroppedQuads(...)` entry point and
+`CopycatModel` base class integration that needs to change, not necessarily the crop math itself).
+
+### Corrected, trustworthy status after this session (via the new verification method)
+Direct `javac` against **both** source trees together: **1057 unique errors across 142 files**
+(down from 1110/147 measured at the start of this specific investigation, after the RenderType +
+quick-win fixes above). Of those, **107 files / 846 errors are under `src/main`** (matches
+`./gradlew compileJava`'s real, trustworthy count exactly) and **~35 files / ~211 errors are under
+`src/client`** - this client-side error count has never been visible in any previous session's
+reporting and is now, for the first time, a real number. The single largest remaining known
+concentration in `src/client` is the `CopycatModel` rewrite above (10 files); the rest is a mix of
+NeoForge `ModelData`/`Capabilities` references (expected, tracked) and other not-yet-triaged items.
+
 ## Constraints / house rules
 - Don't add speculative abstractions or backwards-compat shims. Match the existing
   code's structure/intent as closely as Fabric + Create Fly allow.

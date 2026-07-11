@@ -5,46 +5,48 @@ import com.hlysine.create_connected.CreateConnected;
 import com.hlysine.create_connected.config.CServer;
 import com.hlysine.create_connected.config.FeatureToggle;
 import com.zurrtum.create.content.redstone.link.IRedstoneLinkable;
-import com.zurrtum.create.client.content.redstone.link.LinkBehaviour;
+import com.zurrtum.create.content.redstone.link.ServerLinkBehaviour;
 import com.zurrtum.create.content.redstone.link.RedstoneLinkNetworkHandler;
 import com.zurrtum.create.content.redstone.link.RedstoneLinkNetworkHandler.Frequency;
 import com.zurrtum.create.infrastructure.config.AllConfigs;
-import dev.ryanhcode.sable.companion.SableCompanion;
-import dev.ryanhcode.sable.companion.SubLevelAccess;
 import com.zurrtum.create.catnip.data.Couple;
+import com.zurrtum.create.catnip.registry.RegisteredObjectsHelper;
 import com.zurrtum.create.catnip.levelWrappers.WorldHelper;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.level.LevelEvent;
 import org.joml.Vector3d;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-@EventBusSubscriber(modid = CreateConnected.MODID)
+// Real logic preserved as-is, just re-hosted on Fabric APIs:
+// - net.neoforged...EventBusSubscriber/@SubscribeEvent/LevelEvent.Load/Unload -> Fabric API's
+//   ServerWorldEvents.LOAD/UNLOAD (registered from CreateConnected's main entrypoint - see
+//   register() below, called from CreateConnected.onInitialize()).
+// - client.content.redstone.link.LinkBehaviour (client-only UI wrapper) -> the real Create Fly
+//   RedstoneLinkNetworkHandler.updateNetworkOf itself already uses ServerLinkBehaviour (the actual
+//   state holder, verified in the real sources jar) for this exact same instanceof check, so this
+//   is not a workaround but matching Create Fly's own real pattern.
 public class LinkWildcardNetworkHandler {
     static final Map<LevelAccessor, Map<Couple<Frequency>, Set<Couple<Frequency>>>> transmitter_connections =
             new IdentityHashMap<>();
     static final Map<LevelAccessor, Map<Couple<Frequency>, Set<Couple<Frequency>>>> receiver_connections =
             new IdentityHashMap<>();
 
-    @SubscribeEvent
-    public static void onLoadWorld(LevelEvent.Load event) {
-        transmitter_connections.put(event.getLevel(), new HashMap<>());
-        receiver_connections.put(event.getLevel(), new HashMap<>());
-        CreateConnected.LOGGER.debug("Link-Wildcard: Prepared Redstone Network Wildcards for {}", WorldHelper.getDimensionID(event.getLevel()));
-    }
-
-    @SubscribeEvent
-    public static void onUnloadWorld(LevelEvent.Unload event) {
-        transmitter_connections.remove(event.getLevel());
-        receiver_connections.remove(event.getLevel());
-        CreateConnected.LOGGER.debug("Link-Wildcard: Removed Redstone Network Wildcards for {}", WorldHelper.getDimensionID(event.getLevel()));
+    public static void register() {
+        ServerWorldEvents.LOAD.register((server, level) -> {
+            transmitter_connections.put(level, new HashMap<>());
+            receiver_connections.put(level, new HashMap<>());
+            CreateConnected.LOGGER.debug("Link-Wildcard: Prepared Redstone Network Wildcards for {}", WorldHelper.getDimensionID(level));
+        });
+        ServerWorldEvents.UNLOAD.register((server, level) -> {
+            transmitter_connections.remove(level);
+            receiver_connections.remove(level);
+            CreateConnected.LOGGER.debug("Link-Wildcard: Removed Redstone Network Wildcards for {}", WorldHelper.getDimensionID(level));
+        });
     }
 
     public static Map<Couple<Frequency>, Set<Couple<Frequency>>> transmittersIn(LevelAccessor world) {
@@ -64,7 +66,7 @@ public class LinkWildcardNetworkHandler {
     }
 
     public static boolean updateNetworkOf(RedstoneLinkNetworkHandler handler, LevelAccessor world, IRedstoneLinkable actor) {
-        if (!FeatureToggle.isEnabled(CCItems.REDSTONE_LINK_WILDCARD.getId()))
+        if (!FeatureToggle.isEnabled(RegisteredObjectsHelper.getKeyOrThrow(CCItems.REDSTONE_LINK_WILDCARD)))
             return false;
 
         Couple<Frequency> key = actor.getNetworkKey();
@@ -118,7 +120,7 @@ public class LinkWildcardNetworkHandler {
                 updatePower.accept(wildcardNetwork);
             }
 
-        if (actor instanceof LinkBehaviour linkBehaviour) {
+        if (actor instanceof ServerLinkBehaviour linkBehaviour) {
             // fix one-to-one loading order problem
             if (linkBehaviour.isListening()) {
                 linkBehaviour.newPosition = true;
@@ -240,27 +242,25 @@ public class LinkWildcardNetworkHandler {
         }
     }
 
-    // Implement a custom range check for compatibility with sable. Modified version of dev.ryanhcode.sable.neoforge.mixin.compatibility.create.redstone_links.RedstoneLinkNetworkHandlerMixin.sable$projectComparisons
+    // Originally implemented a custom range check for compatibility with the "Sable" mod
+    // (dev.ryanhcode.sable, sub-level/moving-structure physics), transforming positions into a
+    // sub-level's logical pose before distance-checking so links keep working aboard a moving
+    // Sable structure. Verified via Modrinth (WebSearch, session 7) that Sable's newest release
+    // only targets MC 1.21.1 - there is no 1.21.11-compatible build to depend on (compileOnly or
+    // otherwise), so the real compat integration is currently impossible to reinstate, not merely
+    // skipped. This falls back to the plain distance check, which is exactly the behavior the
+    // original code already had whenever Sable's helper returned no sub-level for a position (its
+    // null checks were unconditional no-ops in that case) - i.e. this is the correct behavior for
+    // "Sable not present", just without the dead unreachable-for-us compat branch. Revisit if/when
+    // Sable ships a 1.21.11 build: add modCompileOnly + FabricLoader.isModLoaded("sable") guarded
+    // reflection or a dedicated compat/ class per this mod's existing Mods.java soft-dep pattern.
     private static boolean withinRange(IRedstoneLinkable from, IRedstoneLinkable to, LevelAccessor levelAccessor) {
-        final Level level = (Level) levelAccessor;
-
         if (from == to) return true;
 
         final BlockPos fromLocation = from.getLocation();
         final Vector3d fromPos = new Vector3d(fromLocation.getX(), fromLocation.getY(), fromLocation.getZ());
         final BlockPos toLocation = to.getLocation();
         final Vector3d toPos = new Vector3d(toLocation.getX(), toLocation.getY(), toLocation.getZ());
-
-        final SableCompanion helper = SableCompanion.INSTANCE;
-        final SubLevelAccess fromSublevel = helper.getContaining(level, fromPos);
-        if (fromSublevel != null) {
-            fromSublevel.logicalPose().transformPosition(fromPos);
-        }
-
-        final SubLevelAccess toSublevel = helper.getContaining(level, toPos);
-        if (toSublevel != null) {
-            toSublevel.logicalPose().transformPosition(toPos);
-        }
 
         final int linkRange = AllConfigs.server().logistics.linkRange.get();
         return fromPos.distanceSquared(toPos) < linkRange * linkRange;

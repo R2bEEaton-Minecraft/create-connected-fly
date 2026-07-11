@@ -163,7 +163,7 @@ public class LinkedButtonBlock extends ButtonBlock implements IBE<LinkedTransmit
     }
 
     public void updateTransmittedSignal(Level worldIn, BlockPos pos) {
-        if (worldIn.isClientSide)
+        if (worldIn.isClientSide())
             return;
 
         BlockState state = worldIn.getBlockState(pos);

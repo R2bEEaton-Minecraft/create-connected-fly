@@ -6,15 +6,13 @@ import com.zurrtum.create.api.connectivity.ConnectivityHandler;
 import com.zurrtum.create.client.api.goggles.IHaveGoggleInformation;
 import com.zurrtum.create.content.fluids.tank.FluidTankBlockEntity;
 import com.zurrtum.create.foundation.blockEntity.IMultiBlockEntityContainer;
-import com.zurrtum.create.foundation.fluid.SmartFluidTank;
 import com.zurrtum.create.infrastructure.config.AllConfigs;
 import com.zurrtum.create.catnip.animation.LerpedFloat;
-import com.zurrtum.create.catnip.nbt.NBTHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -30,7 +28,7 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 import static com.hlysine.create_connected.content.fluidvessel.FluidVesselBlock.*;
@@ -77,14 +75,14 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
     }
 
     @Override
-    protected SmartFluidTank createInventory() {
-        return new SmartFluidTank(getCapacityMultiplier(), this::onFluidStackChanged);
+    protected FluidVesselTank createInventory() {
+        return new FluidVesselTank(getCapacityMultiplier(), this::onFluidStackChanged);
     }
 
     @Override
     protected void updateConnectivity() {
         updateConnectivity = false;
-        if (level.isClientSide)
+        if (level.isClientSide())
             return;
         if (!isController())
             return;
@@ -153,7 +151,7 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
             }
         }
 
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             setChanged();
             sendData();
         }
@@ -179,7 +177,7 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
 
     @Override
     public void removeController(boolean keepFluids) {
-        if (level.isClientSide)
+        if (level.isClientSide())
             return;
         updateConnectivity = true;
         if (!keepFluids)
@@ -339,7 +337,7 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
 
     @Override
     public void setController(BlockPos controller) {
-        if (level.isClientSide && !isVirtual())
+        if (level.isClientSide() && !isVirtual())
             return;
         if (controller.equals(this.controller))
             return;
@@ -398,40 +396,45 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
     }
 
     @Override
-    protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
-        super.read(compound, registries, clientPacket);
+    protected void read(ValueInput view, boolean clientPacket) {
+        super.read(view, clientPacket);
 
         BlockPos controllerBefore = controller;
         int prevWidth = width;
         int prevLength = height;
         int prevLum = luminosity;
 
-        updateConnectivity = compound.contains("Uninitialized");
-        luminosity = compound.getInt("Luminosity");
+        updateConnectivity = view.getBooleanOr("Uninitialized", false);
+        luminosity = view.getIntOr("Luminosity", 0);
 
-        lastKnownPos = null;
-        if (compound.contains("LastKnownPos"))
-            lastKnownPos = NBTHelper.readBlockPos(compound, "LastKnownPos");
-
-        controller = null;
-        if (compound.contains("Controller"))
-            controller = NBTHelper.readBlockPos(compound, "Controller");
+        lastKnownPos = view.read("LastKnownPos", BlockPos.CODEC).orElse(null);
+        controller = view.read("Controller", BlockPos.CODEC).orElse(null);
 
         if (isController()) {
-            window = compound.getBoolean("Window");
-            windowType = NBTHelper.readEnum(compound, "WindowType", WindowType.class);
-            width = compound.getInt("Size");
-            height = compound.getInt("Height");
+            window = view.getBooleanOr("Window", false);
+            WindowType[] windowTypes = WindowType.values();
+            String windowTypeName = view.getStringOr("WindowType", windowTypes[0].name());
+            WindowType parsedWindowType = windowTypes[0];
+            for (WindowType t : windowTypes)
+                if (t.name().equals(windowTypeName))
+                    parsedWindowType = t;
+            windowType = parsedWindowType;
+            width = view.getIntOr("Size", 0);
+            height = view.getIntOr("Height", 0);
             tankInventory.setCapacity(getTotalTankSize() * getCapacityMultiplier());
 
-            tankInventory.readFromNBT(registries, compound.getCompound("TankContent"));
+            // NeoForge's SmartFluidTank.readFromNBT still expects a raw CompoundTag - bridged via
+            // CompoundTag.CODEC. SmartFluidTank itself is part of the separate replacement item
+            // tracked in PORTING_NOTES.md (Create Fly no longer ships this exact class), not yet done.
+            tankInventory.readFromNBT(view.lookup(), view.read("TankContent", CompoundTag.CODEC).orElseGet(CompoundTag::new));
             if (tankInventory.getSpace() < 0)
                 tankInventory.drain(-tankInventory.getSpace(), FluidAction.EXECUTE);
         }
 
-        boiler.read(compound.getCompound("Boiler"), width * width * height);
+        boiler.read(view.childOrEmpty("Boiler"), width * width * height);
 
-        if (compound.contains("ForceFluidLevel") || fluidLevel == null)
+        boolean forceFluidLevel = view.getBooleanOr("ForceFluidLevel", false);
+        if (forceFluidLevel || fluidLevel == null)
             fluidLevel = LerpedFloat.linear()
                     .startWithValue(getFillState());
 
@@ -451,7 +454,7 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
         }
         if (isController()) {
             float fillState = getFillState();
-            if (compound.contains("ForceFluidLevel") || fluidLevel == null)
+            if (forceFluidLevel || fluidLevel == null)
                 fluidLevel = LerpedFloat.linear()
                         .startWithValue(fillState);
             fluidLevel.chase(fillState, 0.5f, LerpedFloat.Chaser.EXP);
@@ -461,35 +464,35 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IHav
                     .getLightEngine()
                     .checkBlock(worldPosition);
 
-        if (compound.contains("LazySync"))
+        if (view.getBooleanOr("LazySync", false))
             fluidLevel.chase(fluidLevel.getChaseTarget(), 0.125f, LerpedFloat.Chaser.EXP);
     }
 
     @Override
-    public void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
+    public void write(ValueOutput view, boolean clientPacket) {
         if (updateConnectivity)
-            compound.putBoolean("Uninitialized", true);
-        compound.put("Boiler", boiler.write());
+            view.putBoolean("Uninitialized", true);
+        boiler.write(view.child("Boiler"));
         if (lastKnownPos != null)
-            compound.put("LastKnownPos", NbtUtils.writeBlockPos(lastKnownPos));
+            view.store("LastKnownPos", BlockPos.CODEC, lastKnownPos);
         if (!isController())
-            compound.put("Controller", NbtUtils.writeBlockPos(controller));
+            view.store("Controller", BlockPos.CODEC, controller);
         if (isController()) {
-            compound.putBoolean("Window", window);
-            NBTHelper.writeEnum(compound, "WindowType", windowType);
-            compound.put("TankContent", tankInventory.writeToNBT(registries, new CompoundTag()));
-            compound.putInt("Size", width);
-            compound.putInt("Height", height);
+            view.putBoolean("Window", window);
+            view.putString("WindowType", windowType.name());
+            view.store("TankContent", CompoundTag.CODEC, tankInventory.writeToNBT(view.lookup(), new CompoundTag()));
+            view.putInt("Size", width);
+            view.putInt("Height", height);
         }
-        compound.putInt("Luminosity", luminosity);
-        super.write(compound, registries, clientPacket);
+        view.putInt("Luminosity", luminosity);
+        super.write(view, clientPacket);
 
         if (!clientPacket)
             return;
         if (forceFluidLevelUpdate)
-            compound.putBoolean("ForceFluidLevel", true);
+            view.putBoolean("ForceFluidLevel", true);
         if (queuedSync)
-            compound.putBoolean("LazySync", true);
+            view.putBoolean("LazySync", true);
         forceFluidLevelUpdate = false;
     }
 

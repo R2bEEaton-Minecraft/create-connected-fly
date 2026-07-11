@@ -11,9 +11,9 @@ import com.zurrtum.create.content.redstone.diodes.BrassDiodeBlock;
 import com.zurrtum.create.foundation.blockEntity.behaviour.*;
 import com.zurrtum.create.foundation.blockEntity.behaviour.scrollValue.ServerScrollValueBehaviour;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -41,7 +41,7 @@ public class OverstressClutchBlockEntity extends SplitShaftBlockEntity {
     }
 
     @Override
-    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+    public void addBehaviours(List<BlockEntityBehaviour<?>> behaviours) {
         AdvancementBehaviour.registerAwardables(this, behaviours, CCAdvancements.OVERSTRESS_CLUTCH);
         maxDelay = new TimeDelayScrollValueBehaviour(this);
         maxDelay.between(1, 60 * 20 * 60);
@@ -137,21 +137,21 @@ public class OverstressClutchBlockEntity extends SplitShaftBlockEntity {
     @Override
     public void tick() {
         super.tick();
-        if (getBlockState().getValue(STATE) == ClutchState.UNCOUPLING && level != null && !level.isClientSide) {
+        if (getBlockState().getValue(STATE) == ClutchState.UNCOUPLING && level != null && !level.isClientSide()) {
             level.scheduleTick(getBlockPos(), CCBlocks.OVERSTRESS_CLUTCH, 0, TickPriority.EXTREMELY_HIGH);
         }
     }
 
     @Override
-    protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
-        delay = compound.getInt("Delay");
-        super.read(compound, registries, clientPacket);
+    protected void read(ValueInput compound, boolean clientPacket) {
+        delay = compound.getIntOr("Delay", 0);
+        super.read(compound, clientPacket);
     }
 
     @Override
-    protected void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
+    protected void write(ValueOutput compound, boolean clientPacket) {
         compound.putInt("Delay", delay);
-        super.write(compound, registries, clientPacket);
+        super.write(compound, clientPacket);
     }
 
     // Client-only createBoard()/formatSettings() (custom "ticks/seconds/minutes" UI board rows)
