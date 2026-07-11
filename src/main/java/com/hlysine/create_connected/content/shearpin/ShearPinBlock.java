@@ -99,7 +99,7 @@ public class ShearPinBlock extends AbstractBEShaftBlock<ShearPinBlockEntity> {
         IPlacementHelper helper = PlacementHelpers.get(placementHelperId);
         if (helper.matchesItem(item))
             return helper.getOffset(player, world, state, pos, ray)
-                    .placeInWorld(world, (BlockItem) item.getItem(), player, hand, ray);
+                    .placeInWorld(world, (BlockItem) item.getItem(), player, hand);
 
         return InteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }

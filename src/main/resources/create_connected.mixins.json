@@ -53,6 +53,7 @@
     "sequencedgearshift.SequencedGearshiftBlockEntityMixin"
   ],
   "client": [
+    "copycat.BlockStateModelLoaderMixin",
     "copycat.fence.ValueBoxRendererMixin",
     "nestedschematics.ClientSchematicLoaderMixin",
     "sequencedgearshift.AbstractSimiScreenAccessor",

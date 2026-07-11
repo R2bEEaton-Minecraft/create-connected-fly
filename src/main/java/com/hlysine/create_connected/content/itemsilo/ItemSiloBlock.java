@@ -97,7 +97,7 @@ public class ItemSiloBlock extends Block implements IWrenchable, IBE<ItemSiloBlo
     }
 
     @Override
-    public int getAnalogOutputSignal(BlockState pState, Level pLevel, BlockPos pPos) {
+    public int getAnalogOutputSignal(BlockState pState, Level pLevel, BlockPos pPos, Direction direction) {
         return ItemHelper.calcRedstoneFromBlockEntity(this, pLevel, pPos);
     }
 

@@ -32,8 +32,9 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
@@ -157,8 +158,9 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
     }
 
     @Override
-    public BlockState updateShape(BlockState pState, Direction pDirection, BlockState pNeighborState,
-                                  LevelAccessor pLevel, BlockPos pCurrentPos, BlockPos pNeighborPos) {
+    public BlockState updateShape(BlockState pState, LevelReader pLevel, ScheduledTickAccess pScheduledTickAccess,
+                                  BlockPos pCurrentPos, Direction pDirection, BlockPos pNeighborPos, BlockState pNeighborState,
+                                  RandomSource pRandom) {
         if (pDirection == Direction.DOWN && pNeighborState.getBlock() != this)
             withBlockEntityDo(pLevel, pCurrentPos, FluidVesselBlockEntity::updateBoilerTemperature);
         return pState;
@@ -370,7 +372,7 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
     }
 
     @Override
-    public int getAnalogOutputSignal(BlockState blockState, Level worldIn, BlockPos pos) {
+    public int getAnalogOutputSignal(BlockState blockState, Level worldIn, BlockPos pos, Direction direction) {
         return getBlockEntityOptional(worldIn, pos).map(FluidVesselBlockEntity::getControllerBE)
                 .map(be -> ComparatorUtil.fractionToRedstoneLevel(be.getFillState()))
                 .orElse(0);

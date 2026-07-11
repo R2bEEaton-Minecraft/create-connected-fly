@@ -17,8 +17,8 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -107,13 +107,14 @@ public class KineticBridgeDestinationBlock extends DirectionalKineticBlock imple
     }
 
     @Override
-    public BlockState updateShape(BlockState pState, Direction pFacing, BlockState pFacingState, LevelAccessor pLevel,
-                                  BlockPos pCurrentPos, BlockPos pFacingPos) {
+    public BlockState updateShape(BlockState pState, LevelReader pLevel, ScheduledTickAccess pScheduledTickAccess,
+                                  BlockPos pCurrentPos, Direction pFacing, BlockPos pFacingPos, BlockState pFacingState,
+                                  RandomSource pRandom) {
         if (stillValid(pLevel, pCurrentPos, pState)) {
             BlockPos sourcePos = getSource(pCurrentPos, pState);
             if (pLevel.getBlockState(sourcePos).is(CCBlocks.KINETIC_BRIDGE))
-                if (!pLevel.getBlockTicks().hasScheduledTick(sourcePos, CCBlocks.KINETIC_BRIDGE))
-                    pLevel.scheduleTick(sourcePos, CCBlocks.KINETIC_BRIDGE, 1);
+                if (!pScheduledTickAccess.getBlockTicks().hasScheduledTick(sourcePos, CCBlocks.KINETIC_BRIDGE))
+                    pScheduledTickAccess.scheduleTick(sourcePos, CCBlocks.KINETIC_BRIDGE, 1);
             return pState;
         }
         if (!(pLevel instanceof Level level) || level.isClientSide())

@@ -39,13 +39,9 @@ public class ParallelGearboxBlock extends RotatedPillarKineticBlock implements I
     }
 
     @Override
-    public @NotNull ItemStack getCloneItemStack(BlockState state,
-                                                @NotNull HitResult target,
-                                                @NotNull LevelReader world,
-                                                @NotNull BlockPos pos,
-                                                @NotNull Player player) {
+    public @NotNull ItemStack getCloneItemStack(@NotNull LevelReader world, @NotNull BlockPos pos, @NotNull BlockState state, boolean includeData) {
         if (state.getValue(AXIS).isVertical())
-            return super.getCloneItemStack(state, target, world, pos, player);
+            return super.getCloneItemStack(world, pos, state, includeData);
         return new ItemStack(CCItems.VERTICAL_PARALLEL_GEARBOX);
     }
 

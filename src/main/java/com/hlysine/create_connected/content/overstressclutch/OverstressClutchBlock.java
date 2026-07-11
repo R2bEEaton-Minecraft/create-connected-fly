@@ -9,6 +9,7 @@ import com.zurrtum.create.content.kinetics.RotationPropagator;
 import com.zurrtum.create.content.kinetics.base.AbstractEncasedShaftBlock;
 import com.zurrtum.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.StringRepresentable;
@@ -83,7 +84,7 @@ public class OverstressClutchBlock extends AbstractEncasedShaftBlock implements 
 
     @SuppressWarnings("deprecation")
     @Override
-    public int getAnalogOutputSignal(@NotNull BlockState pState, @NotNull Level pLevel, @NotNull BlockPos pPos) {
+    public int getAnalogOutputSignal(@NotNull BlockState pState, @NotNull Level pLevel, @NotNull BlockPos pPos, @NotNull Direction pDirection) {
         return pState.getValue(STATE) == ClutchState.UNCOUPLED ? 0 : 15;
     }
 

@@ -69,9 +69,9 @@ public class BrassGearboxBlock extends RotatedPillarKineticBlock implements IBE<
     }
 
     @Override
-    public ItemStack getCloneItemStack(BlockState state, HitResult target, LevelReader level, BlockPos pos, Player player) {
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean includeData) {
         if (state.getValue(AXIS).isVertical())
-            return super.getCloneItemStack(state, target, level, pos, player);
+            return super.getCloneItemStack(level, pos, state, includeData);
         return new ItemStack(CCItems.VERTICAL_BRASS_GEARBOX);
     }
 

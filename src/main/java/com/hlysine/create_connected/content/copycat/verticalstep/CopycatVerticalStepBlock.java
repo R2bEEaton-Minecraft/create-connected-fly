@@ -61,7 +61,7 @@ public class CopycatVerticalStepBlock extends MigratingWaterloggedCopycatBlock {
             IPlacementHelper placementHelper = PlacementHelpers.get(placementHelperId);
             if (placementHelper.matchesItem(heldItem)) {
                 placementHelper.getOffset(player, level, state, pos, hitResult)
-                        .placeInWorld(level, (BlockItem) heldItem.getItem(), player, hand, hitResult);
+                        .placeInWorld(level, (BlockItem) heldItem.getItem(), player, hand);
                 return InteractionResult.SUCCESS;
             }
         }

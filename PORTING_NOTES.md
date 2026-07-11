@@ -1250,6 +1250,234 @@ reporting and is now, for the first time, a real number. The single largest rema
 concentration in `src/client` is the `CopycatModel` rewrite above (10 files); the rest is a mix of
 NeoForge `ModelData`/`Capabilities` references (expected, tracked) and other not-yet-triaged items.
 
+## PROGRESS session 10: CopycatModel architectural rewrite (the largest known remaining item)
+
+**Note**: from this session on, only this worktree's own `PORTING_NOTES.md` is being maintained -
+the coordinator carries it forward into `main` on merge, so there's no need to also write directly
+to `F:\create-connected-fly\PORTING_NOTES.md` outside the worktree (that dual-write was a stopgap
+for an earlier drift issue, no longer needed).
+
+### The real API: MC 1.21.11's "unbaked model parts" rendering pipeline
+Confirmed via `javap` against the real resolved `minecraft-clientOnly` mapped jar (not guessed):
+- `net.minecraft.client.renderer.block.model.BlockStateModel` (real name of the old `BakedModel`-
+  shaped wrapper interface Create Fly's `WrapperBlockStateModel`/`CopycatModel` implement) -
+  `collectParts(RandomSource, List<BlockModelPart>)` + `particleIcon()`. Its nested
+  `BlockStateModel.UnbakedRoot` interface has `bake(BlockState, ModelBaker)` +
+  `visualEqualityGroup(BlockState)` - this is the real name for the second constructor parameter
+  type on every `CopycatModel` subclass (Create Fly's decompiled sources call it `class_9979` in
+  `WrapperBlockStateModel`, easily mistaken for `BlockStateModel.Unbaked` since that also exists
+  but is a *different*, single-arg-`bake` interface - verified by checking the actual 2-arg `bake`
+  signature matches `UnbakedRoot`, not `Unbaked`).
+- `net.minecraft.client.renderer.block.model.BlockModelPart` (real name for what was baked
+  `BakedQuad` lists keyed by cull-face before) - `getQuads(@Nullable Direction)`,
+  `useAmbientOcclusion()`, `particleIcon()`.
+- `net.minecraft.client.renderer.block.model.SimpleModelWrapper` - the concrete record
+  implementing `BlockModelPart`: `(QuadCollection quads, boolean useAmbientOcclusion,
+  TextureAtlasSprite particleIcon)`.
+- `net.minecraft.client.resources.model.QuadCollection` + nested `QuadCollection.Builder` - the
+  real replacement for manually accumulating a `List<BakedQuad>` per cull face:
+  `addUnculledFace(BakedQuad)` / `addCulledFace(Direction, BakedQuad)` / `build()`.
+- `BakedQuad` **is now a Java record** with renamed accessors: `direction()` (was `getDirection()`),
+  `sprite()` (was `getSprite()`), `tintIndex()` (was `getTintIndex()`) - a separate, easy-to-miss
+  MC 1.21.11 API drift on top of the model-parts rewrite itself. Fixed the 4 files that called the
+  old accessor names directly (`ISimpleCopycatModel`, `CopycatBeamModel`, `CopycatSlabModel`,
+  `CopycatVerticalStepModel` - the ones that inspect `quad.getDirection()` for per-quad skip logic).
+- Real Create Fly's own `com.zurrtum.create.client.infrastructure.model.CopycatModel` (the shared
+  base class - unchanged by us, we only extend it) confirms the new abstract method shape:
+  `protected abstract void addPartsWithInfo(BlockAndTintGetter world, BlockPos pos, BlockState
+  state, CopycatBlock block, BlockState material, RandomSource random, List<BlockModelPart>
+  parts)` - replacing the old NeoForge-era `getCroppedQuads(BlockState state, Direction side,
+  RandomSource rand, BlockState material, ModelData wrappedData, RenderType renderType) ->
+  List<BakedQuad>`. It also still provides `getModelOf(material)`, `getMaterialParts(...)`,
+  `addModelParts(...)`, and `gatherOcclusionData(...)` as helper methods, all real and unchanged.
+
+### The conversion pattern applied to all 10 files
+Old code was invoked once per queried cull-face (`side` parameter: null for unculled, or one of
+the 6 directions), returning a flat `List<BakedQuad>` for just that face. New code is invoked once
+total and must build the whole `QuadCollection` itself. The safest, most behavior-preserving
+translation (verified against 3 real Create Fly reference examples decompiled from the sources jar
+- `CopycatStepModel`, `CopycatPanelModel`, `FluidTankModel` - all doing exactly this pattern):
+for each source `BlockModelPart` (from `getMaterialParts(...)`), build one `QuadCollection.Builder`,
+then for each of the 7 "query directions" (`null` + `Iterate.directions`), call
+`part.getQuads(direction)`, apply the exact same per-quad crop/skip logic the old code had, and
+route survivors into `builder.addUnculledFace(quad)` (for the `null` query) or
+`builder.addCulledFace(direction, quad)` (for a real direction) - i.e., quads stay in the same
+cull-face bucket they were queried from, only their geometry changes via `cropAndMove`. Finally
+wrap with `parts.add(new SimpleModelWrapper(builder.build(), part.useAmbientOcclusion(),
+part.particleIcon()))`.
+- `CopycatBlockModel` (no cropping at all) needed no per-face loop - it now just delegates straight
+  to the base class's `addModelParts(...)` helper, exactly like real Create Fly's own
+  `CopycatPanelModel` does for its "trapdoor material" special case.
+- `ISimpleCopycatModel.assemblePiece(...)` (the shared helper 5 of the 9 real block models use -
+  board/fence/fencegate/stairs/wall) changed its two list parameters (`sourceQuads`, `destQuads`)
+  to `(BlockModelPart part, QuadCollection.Builder builder)`, doing the same per-query-direction
+  loop internally once, so none of its 5 callers needed anything beyond a mechanical
+  `assemblePiece(templateQuads, quads, ...)` -> `assemblePiece(part, builder, ...)` argument swap
+  plus wrapping their whole body in the new outer "for each material part" loop.
+- All 9 block model files + the shared interface verified compiling clean via the session 9
+  javac-direct-invocation method (990 unique errors / 134 files after, down from 994/136 before
+  touching them, and zero of these 10 files appear in the error list at all going forward).
+
+### The missing piece nobody had wired yet: none of these 10 classes were ever actually used
+Searched the entire codebase (`grep -rln "new CopycatBlockModel\|new CopycatSlabModel\|..."`) and
+found **zero** instantiation sites for any of the 9 model classes, in either this mod or (via the
+full extracted Create Fly sources) Create Fly itself owning a generic hook for third-party blocks.
+Real Create Fly wires its OWN copycat model classes (`CopycatPanelModel`, `CopycatStepModel`) via:
+- `com.zurrtum.create.client.AllModels.ALL` - a `Map<Block, BiFunction<BlockState,
+  BlockStateModel.UnbakedRoot, BlockStateModel.UnbakedRoot>>` resolver registry, populated via
+  `register(AllBlocks.COPYCAT_STEP, CopycatStepModel::new)` (this only works because
+  `CopycatStepModel`'s constructor signature exactly matches the `BiFunction`'s shape, and the
+  class itself doubles as an `UnbakedRoot` once baked, per `WrapperBlockStateModel`).
+- `com.zurrtum.create.client.mixin.BlockStateModelLoaderMixin` - a real mixin into VANILLA's own
+  `net.minecraft.client.resources.model.BlockStateModelLoader.loadBlockStateDefinitionStack(...)`,
+  injecting at the `NEW` (constructor) of the returned `LoadedModels`, capturing the local
+  `Map<BlockState, BlockStateModel.UnbakedRoot> models` via MixinExtras' `@Local`, and calling
+  `models.replaceAll(factory)` if `AllModels.ALL` has an entry for the block being loaded.
+
+Since this only wraps Create Fly's OWN blocks (registered in ITS OWN `AllModels.ALL`), our mod's
+blocks are never touched by it - we need the exact same two pieces for ourselves. Added:
+- `registries/CCModels.java` (client) - our own `Map<Block, BiFunction<...>>` registry, mirroring
+  `AllModels.ALL` exactly, registering all 9 real `CCBlocks.COPYCAT_*` fields to their
+  `CopycatXxxModel::new` constructor references.
+- `mixin/copycat/BlockStateModelLoaderMixin.java` (client) - a direct copy of Create Fly's own real
+  mixin shape (same target method, same injection point, same `@Local` capture), just consulting
+  `CCModels.ALL` instead. Registered in `create_connected.mixins.json`'s `"client"` array.
+  **One real compile-time obstacle**: `BlockStateModelLoader.LoadedBlockModelDefinition` (one of
+  the target method's own parameter types) is `private` in the real class - can't be named directly
+  in our own mixin handler method's signature under plain `javac`. Used `List<?>` for that
+  parameter instead (erasure-compatible, and unused in the handler body) rather than fighting
+  Java's access rules for a type we don't actually need.
+- `CCModels.register()` wired into `CreateConnectedClient.onInitializeClient()`.
+
+### CAVEAT, disclosed not hidden: mixin classes may not be 100% verifiable via the javac workaround
+The private-type issue above raises a real possibility that Loom's actual Gradle-orchestrated
+compile (which runs the Mixin annotation processor with its own special handling for referencing
+mixin-target-internal types) behaves differently than plain command-line `javac` for **mixin
+classes specifically** - our workaround verifies "does this file compile as ordinary Java," which
+isn't quite the same guarantee as "will Mixin successfully weave this into the target class at
+runtime." The `BlockStateModelLoaderMixin` compiles clean under the javac workaround as written
+(with the `List<?>` erasure workaround), but its real correctness (the `@Local` capture matching
+the right local variable slot, the `@At("NEW")` injection point actually existing at that
+bytecode offset in the target method) can only be fully confirmed once a real
+`./gradlew compileClientJava` succeeds (requires `compileJava` to be clean first - see session 9's
+root-cause finding) or the mod is actually run. Flagging this prominently rather than claiming
+full confidence - a future session should re-verify this specific file once a full Gradle client
+compile becomes possible.
+
+### Status after this session
+Direct javac (both source trees together): 990 unique errors / 134 files (down from 994/136
+at the point the CopycatModel investigation started, and down from the session's starting point of
+1057/142 after the mechanical RenderType/isClientSide/etc fixes - see session 9 for those). All 10
+CopycatModel-family files plus the new `CCModels`/`BlockStateModelLoaderMixin` wiring compile clean
+and introduce zero new errors elsewhere.
+
+## PROGRESS session 11: remaining content/ files - Ponder move, vanilla Block-state API migration, getCloneItemStack/placeInWorld drift
+
+### Ponder scenes package (12 files + CCPonderPlugin) - entirely client-only, moved wholesale
+Confirmed via the sources jar that Create Fly's WHOLE ponder system (`com.zurrtum.create.ponder.
+api.*`, `com.zurrtum.create.foundation.ponder.*`, `com.zurrtum.create.infrastructure.ponder.*`)
+moved to `com.zurrtum.create.client.*` equivalents - makes sense, ponder is pure in-game-tutorial
+rendering with no server-side component. Moved all 12 of this mod's `ponder/*Scenes.java` files
+from `src/main/java` to `src/client/java` (verified nothing in `src/main` referenced them), did a
+blanket import-root swap (`com.zurrtum.create.ponder.` -> `com.zurrtum.create.client.ponder.`,
+`com.zurrtum.create.foundation.ponder.` -> `com.zurrtum.create.client.foundation.ponder.`), and
+fixed `CCPonderPlugin.java` (already correctly in `src/client/java`) the same way. Also found
+`Create.asResource(String)` (the mod-id resource helper on Create Fly's own entrypoint class)
+doesn't exist anymore - replaced the 2 call sites with `Identifier.fromNamespaceAndPath(Create.
+MOD_ID, ...)` directly.
+
+**Also found and fixed: none of this was ever actually wired up either** (same class of finding as
+session 10's CopycatModel discovery). Real Create Fly registers its own ponder plugin via a direct
+call - `PonderIndex.addPlugin(new CreatePonderPlugin())` from its client entrypoint - not via
+Fabric entrypoints or ServiceLoader (checked both, neither is used). Added the equivalent
+`PonderIndex.addPlugin(new CCPonderPlugin())` call to `CreateConnectedClient.onInitializeClient()`.
+
+### Vanilla MC 1.21.11 Block/BlockState API migration - widespread, affects ~15 files
+Verified via `javap` against the real resolved jars (not guessed). Several per-state query methods
+that used to be overridable at the `Block` level with `(BlockGetter/LevelAccessor, BlockPos)`
+params moved to be simpler, state-only, or were folded into `BlockStateBase` instance methods:
+- `getPistonPushReaction(BlockState)` **removed entirely as an override point** - replaced by
+  `BlockBehaviour.Properties.pushReaction(PushReaction)`, a static property set at block
+  construction time. (Not yet applied anywhere this session - none of the flagged files actually
+  had a `getPistonPushReaction` override needing this treatment once inspected; flagging the fact
+  for any future file that does.)
+- `getOcclusionShape(BlockState)` / `propagatesSkylightDown(BlockState)` - both **dropped their
+  `(BlockGetter/LevelReader, BlockPos)` params entirely**, now purely state-based (both the
+  `Block`-level override and the `BlockState` instance-method equivalent). Fixed in
+  `CopycatFenceBlock`, `CopycatFenceGateBlock`, `CopycatWallBlock`.
+- `updateShape(...)` - the single biggest one, affecting **11 files**. Old:
+  `updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor
+  level, BlockPos pos, BlockPos neighborPos)`. New:
+  `updateShape(BlockState state, LevelReader level, ScheduledTickAccess scheduledTickAccess,
+  BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, RandomSource
+  random)` - reordered, and the single `LevelAccessor` param split into its two constituent
+  interfaces (`LevelAccessor extends LevelReader, ScheduledTickAccess` among others) as two
+  separate params. Where the old body needed mutation capability (`scheduleTick`/`getBlockTicks`),
+  those specific calls now go through the new `scheduledTickAccess` param instead of a level-wide
+  cast - confirmed via `ProperWaterloggedBlock.updateWater(LevelReader, ScheduledTickAccess,
+  BlockState, BlockPos)`'s own real signature already expecting the same split, so this isn't a
+  workaround, it's the intended real shape. Fixed all 11: `AbstractBEShaftBlock`,
+  `CopycatFenceBlock`, `CopycatFenceGateBlock`, `MigratingCopycatBlock`,
+  `MigratingWaterloggedCopycatBlock`, `CopycatStairsBlock`, `CopycatWallBlock`, `CrankWheelBlock`,
+  `DashboardBlock`, `FluidVesselBlock`, `KineticBridgeDestinationBlock`. The 5 `ICopycatWithWrappedBlock`-style files also needed their internal `state.updateShape(...)` *instance* call
+  (5-arg old shape) converted to the new 7-arg instance shape (same reordering, minus the leading
+  "this state").
+- `getAnalogOutputSignal(BlockState, Level, BlockPos)` -> `getAnalogOutputSignal(BlockState, Level,
+  BlockPos, Direction)` - gained a trailing `Direction` param (both the `Block`-level override and
+  the `BlockState` instance-method call site). Fixed in 9 files: `CentrifugalClutchBlock`,
+  `FluidVesselBlock`, `FreewheelClutchBlock`, `InventoryAccessPortBlock`, `InventoryBridgeBlock`,
+  `ItemSiloBlock`, `KineticBatteryBlock`, `OverstressClutchBlock`,
+  `SequencedPulseGeneratorBlock`. None of the bodies actually needed the new `direction` value for
+  anything beyond passing it through to a recursive/target call, so this was a safe, mechanical
+  signature-only change everywhere.
+- `Block.rotate(BlockState, LevelAccessor, BlockPos, Rotation)` -> `Block.rotate(BlockState,
+  Rotation)` (dropped the level/pos params entirely) - fixed in `CrankWheelBlock`.
+- `Item.getCloneItemStack(BlockState, HitResult, LevelReader, BlockPos, Player)` ->
+  `getCloneItemStack(LevelReader, BlockPos, BlockState, boolean includeData)` - dropped
+  `HitResult`/`Player` entirely, gained a trailing `includeData` boolean. Fixed in 7 files.
+  **Real, disclosed feature reduction** in 3 of them (`LinkedAnalogLeverBlock`, `LinkedButtonBlock`,
+  `LinkedLeverBlock`): their old bodies used the removed `HitResult` to distinguish "player
+  pick-blocked the visual base part" vs. "player pick-blocked the lever/button part" via an
+  `isHittingBase(...)` helper, returning a different item stack for each. Since there's no more
+  HitResult to make that distinction, all three now always return this mod's own item (matching
+  the old "not hitting base" branch) - the block's actual placement/interaction behavior is
+  completely unaffected, only this one pick-block nuance is gone. Commented clearly at each site.
+- `PlacementOffset.placeInWorld(Level, BlockItem, Player, InteractionHand, BlockHitResult)` (Create
+  Fly's own catnip placement-helper class, not vanilla) -> `placeInWorld(Level, BlockItem, Player,
+  InteractionHand)` - dropped the trailing `BlockHitResult` and, in `CrankWheelItem`, the return
+  type is now directly `InteractionResult` (no more `.result()` unwrapping needed). Fixed in 6
+  files: `CopycatBeamBlock`, `CopycatSlabBlock`, `CopycatVerticalStepBlock`, `CrankWheelItem`,
+  `KineticBatteryBlock`, `ShearPinBlock`.
+
+### IMPORTANT WORKAROUND LIMITATION FOUND: access wideners are invisible to the javac-direct method
+While fixing the above, hit `ButtonBlock.type`/`ButtonBlock.ticksToStayPressed`/`JukeboxBlockEntity.
+jukeboxSongPlayer` "private access" errors (8 total) in `LinkedButtonBlock`/wherever the
+access-widener-covered fields are used. **These are false positives of the javac-direct
+verification workaround, not real bugs** - `src/main/resources/create_connected.accesswidener`
+already declares exactly these 3 fields as accessible (confirmed by reading the file), and access
+wideners are a Loom-specific bytecode transform applied to the dependency jars before compilation -
+my raw `javac` invocation uses the untransformed jars directly, so it can never see the widened
+access. This is the same class of blind spot as the Mixin-private-type issue from session 10, just
+for a different Loom feature. **Do not "fix" these particular errors** by chasing alternate
+non-private APIs - they're already correctly handled via the access widener and will compile fine
+under a real `./gradlew` build. Treat any future "X has private access" error as a first-check
+against `create_connected.accesswidener` before assuming it's a real problem.
+
+### Real Gradle build attempt (per the coordinator's request, not just the javac workaround)
+Ran `./gradlew compileJava` for real this session (not just the javac-direct method) as a sanity
+cross-check: **532 unique errors / 91 files**, all under `src/main` - consistent with (a subset
+of) the javac-direct method's combined 670/125 count, confirming the workaround's main-sourceset
+portion is trustworthy. `compileClientJava`/`build` still cannot be attempted for real (per session
+9's root-cause finding - they hard-depend on `compileJava` succeeding first), so
+`BlockStateModelLoaderMixin`'s true Mixin-weaving correctness is still unverified by a real build -
+that remains open until `compileJava` reaches zero errors.
+
+### Status after this session
+Direct javac (both source trees together): **670 unique errors / 125 files** (down from 990/134 at
+the start of this session - session 10's CopycatModel work, plus this session's ponder move and
+Block-state API migration, combined for a ~320-error reduction). Real `./gradlew compileJava`:
+**532/91** (main-sourceset subset, cross-checked consistent).
+
 ## Constraints / house rules
 - Don't add speculative abstractions or backwards-compat shims. Match the existing
   code's structure/intent as closely as Fabric + Create Fly allow.

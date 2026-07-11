@@ -2,11 +2,11 @@ package com.hlysine.create_connected.ponder;
 
 import com.zurrtum.create.AllItems;
 import com.zurrtum.create.content.kinetics.chainDrive.ChainDriveBlock;
-import com.zurrtum.create.foundation.ponder.CreateSceneBuilder;
+import com.zurrtum.create.client.foundation.ponder.CreateSceneBuilder;
 import com.zurrtum.create.catnip.math.Pointing;
-import com.zurrtum.create.ponder.api.scene.SceneBuilder;
-import com.zurrtum.create.ponder.api.scene.SceneBuildingUtil;
-import com.zurrtum.create.ponder.api.scene.Selection;
+import com.zurrtum.create.client.ponder.api.scene.SceneBuilder;
+import com.zurrtum.create.client.ponder.api.scene.SceneBuildingUtil;
+import com.zurrtum.create.client.ponder.api.scene.Selection;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 

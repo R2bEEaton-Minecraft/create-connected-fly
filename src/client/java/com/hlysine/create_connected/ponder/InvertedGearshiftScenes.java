@@ -1,9 +1,9 @@
 package com.hlysine.create_connected.ponder;
 
-import com.zurrtum.create.foundation.ponder.CreateSceneBuilder;
-import com.zurrtum.create.ponder.api.PonderPalette;
-import com.zurrtum.create.ponder.api.scene.SceneBuilder;
-import com.zurrtum.create.ponder.api.scene.SceneBuildingUtil;
+import com.zurrtum.create.client.foundation.ponder.CreateSceneBuilder;
+import com.zurrtum.create.client.ponder.api.PonderPalette;
+import com.zurrtum.create.client.ponder.api.scene.SceneBuilder;
+import com.zurrtum.create.client.ponder.api.scene.SceneBuildingUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 
