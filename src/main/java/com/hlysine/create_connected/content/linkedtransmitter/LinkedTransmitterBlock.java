@@ -66,7 +66,9 @@ public interface LinkedTransmitterBlock {
             level.setBlock(pos, newState, Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_ALL);
             level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(player, newState));
             level.levelEvent(player, 3003, pos, 0);
-            return InteractionResult.sidedSuccess(level.isClientSide());
+            // InteractionResult.sidedSuccess(boolean) is gone (confirmed via javap - the interface only
+            // exposes the SUCCESS/SUCCESS_SERVER constants themselves now); inlined the same branch.
+            return level.isClientSide() ? InteractionResult.SUCCESS : InteractionResult.SUCCESS_SERVER;
         }
         if (stack.is(ItemTags.AXES) && state.getValue(BlockStateProperties.LOCKED)) {
             level.playSound(player, pos, SoundEvents.AXE_WAX_OFF, SoundSource.BLOCKS, 1.0F, 1.0F);
@@ -78,10 +80,14 @@ public interface LinkedTransmitterBlock {
             level.setBlock(pos, newState, Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_ALL);
             level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(player, newState));
             if (player != null && !player.isCreative()) {
-                stack.hurtAndBreak(1, player, LivingEntity.getSlotForHand(hand));
+                // LivingEntity.getSlotForHand(InteractionHand) is gone - real equivalent is the
+                // instance method InteractionHand.asEquipmentSlot() (confirmed via javap).
+                stack.hurtAndBreak(1, player, hand.asEquipmentSlot());
             }
 
-            return InteractionResult.sidedSuccess(level.isClientSide());
+            // InteractionResult.sidedSuccess(boolean) is gone (confirmed via javap - the interface only
+            // exposes the SUCCESS/SUCCESS_SERVER constants themselves now); inlined the same branch.
+            return level.isClientSide() ? InteractionResult.SUCCESS : InteractionResult.SUCCESS_SERVER;
         }
         return InteractionResult.TRY_WITH_EMPTY_HAND;
     }

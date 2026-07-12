@@ -264,7 +264,7 @@ public class CCSoundEvents {
         @Override
         public void playAt(Level world, double x, double y, double z, float volume, float pitch, boolean fade) {
             for (WrappedSoundEntry.CompiledSoundEvent event : compiledEvents) {
-                world.playLocalSound(x, y, z, event.event().get(), category, event.volume() * volume,
+                world.playLocalSound(x, y, z, event.event().value(), category, event.volume() * volume,
                         event.pitch() * pitch, fade);
             }
         }

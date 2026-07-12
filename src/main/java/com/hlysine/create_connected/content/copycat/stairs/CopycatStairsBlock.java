@@ -1,5 +1,6 @@
 package com.hlysine.create_connected.content.copycat.stairs;
 
+import com.hlysine.create_connected.content.DirectionHelper;
 import com.hlysine.create_connected.content.copycat.ICopycatWithWrappedBlock;
 import com.hlysine.create_connected.content.copycat.WaterloggedCopycatWrappedBlock;
 import com.zurrtum.create.content.decoration.copycat.CopycatBlock;
@@ -71,20 +72,27 @@ public class CopycatStairsBlock extends WaterloggedCopycatWrappedBlock {
         ICopycatWithWrappedBlock.wrappedState(stairs, pState).attack(pLevel, pPos, pPlayer);
     }
 
-    @Override
-    public float getExplosionResistance(BlockState state, BlockGetter level, BlockPos pos, Explosion explosion) {
-        return super.getExplosionResistance(state, level, pos, explosion);
-    }
+    // Block.getExplosionResistance(BlockState, BlockGetter, BlockPos, Explosion) is gone - real
+    // signature is a plain no-arg getExplosionResistance() reading a fixed per-block Properties value
+    // (confirmed via javap), no longer overridable with per-call context. This override only ever
+    // called straight through to super() anyway (never actually delegated to the wrapped `stairs`
+    // block's own resistance), so removing it is behaviorally a no-op, not a functionality drop.
 
     @Override
     public void onPlace(@NotNull BlockState pState, @NotNull Level pLevel, @NotNull BlockPos pPos, @NotNull BlockState pOldState, boolean pIsMoving) {
         ICopycatWithWrappedBlock.wrappedState(stairs, pState).onPlace(pLevel, pPos, pOldState, pIsMoving);
     }
 
+    // BlockState.onRemove(Level, BlockPos, BlockState newState, boolean) and the matching
+    // Block/BlockBehaviour.onRemove override were both replaced by affectNeighborsAfterRemoval, which
+    // takes ServerLevel instead of Level and drops the newState param entirely (confirmed via javap on
+    // BlockStateBase and BlockBehaviour; see MigratingCopycatBlock.java for the fuller writeup on the
+    // block-level override). The wrapped-block delegation below only ever forwarded to the same call,
+    // so it carries over unchanged aside from the signature/param updates.
     @Override
-    public void onRemove(BlockState pState, Level pLevel, BlockPos pPos, BlockState pNewState, boolean pIsMoving) {
-        super.onRemove(pState, pLevel, pPos, pNewState, pIsMoving);
-        ICopycatWithWrappedBlock.wrappedState(stairs, pState).onRemove(pLevel, pPos, pNewState, pIsMoving);
+    protected void affectNeighborsAfterRemoval(@NotNull BlockState pState, @NotNull ServerLevel pLevel, @NotNull BlockPos pPos, boolean movedByPiston) {
+        super.affectNeighborsAfterRemoval(pState, pLevel, pPos, movedByPiston);
+        ICopycatWithWrappedBlock.wrappedState(stairs, pState).affectNeighborsAfterRemoval(pLevel, pPos, movedByPiston);
     }
 
     @Override
@@ -135,7 +143,7 @@ public class CopycatStairsBlock extends WaterloggedCopycatWrappedBlock {
         if (diff.equals(Vec3i.ZERO)) {
             return true;
         }
-        Direction side = Direction.fromDelta(diff.getX(), diff.getY(), diff.getZ());
+        Direction side = DirectionHelper.fromDelta(diff.getX(), diff.getY(), diff.getZ());
 
         if (toState.is(this)) {
             return false;
@@ -164,7 +172,7 @@ public class CopycatStairsBlock extends WaterloggedCopycatWrappedBlock {
         if (diff.equals(Vec3i.ZERO)) {
             return true;
         }
-        Direction side = Direction.fromDelta(diff.getX(), diff.getY(), diff.getZ());
+        Direction side = DirectionHelper.fromDelta(diff.getX(), diff.getY(), diff.getZ());
 
         if (side != null) {
             FaceShape sideShape = getFaceShape(state, side);
@@ -190,22 +198,11 @@ public class CopycatStairsBlock extends WaterloggedCopycatWrappedBlock {
         return !canFaceBeOccluded(state, face);
     }
 
-    @Override
-    public boolean supportsExternalFaceHiding(BlockState state) {
-        return true;
-    }
-
-    @Override
-    public boolean hidesNeighborFace(BlockGetter level, BlockPos pos, BlockState state, BlockState neighborState,
-                                     Direction dir) {
-        if (neighborState.getBlock() instanceof StairBlock || neighborState.getBlock() instanceof CopycatStairsBlock) {
-            if (getMaterial(level, pos).skipRendering(getMaterial(level, pos.relative(dir)), dir.getOpposite()))
-                return getFaceShape(state, dir).equals(getFaceShape(neighborState, dir.getOpposite()));
-        }
-
-        return getFaceShape(state, dir).isFull()
-                && getMaterial(level, pos).skipRendering(neighborState, dir.getOpposite());
-    }
+    // supportsExternalFaceHiding(BlockState)/hidesNeighborFace(BlockGetter, BlockPos, BlockState,
+    // BlockState, Direction) do not exist anywhere in this Fabric API surface (confirmed via javap; see
+    // CopycatWallBlock.java for the full writeup) - NeoForge-only IBlockExtension face-culling hooks
+    // with no Fabric replacement. Feature reduction: adjacent copycat stairs sharing material/shape will
+    // render their shared internal faces instead of culling them (a fill-rate optimization loss only).
 
     public static BlockState getMaterial(BlockGetter reader, BlockPos targetPos) {
         BlockState state = CopycatBlock.getMaterial(reader, targetPos);

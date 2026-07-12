@@ -37,7 +37,11 @@ public class BrassGearboxBlock extends RotatedPillarKineticBlock implements IBE<
     public static final BooleanProperty FACE_4_FLIPPED = BooleanProperty.create("face_4_flipped");
 
     public BrassGearboxBlock(Properties properties) {
-        super(properties);
+        // BlockBehaviour.getPistonPushReaction(BlockState) is gone - real BlockStateBase.
+        // getPistonPushReaction() is now a plain no-arg getter reading a fixed per-block Properties
+        // value (confirmed via javap, same pattern as the earlier getExplosionResistance() finding),
+        // set via Properties.pushReaction(...) instead of an override.
+        super(properties.pushReaction(PushReaction.PUSH_ONLY));
         this.registerDefaultState(this.defaultBlockState()
                 .setValue(FACE_1_FLIPPED, true)
                 .setValue(FACE_2_FLIPPED, true)
@@ -53,11 +57,6 @@ public class BrassGearboxBlock extends RotatedPillarKineticBlock implements IBE<
         builder.add(FACE_2_FLIPPED);
         builder.add(FACE_3_FLIPPED);
         builder.add(FACE_4_FLIPPED);
-    }
-
-    @Override
-    public PushReaction getPistonPushReaction(BlockState state) {
-        return PushReaction.PUSH_ONLY;
     }
 
     @SuppressWarnings("deprecation")

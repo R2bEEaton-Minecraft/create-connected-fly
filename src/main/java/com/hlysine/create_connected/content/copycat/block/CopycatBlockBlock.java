@@ -41,14 +41,10 @@ public class CopycatBlockBlock extends MigratingCopycatBlock implements ICopycat
         return Shapes.block();
     }
 
-    @Override
-    public boolean hidesNeighborFace(BlockGetter level, BlockPos pos, BlockState state, BlockState neighborState,
-                                     Direction dir) {
-        if (state.is(this) == neighborState.is(this)) {
-            return (getMaterial(level, pos).skipRendering(getMaterial(level, pos.relative(dir)), dir.getOpposite()));
-        }
-
-        return getMaterial(level, pos).skipRendering(neighborState, dir.getOpposite());
-    }
+    // hidesNeighborFace(BlockGetter, BlockPos, BlockState, BlockState, Direction) does not exist anywhere
+    // in this Fabric API surface (confirmed via javap; see CopycatWallBlock.java for the full writeup) -
+    // a NeoForge-only IBlockExtension face-culling hook with no Fabric replacement. Feature reduction:
+    // adjacent copycat blocks sharing the same material will render their shared internal faces instead
+    // of culling them (a fill-rate optimization loss only).
 }
 

@@ -1,5 +1,6 @@
 package com.hlysine.create_connected.content.crossconnector;
 
+import com.hlysine.create_connected.content.DirectionHelper;
 import com.hlysine.create_connected.registries.CCShapes;
 import com.hlysine.create_connected.content.IConnectionForwardingBlock;
 import com.hlysine.create_connected.content.KineticHelper;
@@ -156,7 +157,7 @@ public class CrossConnectorBlock extends Block implements IWrenchable, IConnecti
         Vec3i offset = neighbourPos.subtract(sourcePos);
         if (!(sourceState.getBlock() instanceof IRotate rotatingBlock))
             return neighbourPos;
-        Direction offsetDirection = Direction.fromDelta(offset.getX(), offset.getY(), offset.getZ());
+        Direction offsetDirection = DirectionHelper.fromDelta(offset.getX(), offset.getY(), offset.getZ());
         if (offsetDirection == null)
             return neighbourPos;
         if (!rotatingBlock.hasShaftTowards(level, sourcePos, sourceState, offsetDirection))

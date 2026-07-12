@@ -81,7 +81,7 @@ public class JukeboxInteractionBehaviour extends MovingInteractionBehaviour {
             @Override
             public void levelEvent(@Nullable Player player, int type, BlockPos pos, int data) {
                 if (type == 1010 || type == 1011) {
-                    PlayContraptionJukeboxPacket payload = new PlayContraptionJukeboxPacket(dimension().location(),
+                    PlayContraptionJukeboxPacket payload = new PlayContraptionJukeboxPacket(dimension().identifier(),
                             contraptionEntity.getId(),
                             contraptionPos,
                             pos,

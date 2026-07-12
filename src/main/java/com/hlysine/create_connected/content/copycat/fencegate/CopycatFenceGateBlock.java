@@ -63,10 +63,9 @@ public class CopycatFenceGateBlock extends WaterloggedCopycatWrappedBlock {
         return ICopycatWithWrappedBlock.copyState(state, super.getStateForPlacement(pContext), false);
     }
 
-    @Override
-    public boolean collisionExtendsVertically(BlockState state, BlockGetter level, BlockPos pos, Entity collidingEntity) {
-        return true;
-    }
+    // collisionExtendsVertically(BlockState, BlockGetter, BlockPos, Entity) does not exist anywhere in
+    // this Fabric API surface (confirmed via javap; see CopycatWallBlock.java for the full writeup) - a
+    // NeoForge-only IBlockExtension hook with no Fabric replacement.
 
     @Override
     protected @NotNull InteractionResult useWithoutItem(@NotNull BlockState state, @NotNull Level level, @NotNull BlockPos pos, @NotNull Player player, @NotNull BlockHitResult hitResult) {
@@ -139,9 +138,8 @@ public class CopycatFenceGateBlock extends WaterloggedCopycatWrappedBlock {
         return true;
     }
 
-    @Override
-    public boolean supportsExternalFaceHiding(BlockState state) {
-        return true;
-    }
+    // supportsExternalFaceHiding(BlockState) does not exist anywhere in this Fabric API surface
+    // (confirmed via javap; see CopycatWallBlock.java for the full writeup) - a NeoForge-only
+    // IBlockExtension face-culling hook with no Fabric replacement.
 }
 

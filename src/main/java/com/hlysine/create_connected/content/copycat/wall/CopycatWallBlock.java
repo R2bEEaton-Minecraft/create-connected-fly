@@ -1,5 +1,6 @@
 package com.hlysine.create_connected.content.copycat.wall;
 
+import com.hlysine.create_connected.content.DirectionHelper;
 import com.hlysine.create_connected.content.copycat.ICopycatWithWrappedBlock;
 import com.hlysine.create_connected.content.copycat.WaterloggedCopycatWrappedBlock;
 import com.zurrtum.create.content.decoration.copycat.CopycatBlock;
@@ -38,10 +39,10 @@ public class CopycatWallBlock extends WaterloggedCopycatWrappedBlock {
         super(properties);
         registerDefaultState(defaultBlockState()
                 .setValue(UP, true)
-                .setValue(NORTH_WALL, WallSide.NONE)
-                .setValue(SOUTH_WALL, WallSide.NONE)
-                .setValue(EAST_WALL, WallSide.NONE)
-                .setValue(WEST_WALL, WallSide.NONE)
+                .setValue(NORTH, WallSide.NONE)
+                .setValue(SOUTH, WallSide.NONE)
+                .setValue(EAST, WallSide.NONE)
+                .setValue(WEST, WallSide.NONE)
         );
     }
 
@@ -52,7 +53,7 @@ public class CopycatWallBlock extends WaterloggedCopycatWrappedBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.@NotNull Builder<Block, BlockState> pBuilder) {
-        super.createBlockStateDefinition(pBuilder.add(UP, NORTH_WALL, SOUTH_WALL, EAST_WALL, WEST_WALL));
+        super.createBlockStateDefinition(pBuilder.add(UP, NORTH, SOUTH, EAST, WEST));
     }
 
     @Nullable
@@ -63,10 +64,16 @@ public class CopycatWallBlock extends WaterloggedCopycatWrappedBlock {
         return ICopycatWithWrappedBlock.copyState(state, super.getStateForPlacement(pContext), false);
     }
 
-    @Override
-    public boolean collisionExtendsVertically(BlockState state, BlockGetter level, BlockPos pos, Entity collidingEntity) {
-        return true;
-    }
+    // collisionExtendsVertically(BlockState, BlockGetter, BlockPos, Entity) does not exist anywhere in
+    // this Fabric API surface (confirmed via javap on Block/BlockBehaviour/FabricBlock/FabricBlockState;
+    // also absent from real Create Fly's own compiled CopycatBlock.class and CopycatWallBlock analog).
+    // This was a NeoForge-only IBlockExtension hook with no Fabric replacement - real Create Fly's own
+    // MetalLadderBlock has an analogous hook (supportsExternalFaceHiding) left commented out with a
+    // "//TODO" for the same reason, confirming this is a genuine, currently-unported API gap rather
+    // than a mistake on this mod's part. Feature reduction: entity collision may no longer extend
+    // through the full vertical height of a tall wall segment the way vanilla WallBlock's own
+    // (also-removed) equivalent used to; the wall's actual getCollisionShape/getShape still render and
+    // collide correctly per-voxel, this only affected a specific vertical-extension optimization.
 
     @Override
     public @NotNull VoxelShape getShape(@NotNull BlockState pState, @NotNull BlockGetter pLevel, @NotNull BlockPos pPos, @NotNull CollisionContext pContext) {
@@ -130,7 +137,7 @@ public class CopycatWallBlock extends WaterloggedCopycatWrappedBlock {
         long sideCount = Arrays.stream(Iterate.horizontalDirections).filter(s -> state.getValue(byDirection(s)) != WallSide.NONE).count();
         if (sideCount > 2)
             return false;
-        if (sideCount == 2 && (state.getValue(NORTH_WALL) != state.getValue(SOUTH_WALL) || state.getValue(EAST_WALL) != state.getValue(WEST_WALL))) {
+        if (sideCount == 2 && (state.getValue(NORTH) != state.getValue(SOUTH) || state.getValue(EAST) != state.getValue(WEST))) {
             return false;
         }
 
@@ -138,7 +145,7 @@ public class CopycatWallBlock extends WaterloggedCopycatWrappedBlock {
         if (diff.equals(Vec3i.ZERO)) {
             return true;
         }
-        Direction face = Direction.fromDelta(diff.getX(), diff.getY(), diff.getZ());
+        Direction face = DirectionHelper.fromDelta(diff.getX(), diff.getY(), diff.getZ());
         if (face == null) {
             if (diff.distManhattan(Vec3i.ZERO) > 2) return false;
             if (diff.getY() == 0) return false;
@@ -188,34 +195,15 @@ public class CopycatWallBlock extends WaterloggedCopycatWrappedBlock {
         return !canFaceBeOccluded(state, face);
     }
 
-    @Override
-    public boolean supportsExternalFaceHiding(BlockState state) {
-        return true;
-    }
-
-    @Override
-    public boolean hidesNeighborFace(BlockGetter level, BlockPos pos, BlockState state, BlockState neighborState,
-                                     Direction dir) {
-        if (neighborState.getBlock() instanceof WallBlock || neighborState.getBlock() instanceof CopycatWallBlock) {
-            if (getMaterial(level, pos).skipRendering(getMaterial(level, pos.relative(dir)), dir.getOpposite())) {
-                if (dir.getAxis().isHorizontal()) {
-                    WallSide side = state.getValue(byDirection(dir));
-                    return side != WallSide.NONE && side == neighborState.getValue(byDirection(dir.getOpposite()));
-                } else {
-                    if (neighborState.getValue(UP) && !state.getValue(UP)) return false;
-                    return Arrays.stream(Iterate.horizontalDirections).allMatch(s -> {
-                        WallSide neighbor = neighborState.getValue(byDirection(s));
-                        WallSide self = state.getValue(byDirection(s));
-                        if (dir == Direction.UP && self == WallSide.LOW) return false;
-                        if (dir == Direction.DOWN && neighbor == WallSide.LOW) return false;
-                        return self == neighbor;
-                    });
-                }
-            }
-        }
-
-        return false;
-    }
+    // supportsExternalFaceHiding(BlockState) and hidesNeighborFace(BlockGetter, BlockPos, BlockState,
+    // BlockState, Direction) do not exist anywhere in this Fabric API surface either (same confirmation
+    // as collisionExtendsVertically above) - both were NeoForge-only IBlockExtension hooks used to skip
+    // rendering faces between two adjacent copycat walls that share the same material and connectivity,
+    // a pure GPU/fill-rate optimization. Feature reduction: adjacent copycat walls will render their
+    // shared internal faces instead of culling them (a performance cost only - block appearance,
+    // texture connection via canConnectTexturesToward, and face-occlusion via canFaceBeOccluded/
+    // shouldFaceAlwaysRender above are all unaffected since those hooks do have real Fabric equivalents
+    // and remain in place).
 
     public static BlockState getMaterial(BlockGetter reader, BlockPos targetPos) {
         BlockState state = CopycatBlock.getMaterial(reader, targetPos);
@@ -223,14 +211,16 @@ public class CopycatWallBlock extends WaterloggedCopycatWrappedBlock {
         return state;
     }
 
+    // WallBlock.NORTH_WALL/SOUTH_WALL/EAST_WALL/WEST_WALL were renamed to plain NORTH/SOUTH/EAST/WEST
+    // (confirmed via javap), and vanilla now ships a ready-made WallBlock.PROPERTY_BY_DIRECTION map
+    // doing exactly what this switch used to build by hand - used directly instead (also sidesteps
+    // the naming collision a straight rename would otherwise create between the switch's Direction
+    // case labels and the statically-imported WallBlock.NORTH/SOUTH/EAST/WEST EnumProperty fields).
     public static EnumProperty<WallSide> byDirection(Direction direction) {
-        return switch (direction) {
-            case NORTH -> NORTH_WALL;
-            case SOUTH -> SOUTH_WALL;
-            case WEST -> WEST_WALL;
-            case EAST -> EAST_WALL;
-            default -> throw new IllegalArgumentException("Vertical directions not supported");
-        };
+        EnumProperty<WallSide> property = WallBlock.PROPERTY_BY_DIRECTION.get(direction);
+        if (property == null)
+            throw new IllegalArgumentException("Vertical directions not supported");
+        return property;
     }
 }
 

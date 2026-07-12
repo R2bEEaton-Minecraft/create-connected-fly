@@ -7,7 +7,6 @@ import com.zurrtum.create.content.kinetics.mechanicalArm.ArmInteractionPoint;
 import com.zurrtum.create.content.kinetics.mechanicalArm.ArmInteractionPointType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.Containers;
-import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -20,9 +19,9 @@ public class KineticBatteryInteractionPoint extends AllArmInteractionPointTypes.
     @Override
     public ItemStack insert(ArmBlockEntity armBlockEntity, ItemStack stack, boolean simulate) {
         ItemStack input = stack.copy();
-        InteractionResultHolder<ItemStack> res =
+        KineticBatteryBlock.InsertResult res =
                 KineticBatteryBlock.tryInsert(cachedState, level, pos, input, false, simulate);
-        ItemStack remainder = res.getObject();
+        ItemStack remainder = res.object();
         if (input.isEmpty()) {
             return remainder;
         } else {
@@ -35,7 +34,7 @@ public class KineticBatteryInteractionPoint extends AllArmInteractionPointTypes.
     public static class Type extends ArmInteractionPointType {
         @Override
         public boolean canCreatePoint(Level level, BlockPos pos, BlockState state) {
-            return CCBlocks.KINETIC_BATTERY.has(state);
+            return state.is(CCBlocks.KINETIC_BATTERY);
         }
 
         @Override

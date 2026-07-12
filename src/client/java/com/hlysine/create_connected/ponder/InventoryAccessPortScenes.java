@@ -109,7 +109,7 @@ public class InventoryAccessPortScenes {
         scene.idle(5);
         scene.world().setBlock(
                 daisyThresholdSwitch,
-                AllBlocks.THRESHOLD_SWITCH.getDefaultState()
+                AllBlocks.THRESHOLD_SWITCH.defaultBlockState()
                         .setValue(ThresholdSwitchBlock.FACING, Direction.EAST)
                         .setValue(ThresholdSwitchBlock.LEVEL, 4),
                 false
@@ -142,7 +142,7 @@ public class InventoryAccessPortScenes {
 
         scene.world().setBlock(
                 daisyThresholdSwitch,
-                CCBlocks.INVENTORY_ACCESS_PORT.getDefaultState()
+                CCBlocks.INVENTORY_ACCESS_PORT.defaultBlockState()
                         .setValue(InventoryAccessPortBlock.FACING, Direction.EAST)
                         .setValue(InventoryAccessPortBlock.ATTACHED, false),
                 false

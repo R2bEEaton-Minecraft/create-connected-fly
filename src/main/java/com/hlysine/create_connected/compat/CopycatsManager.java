@@ -128,7 +128,9 @@ public class CopycatsManager {
                 Set<BlockPos> list = migrationQueue.get(level);
                 synchronized (list) {
                     if (!list.isEmpty())
-                        CreateConnected.LOGGER.debug("Copycats: Migrated " + list.size() + " copycats in " + level.dimension().location());
+                        // ResourceKey.location() was renamed to identifier() (ResourceLocation itself
+                        // was renamed to Identifier mod-wide, confirmed via javap).
+                        CreateConnected.LOGGER.debug("Copycats: Migrated " + list.size() + " copycats in " + level.dimension().identifier());
                     for (Iterator<BlockPos> iterator = list.iterator(); iterator.hasNext(); ) {
                         BlockPos pos = iterator.next();
                         if (!level.isLoaded(pos)) {

@@ -40,7 +40,7 @@ public class EncasedCrossConnectorBlock extends CrossConnectorBlock implements S
             return InteractionResult.SUCCESS;
         context.getLevel().levelEvent(2001, context.getClickedPos(), Block.getId(state));
         KineticBlockEntity.switchToBlockState(context.getLevel(), context.getClickedPos(),
-                CCBlocks.CROSS_CONNECTOR.getDefaultState().setValue(AXIS, state.getValue(AXIS)));
+                CCBlocks.CROSS_CONNECTOR.defaultBlockState().setValue(AXIS, state.getValue(AXIS)));
         return InteractionResult.SUCCESS;
     }
 
@@ -59,7 +59,7 @@ public class EncasedCrossConnectorBlock extends CrossConnectorBlock implements S
 
     @Override
     public ItemRequirement getRequiredItems(BlockState state, BlockEntity be) {
-        return ItemRequirement.of(CCBlocks.CROSS_CONNECTOR.getDefaultState(), be);
+        return ItemRequirement.of(CCBlocks.CROSS_CONNECTOR.defaultBlockState(), be);
     }
 
     @Override

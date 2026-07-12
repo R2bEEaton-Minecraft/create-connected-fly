@@ -34,6 +34,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.stream.Stream;
 
@@ -44,10 +45,34 @@ import java.util.stream.Stream;
 // src/client/java), tracked as a follow-up in PORTING_NOTES.md. Without it the blocks will function
 // but render as missing/no block entity renderer until that client class exists.
 public class CCBlockEntityTypes {
+    // Vanilla's BlockEntityType.Builder/BlockEntitySupplier are gone from the public API entirely
+    // (BlockEntitySupplier is now package-private, confirmed via javap - Create Fly's own real
+    // AllBlockEntityTypes.register() works around this by giving every block entity a 2-arg
+    // (BlockPos, BlockState) constructor that hardcodes its own registered type via a static
+    // self-reference, e.g. CopycatBlockEntity(pos, state) { super(AllBlockEntityTypes.COPYCAT, pos,
+    // state); } - but this mod's own ~30 block entity classes all still use the previous 3-arg
+    // (BlockEntityType<?>, BlockPos, BlockState) shape throughout their own code and renderers, so
+    // rewriting every one of them wasn't worth it just to match this one registration helper.
+    // Instead, this uses the standard "forward-reference holder" trick (well-established for exactly
+    // this bootstrapping problem - the type doesn't exist yet when the factory needs to close over
+    // it) to keep feeding a 3-arg XxxBlockEntity::new reference through Fabric's own
+    // FabricBlockEntityTypeBuilder (net.fabricmc.fabric.api.object.builder.v1.block.entity, which
+    // BlockEntityType now implements FabricBlockEntityType against) unchanged at every call site
+    // below.
+    @FunctionalInterface
+    private interface Factory3<T extends net.minecraft.world.level.block.entity.BlockEntity> {
+        T create(BlockEntityType<T> type, net.minecraft.core.BlockPos pos, BlockState state);
+    }
+
+    @SuppressWarnings("unchecked")
     private static <T extends net.minecraft.world.level.block.entity.BlockEntity> BlockEntityType<T> register(
-            String path, BlockEntityType.BlockEntitySupplier<T> factory, Block... validBlocks) {
+            String path, Factory3<T> factory, Block... validBlocks) {
         ResourceKey<BlockEntityType<?>> key = ResourceKey.create(Registries.BLOCK_ENTITY_TYPE, CreateConnected.asResource(path));
-        BlockEntityType<T> type = BlockEntityType.Builder.of(factory, validBlocks).build(null);
+        BlockEntityType<T>[] holder = new BlockEntityType[1];
+        BlockEntityType<T> type = net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder
+                .create((pos, state) -> factory.create(holder[0], pos, state), validBlocks)
+                .build();
+        holder[0] = type;
         return Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, key, type);
     }
 
@@ -127,7 +152,11 @@ public class CCBlockEntityTypes {
     public static final BlockEntityType<DashboardBlockEntity> DASHBOARD =
             register("dashboard", DashboardBlockEntity::new, CCBlocks.DASHBOARD);
 
-    public static final BlockEntityType<CopycatBlockEntity> COPYCAT = register("copycat", CopycatBlockEntity::new,
+    // Real Create Fly's own CopycatBlockEntity constructor is 2-arg (BlockPos, BlockState) - it already
+    // dropped the BlockEntityType param entirely (per the "forward-reference holder" note at the top of
+    // this file), unlike this mod's own block entities which still take the 3-arg shape - adapted with
+    // an explicit lambda instead of a direct method reference.
+    public static final BlockEntityType<CopycatBlockEntity> COPYCAT = register("copycat", (type, pos, state) -> new CopycatBlockEntity(pos, state),
             CCBlocks.COPYCAT_BLOCK, CCBlocks.COPYCAT_SLAB, CCBlocks.COPYCAT_BEAM, CCBlocks.COPYCAT_VERTICAL_STEP,
             CCBlocks.COPYCAT_STAIRS, CCBlocks.COPYCAT_FENCE, CCBlocks.COPYCAT_FENCE_GATE, CCBlocks.COPYCAT_WALL, CCBlocks.COPYCAT_BOARD);
 

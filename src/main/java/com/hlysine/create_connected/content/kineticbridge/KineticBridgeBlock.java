@@ -64,20 +64,28 @@ public class KineticBridgeBlock extends DirectionalKineticBlock implements IBE<K
             level.scheduleTick(pos, this, 1);
     }
 
+    // BlockBehaviour.onRemove(BlockState, Level, BlockPos, BlockState newState, boolean) was replaced by
+    // affectNeighborsAfterRemoval(BlockState, ServerLevel, BlockPos, boolean movedByPiston) (confirmed
+    // via javap; see MigratingCopycatBlock.java for the fuller writeup). Unlike the Copycats+-only
+    // overrides there, this override's `!pNewState.is(this)` guard was real, load-bearing logic (only
+    // tear down the paired destination block when this block is actually being removed, not merely
+    // transitioning to a different FACING/state of itself). The newState param is simply gone now, but
+    // the guard is no longer necessary to reproduce: the new method's own name/contract (and vanilla's
+    // own call site, which now filters same-block state transitions before invoking it at all) means
+    // affectNeighborsAfterRemoval is only invoked on genuine removal in the first place, so the check is
+    // redundant rather than unexpressable - dropped rather than replaced.
     @Override
-    public void onRemove(BlockState pState, Level pLevel, BlockPos pPos, BlockState pNewState, boolean pIsMoving) {
-        if (!pNewState.is(this)) {
-            Direction facing = pState.getValue(FACING);
-            BlockPos destinationPos = pPos.relative(facing);
+    protected void affectNeighborsAfterRemoval(BlockState pState, ServerLevel pLevel, BlockPos pPos, boolean movedByPiston) {
+        Direction facing = pState.getValue(FACING);
+        BlockPos destinationPos = pPos.relative(facing);
 
-            BlockState occupiedState = pLevel.getBlockState(destinationPos);
-            BlockState requiredStructure = CCBlocks.KINETIC_BRIDGE_DESTINATION.getDefaultState()
-                    .setValue(KineticBridgeDestinationBlock.FACING, facing);
-            if (occupiedState.equals(requiredStructure)) {
-                pLevel.destroyBlock(destinationPos, false);
-            }
+        BlockState occupiedState = pLevel.getBlockState(destinationPos);
+        BlockState requiredStructure = CCBlocks.KINETIC_BRIDGE_DESTINATION.defaultBlockState()
+                .setValue(KineticBridgeDestinationBlock.FACING, facing);
+        if (occupiedState.equals(requiredStructure)) {
+            pLevel.destroyBlock(destinationPos, false);
         }
-        super.onRemove(pState, pLevel, pPos, pNewState, pIsMoving);
+        super.affectNeighborsAfterRemoval(pState, pLevel, pPos, movedByPiston);
     }
 
     @Override
@@ -86,7 +94,7 @@ public class KineticBridgeBlock extends DirectionalKineticBlock implements IBE<K
         BlockPos destinationPos = pPos.relative(facing);
 
         BlockState occupiedState = pLevel.getBlockState(destinationPos);
-        BlockState requiredStructure = CCBlocks.KINETIC_BRIDGE_DESTINATION.getDefaultState()
+        BlockState requiredStructure = CCBlocks.KINETIC_BRIDGE_DESTINATION.defaultBlockState()
                 .setValue(KineticBridgeDestinationBlock.FACING, facing);
         if (!occupiedState.equals(requiredStructure)) {
             if (!occupiedState.canBeReplaced()) {

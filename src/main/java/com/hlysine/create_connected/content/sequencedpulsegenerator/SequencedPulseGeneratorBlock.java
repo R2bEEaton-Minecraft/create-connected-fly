@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiConsumer;
 
-public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock implements IBE<SequencedPulseGeneratorBlockEntity> {
+public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock implements IBE<SequencedPulseGeneratorBlockEntity>, com.zurrtum.create.foundation.block.RedStoneConnectBlock {
     public static final BooleanProperty POWERING = BrassDiodeBlock.POWERING;
     public static final BooleanProperty POWERED_SIDE = PoweredLatchBlock.POWERED_SIDE;
 
@@ -114,8 +114,15 @@ public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock implements 
         return 2;
     }
 
+    // Block.canConnectRedstone(BlockState, BlockGetter, BlockPos, Direction) (an IForgeBlock-only
+    // extension method) is gone entirely - confirmed via javap on Block/BlockBehaviour/BlockStateBase.
+    // Real Create Fly ships its own Fabric-appropriate replacement instead:
+    // com.zurrtum.create.foundation.block.RedStoneConnectBlock, a 2-param (BlockState, Direction)
+    // interface hooked into vanilla RedStoneWireBlock via Create Fly's own RedstoneWireBlockMixin
+    // (confirmed by reading both files in the real decompiled sources) - implemented here instead of
+    // overriding a Block method, with the BlockGetter/BlockPos params dropped since they were unused.
     @Override
-    public boolean canConnectRedstone(@NotNull BlockState state, @NotNull BlockGetter world, @NotNull BlockPos pos, Direction side) {
+    public boolean canConnectRedstone(@NotNull BlockState state, Direction side) {
         if (side == null)
             return false;
         return side.getAxis().isHorizontal();

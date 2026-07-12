@@ -1,5 +1,6 @@
 package com.hlysine.create_connected.mixin.chaincogwheel;
 
+import com.hlysine.create_connected.content.DirectionHelper;
 import com.hlysine.create_connected.registries.CCBlocks;
 import com.zurrtum.create.content.kinetics.RotationPropagator;
 import com.zurrtum.create.content.kinetics.base.IRotate;
@@ -32,7 +33,7 @@ public class RotationPropagatorMixin {
         final IRotate definitionTo = (IRotate) toBlock;
         final BlockPos diff = to.getBlockPos()
                 .subtract(from.getBlockPos());
-        final Direction direction = Direction.fromDelta(diff.getX(), diff.getY(), diff.getZ());
+        final Direction direction = DirectionHelper.fromDelta(diff.getX(), diff.getY(), diff.getZ());
 
         if (stateFrom.is(CCBlocks.ENCASED_CHAIN_COGWHEEL) && stateTo.is(CCBlocks.ENCASED_CHAIN_COGWHEEL)) {
             if (direction == null) {

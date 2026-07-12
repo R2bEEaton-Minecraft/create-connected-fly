@@ -257,9 +257,12 @@ public class CCBlocks {
         CCRegistrate.blockItem(BRAKE, "brake");
     }
 
+    // BlockBehaviour.Properties has no .component(...) method at all (confirmed via javap - only
+    // Item.Properties does; data components live on ItemStacks, not on Blocks/BlockStates) - the
+    // matching call on the block-item's own Properties below (which does exist and compiles) already
+    // covers the real default-value use case, so this one is dropped rather than replaced.
     public static final KineticBatteryBlock KINETIC_BATTERY =
-            CCRegistrate.block("kinetic_battery", KineticBatteryBlock::new, CCSharedProperties.stone().noOcclusion().mapColor(MapColor.TERRACOTTA_BROWN)
-                    .component(CCDataComponents.KINETIC_BATTERY_CHARGE, 0.0));
+            CCRegistrate.block("kinetic_battery", KineticBatteryBlock::new, CCSharedProperties.stone().noOcclusion().mapColor(MapColor.TERRACOTTA_BROWN));
     public static final KineticBatteryBlockItem KINETIC_BATTERY_ITEM =
             CCRegistrate.blockItem(KINETIC_BATTERY, "kinetic_battery", (b, p) -> new KineticBatteryBlockItem(b, p),
                     new net.minecraft.world.item.Item.Properties().component(CCDataComponents.KINETIC_BATTERY_CHARGE, 0.0));

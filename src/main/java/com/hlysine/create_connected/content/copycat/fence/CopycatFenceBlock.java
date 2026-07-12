@@ -58,10 +58,9 @@ public class CopycatFenceBlock extends WaterloggedCopycatWrappedBlock {
         return ICopycatWithWrappedBlock.copyState(state, super.getStateForPlacement(pContext), false);
     }
 
-    @Override
-    public boolean collisionExtendsVertically(BlockState state, BlockGetter level, BlockPos pos, Entity collidingEntity) {
-        return true;
-    }
+    // collisionExtendsVertically(BlockState, BlockGetter, BlockPos, Entity) does not exist anywhere in
+    // this Fabric API surface (confirmed via javap; see CopycatWallBlock.java for the full writeup) - a
+    // NeoForge-only IBlockExtension hook with no Fabric replacement.
 
     @Override
     public boolean propagatesSkylightDown(@NotNull BlockState pState) {
@@ -147,22 +146,12 @@ public class CopycatFenceBlock extends WaterloggedCopycatWrappedBlock {
         return true;
     }
 
-    @Override
-    public boolean supportsExternalFaceHiding(BlockState state) {
-        return true;
-    }
-
-    @Override
-    public boolean hidesNeighborFace(BlockGetter level, BlockPos pos, BlockState state, BlockState neighborState,
-                                     Direction dir) {
-        if (neighborState.getBlock() instanceof FenceBlock || neighborState.getBlock() instanceof CopycatFenceBlock) {
-            if (getMaterial(level, pos).skipRendering(getMaterial(level, pos.relative(dir)), dir.getOpposite()))
-                if (dir.getAxis().isHorizontal())
-                    return state.getValue(byDirection(dir)) && neighborState.getValue(byDirection(dir.getOpposite()));
-        }
-
-        return false;
-    }
+    // supportsExternalFaceHiding(BlockState)/hidesNeighborFace(BlockGetter, BlockPos, BlockState,
+    // BlockState, Direction) do not exist anywhere in this Fabric API surface (confirmed via javap; see
+    // CopycatWallBlock.java for the full writeup) - NeoForge-only IBlockExtension face-culling hooks
+    // with no Fabric replacement. Feature reduction: adjacent copycat fences sharing material/direction
+    // will render their shared internal faces instead of culling them (a fill-rate optimization loss
+    // only).
 
     public static BlockState getMaterial(BlockGetter reader, BlockPos targetPos) {
         BlockState state = CopycatBlock.getMaterial(reader, targetPos);

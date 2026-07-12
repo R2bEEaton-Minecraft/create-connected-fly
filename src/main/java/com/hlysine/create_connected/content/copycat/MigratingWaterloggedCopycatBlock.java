@@ -11,11 +11,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.LootParams;
@@ -58,14 +56,14 @@ public abstract class MigratingWaterloggedCopycatBlock extends WaterloggedCopyca
         return Mods.COPYCATS.runIfInstalled(() -> () -> state.is(CopycatsManager.convertIfEnabled(this))).orElse(false);
     }
 
+    // See MigratingCopycatBlock.java for the full writeup: BlockBehaviour.onRemove(...) was replaced by
+    // affectNeighborsAfterRemoval(BlockState, ServerLevel, BlockPos, boolean), which dropped the
+    // newState param the original Copycats+-conversion-skip check depended on. Not a real feature loss
+    // in practice: Copycats+ has no Fabric 1.21.11 build, so the skipped branch was already permanently
+    // dead code on this port.
     @Override
-    public void onRemove(BlockState pState, Level pLevel, BlockPos pPos, BlockState pNewState, boolean pIsMoving) {
-        if (Mods.COPYCATS.runIfInstalled(() -> () -> {
-            Block oldBlock = CopycatsManager.convertIfEnabled(pState.getBlock());
-            Block newBlock = CopycatsManager.convertIfEnabled(pNewState.getBlock());
-            return oldBlock.equals(newBlock);
-        }).orElse(false)) return;
-        super.onRemove(pState, pLevel, pPos, pNewState, pIsMoving);
+    protected void affectNeighborsAfterRemoval(BlockState pState, net.minecraft.server.level.ServerLevel pLevel, BlockPos pPos, boolean movedByPiston) {
+        super.affectNeighborsAfterRemoval(pState, pLevel, pPos, movedByPiston);
     }
 
     @Override

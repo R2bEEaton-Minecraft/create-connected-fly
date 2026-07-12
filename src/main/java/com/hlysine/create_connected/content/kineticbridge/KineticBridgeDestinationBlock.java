@@ -59,9 +59,14 @@ public class KineticBridgeDestinationBlock extends DirectionalKineticBlock imple
         return InteractionResult.PASS;
     }
 
+    // getCloneItemStack's real signature is (LevelReader, BlockPos, BlockState, boolean includeData) and
+    // it's protected, not (BlockState, HitResult, LevelReader, BlockPos, Player) (confirmed via javap on
+    // real Create Fly's own CopycatBlock, which has the same real signature) - updated to match. Also:
+    // Block.asStack() (Registrate-era convenience) doesn't exist - replaced with plain ItemStack
+    // construction, matching the fix already applied to KineticBatteryBlock elsewhere in this port.
     @Override
-    public ItemStack getCloneItemStack(BlockState state, HitResult target, LevelReader level, BlockPos pos, Player player) {
-        return CCBlocks.KINETIC_BRIDGE.asStack();
+    protected ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean includeData) {
+        return new ItemStack(CCBlocks.KINETIC_BRIDGE);
     }
 
     @Override
@@ -82,15 +87,18 @@ public class KineticBridgeDestinationBlock extends DirectionalKineticBlock imple
         return super.onSneakWrenched(state, context);
     }
 
+    // BlockBehaviour.onRemove(...) was replaced by affectNeighborsAfterRemoval(BlockState, ServerLevel,
+    // BlockPos, boolean) (see MigratingCopycatBlock.java for the fuller writeup). This override never
+    // used the dropped newState param, so it carries over unchanged aside from the signature update.
     @Override
-    public void onRemove(BlockState pState, Level pLevel, BlockPos pPos, BlockState pNewState, boolean pIsMoving) {
+    protected void affectNeighborsAfterRemoval(BlockState pState, ServerLevel pLevel, BlockPos pPos, boolean movedByPiston) {
         if (stillValid(pLevel, pPos, pState)) {
             BlockPos sourcePos = getSource(pPos, pState);
             if (pLevel.getBlockState(sourcePos).is(CCBlocks.KINETIC_BRIDGE)) {
                 pLevel.destroyBlock(sourcePos, true);
             }
         }
-        super.onRemove(pState, pLevel, pPos, pNewState, pIsMoving);
+        super.affectNeighborsAfterRemoval(pState, pLevel, pPos, movedByPiston);
     }
 
     public BlockState playerWillDestroy(Level pLevel, BlockPos pPos, BlockState pState, Player pPlayer) {

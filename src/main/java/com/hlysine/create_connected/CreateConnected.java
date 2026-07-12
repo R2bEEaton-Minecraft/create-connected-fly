@@ -4,6 +4,8 @@ import com.hlysine.create_connected.compat.AdditionalPlacementsCompat;
 import com.hlysine.create_connected.compat.CopycatsManager;
 import com.hlysine.create_connected.compat.Mods;
 import com.hlysine.create_connected.config.CCConfigs;
+import com.hlysine.create_connected.content.crankwheel.CrankWheelItem;
+import com.hlysine.create_connected.content.linkedtransmitter.LinkedTransmitterItem;
 import com.hlysine.create_connected.content.redstonelinkwildcard.LinkWildcardNetworkHandler;
 import com.hlysine.create_connected.registries.CCArmInteractionPointTypes;
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
@@ -22,6 +24,7 @@ import com.hlysine.create_connected.registries.CCSoundEvents;
 import com.hlysine.create_connected.registries.CCTransfer;
 import com.mojang.logging.LogUtils;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 
@@ -55,6 +58,13 @@ public class CreateConnected implements ModInitializer {
 
         CCConfigs.register();
         LinkWildcardNetworkHandler.register();
+
+        // Replaces the removed NeoForge-only Item.onItemUseFirst hook LinkedTransmitterItem used to
+        // override - see LinkedTransmitterItem.onUseBlockFirst for the full writeup.
+        UseBlockCallback.EVENT.register(LinkedTransmitterItem::onUseBlockFirst);
+        // Same replacement mechanism, for CrankWheelItem's cog-alignment placement helper - see
+        // CrankWheelItem.onUseBlockFirst for the full writeup.
+        UseBlockCallback.EVENT.register(CrankWheelItem::onUseBlockFirst);
 
         if (Mods.COPYCATS.isLoaded())
             CopycatsManager.registerTickListener();

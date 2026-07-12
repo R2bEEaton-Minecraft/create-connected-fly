@@ -5,8 +5,11 @@ import com.hlysine.create_connected.content.contraption.jukebox.PlayContraptionJ
 import com.hlysine.create_connected.content.fluidvessel.FluidVesselTooltipBehaviour;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryDisplaySourceRender;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryOverrides;
+import com.hlysine.create_connected.content.kineticbattery.KineticBatteryTooltipBehaviour;
+import com.hlysine.create_connected.content.kineticbattery.KineticBatteryValueBox;
 import com.hlysine.create_connected.content.kineticbridge.KineticBridgeBlockItemClient;
 import com.hlysine.create_connected.content.overstressclutch.OverstressClutchBlockEntityClient;
+import com.hlysine.create_connected.content.overstressclutch.OverstressClutchTooltipBehaviour;
 import com.hlysine.create_connected.content.sequencedpulsegenerator.SequencedPulseGeneratorBlock;
 import com.hlysine.create_connected.content.sequencedpulsegenerator.SequencedPulseGeneratorBlockClient;
 import com.hlysine.create_connected.content.sequencedpulsegenerator.instructions.Instruction;
@@ -17,9 +20,11 @@ import com.hlysine.create_connected.registries.CCDisplaySources;
 import com.hlysine.create_connected.registries.CCModels;
 import com.hlysine.create_connected.registries.CCPonderPlugin;
 import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
+import com.zurrtum.create.client.foundation.blockEntity.behaviour.scrollValue.RotationDirectionScrollBehaviour;
 import com.zurrtum.create.client.ponder.foundation.PonderIndex;
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.Component;
 
 // registries.CCPartialModels doesn't need an explicit register() call beyond its own static field
 // init (PartialModel.of(...) instances get discovered the same way Create Fly's own do - no
@@ -39,5 +44,16 @@ public class CreateConnectedClient implements ClientModInitializer {
         CCModels.register();
         PonderIndex.addPlugin(new CCPonderPlugin());
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.FLUID_VESSEL, FluidVesselTooltipBehaviour::new);
+        // Reuses Create Fly's own RotationDirectionScrollBehaviour directly (it's a generic
+        // ScrollOptionBehaviour<WindmillBearingBlockEntity.RotationDirection> that only needs a
+        // SmartBlockEntity/label/ValueBoxTransform, matching this mod's own KineticBatteryBlockEntity
+        // exactly - no need to write a duplicate icon-mapping enum, see PORTING_NOTES.md).
+        BlockEntityBehaviour.addClient(CCBlockEntityTypes.KINETIC_BATTERY, be -> new RotationDirectionScrollBehaviour(
+                be,
+                Component.translatable(CreateConnected.MODID + ".battery.rotation_direction"),
+                new KineticBatteryValueBox(3)
+        ));
+        BlockEntityBehaviour.addClient(CCBlockEntityTypes.KINETIC_BATTERY, KineticBatteryTooltipBehaviour::new);
+        BlockEntityBehaviour.addClient(CCBlockEntityTypes.OVERSTRESS_CLUTCH, OverstressClutchTooltipBehaviour::new);
     }
 }

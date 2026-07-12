@@ -22,13 +22,10 @@ import java.util.List;
 
 public class ParallelGearboxBlock extends RotatedPillarKineticBlock implements IBE<ParallelGearboxBlockEntity> {
 
+    // BlockBehaviour.getPistonPushReaction(BlockState) is gone - see BrassGearboxBlock.java for the
+    // full writeup; set via Properties.pushReaction(...) instead of an override.
     public ParallelGearboxBlock(Properties properties) {
-        super(properties);
-    }
-
-    @Override
-    public PushReaction getPistonPushReaction(@NotNull BlockState state) {
-        return PushReaction.PUSH_ONLY;
+        super(properties.pushReaction(PushReaction.PUSH_ONLY));
     }
 
     @Override

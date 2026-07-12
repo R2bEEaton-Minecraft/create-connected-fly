@@ -18,7 +18,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -35,6 +34,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
@@ -167,9 +167,9 @@ public class KineticBatteryBlock extends DirectionalKineticBlock implements IBE<
                                                        @NotNull Player player,
                                                        @NotNull InteractionHand hand,
                                                        @NotNull BlockHitResult hitResult) {
-        InteractionResultHolder<ItemStack> res =
+        InsertResult res =
                 tryInsert(state, level, pos, stack, false, false);
-        ItemStack leftover = res.getObject();
+        ItemStack leftover = res.object();
         if (!level.isClientSide() && !leftover.isEmpty()) {
             if (stack.isEmpty()) {
                 player.setItemInHand(hand, leftover);
@@ -178,7 +178,7 @@ public class KineticBatteryBlock extends DirectionalKineticBlock implements IBE<
             }
         }
 
-        if (res.getResult().consumesAction())
+        if (res.result().consumesAction())
             return InteractionResult.SUCCESS;
 
         IPlacementHelper helper = PlacementHelpers.get(placementHelperId);
@@ -189,19 +189,34 @@ public class KineticBatteryBlock extends DirectionalKineticBlock implements IBE<
         return InteractionResult.TRY_WITH_EMPTY_HAND;
     }
 
-    @SuppressWarnings("removal")
-    public static InteractionResultHolder<ItemStack> tryInsert(BlockState state, Level world, BlockPos pos,
-                                                               ItemStack stack, boolean doNotConsume, boolean simulate) {
+    // NeoForge/vanilla's net.minecraft.world.InteractionResultHolder<T> is gone entirely (confirmed
+    // absent from the resolved jar and from Create Fly's own real sources - vanilla's own Item.use()
+    // now returns a plain InteractionResult and mutates the held stack directly instead of via a
+    // "holder" wrapper). This was always our own custom static helper though (not a vanilla
+    // override), so a small local record standing in for the old (result, returned-item) pair is a
+    // direct, minimal-diff replacement - no vanilla API dependency needed here at all.
+    public record InsertResult(InteractionResult result, ItemStack object) {
+        public static InsertResult fail(ItemStack stack) {
+            return new InsertResult(InteractionResult.FAIL, stack);
+        }
+
+        public static InsertResult success(ItemStack stack) {
+            return new InsertResult(InteractionResult.SUCCESS, stack);
+        }
+    }
+
+    public static InsertResult tryInsert(BlockState state, Level world, BlockPos pos,
+                                         ItemStack stack, boolean doNotConsume, boolean simulate) {
         if (stack.isEmpty())
-            return InteractionResultHolder.fail(ItemStack.EMPTY);
+            return InsertResult.fail(ItemStack.EMPTY);
         if (!state.hasBlockEntity())
-            return InteractionResultHolder.fail(ItemStack.EMPTY);
+            return InsertResult.fail(ItemStack.EMPTY);
 
         BlockEntity be = world.getBlockEntity(pos);
         if (!(be instanceof KineticBatteryBlockEntity batteryBE))
-            return InteractionResultHolder.fail(ItemStack.EMPTY);
+            return InsertResult.fail(ItemStack.EMPTY);
         if (!stack.is(CCBlocks.KINETIC_BATTERY.asItem()) && !stack.is(CCItems.CHARGED_KINETIC_BATTERY.asItem()))
-            return InteractionResultHolder.fail(ItemStack.EMPTY);
+            return InsertResult.fail(ItemStack.EMPTY);
 
         double level = stack.getOrDefault(CCDataComponents.KINETIC_BATTERY_CHARGE, 0.0);
         if (stack.is(CCItems.CHARGED_KINETIC_BATTERY.asItem()))
@@ -211,20 +226,20 @@ public class KineticBatteryBlock extends DirectionalKineticBlock implements IBE<
         if (isDischarging(state)) {
             double transfer = Math.min(KineticBatteryBlockEntity.getMaxBatteryLevel() - batteryBE.getBatteryLevel(), level);
             if (transfer <= 0)
-                return InteractionResultHolder.fail(ItemStack.EMPTY);
+                return InsertResult.fail(ItemStack.EMPTY);
 
             if (!simulate)
                 batteryBE.setBatteryLevel(batteryBE.getBatteryLevel() + transfer);
-            returnedItem = CCBlocks.KINETIC_BATTERY.asStack();
+            returnedItem = new ItemStack(CCBlocks.KINETIC_BATTERY);
             returnedItem.set(CCDataComponents.KINETIC_BATTERY_CHARGE, level - transfer);
         } else {
             double transfer = Math.min(batteryBE.getBatteryLevel(), KineticBatteryBlockEntity.getMaxBatteryLevel() - level);
             if (transfer <= 0)
-                return InteractionResultHolder.fail(ItemStack.EMPTY);
+                return InsertResult.fail(ItemStack.EMPTY);
 
             if (!simulate)
                 batteryBE.setBatteryLevel(batteryBE.getBatteryLevel() - transfer);
-            returnedItem = CCBlocks.KINETIC_BATTERY.asStack();
+            returnedItem = new ItemStack(CCBlocks.KINETIC_BATTERY);
             returnedItem.set(CCDataComponents.KINETIC_BATTERY_CHARGE, level + transfer);
         }
 
@@ -235,12 +250,12 @@ public class KineticBatteryBlock extends DirectionalKineticBlock implements IBE<
             if (simulate) {
                 // a hack to force mechanical arm to interact, since it normally cancels the interaction
                 // if the returned item is the same as the input item
-                return InteractionResultHolder.success(ItemStack.EMPTY);
+                return InsertResult.success(ItemStack.EMPTY);
             } else {
-                return InteractionResultHolder.success(returnedItem);
+                return InsertResult.success(returnedItem);
             }
         }
-        return InteractionResultHolder.success(ItemStack.EMPTY);
+        return InsertResult.success(ItemStack.EMPTY);
     }
 
     @Override
@@ -269,9 +284,9 @@ public class KineticBatteryBlock extends DirectionalKineticBlock implements IBE<
                                    @NotNull Level level,
                                    @NotNull BlockPos pos,
                                    @NotNull Block block,
-                                   @NotNull BlockPos fromPos,
+                                   @NotNull Orientation orientation,
                                    boolean isMoving) {
-        super.neighborChanged(state, level, pos, block, fromPos, isMoving);
+        super.neighborChanged(state, level, pos, block, orientation, isMoving);
         if (!level.isClientSide()) {
             updatePower(state, level, pos);
         }

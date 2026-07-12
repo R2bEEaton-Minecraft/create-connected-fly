@@ -1,5 +1,6 @@
 package com.hlysine.create_connected.content.copycat.slab;
 
+import com.hlysine.create_connected.content.DirectionHelper;
 import com.hlysine.create_connected.registries.CCBlocks;
 import com.hlysine.create_connected.registries.CCShapes;
 import com.hlysine.create_connected.content.copycat.ICopycatWithWrappedBlock;
@@ -104,7 +105,7 @@ public class CopycatSlabBlock extends MigratingWaterloggedCopycatBlock implement
         if (diff.equals(Vec3i.ZERO)) {
             return true;
         }
-        Direction face = Direction.fromDelta(diff.getX(), diff.getY(), diff.getZ());
+        Direction face = DirectionHelper.fromDelta(diff.getX(), diff.getY(), diff.getZ());
         if (face == null) {
             boolean correctAxis = switch (axis) {
                 case X -> diff.getX() == 0;
@@ -199,22 +200,11 @@ public class CopycatSlabBlock extends MigratingWaterloggedCopycatBlock implement
         }
     }
 
-    @Override
-    public boolean supportsExternalFaceHiding(BlockState state) {
-        return true;
-    }
-
-    @Override
-    public boolean hidesNeighborFace(BlockGetter level, BlockPos pos, BlockState state, BlockState neighborState,
-                                     Direction dir) {
-        if (neighborState.getBlock() instanceof SlabBlock || neighborState.getBlock() instanceof CopycatSlabBlock) {
-            if (getMaterial(level, pos).skipRendering(getMaterial(level, pos.relative(dir)), dir.getOpposite()))
-                return getFaceShape(state, dir) == getFaceShape(neighborState, dir.getOpposite());
-        }
-
-        return getFaceShape(state, dir) == FaceShape.FULL
-                && getMaterial(level, pos).skipRendering(neighborState, dir.getOpposite());
-    }
+    // supportsExternalFaceHiding(BlockState)/hidesNeighborFace(BlockGetter, BlockPos, BlockState,
+    // BlockState, Direction) do not exist anywhere in this Fabric API surface (confirmed via javap; see
+    // CopycatWallBlock.java for the full writeup) - NeoForge-only IBlockExtension face-culling hooks
+    // with no Fabric replacement. Feature reduction: adjacent copycat slabs sharing material/type will
+    // render their shared internal faces instead of culling them (a fill-rate optimization loss only).
 
     public static BlockState getMaterial(BlockGetter reader, BlockPos targetPos) {
         BlockState state = CopycatBlock.getMaterial(reader, targetPos);

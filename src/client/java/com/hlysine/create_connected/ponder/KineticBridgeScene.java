@@ -82,7 +82,7 @@ public class KineticBridgeScene {
                 .pointAt(util.vector().topOf(bridgeSource));
         scene.idle(110);
 
-        scene.world().setBlock(extraSaw, AllBlocks.MECHANICAL_SAW.getDefaultState().setValue(SawBlock.FACING, Direction.UP), false);
+        scene.world().setBlock(extraSaw, AllBlocks.MECHANICAL_SAW.defaultBlockState().setValue(SawBlock.FACING, Direction.UP), false);
         scene.world().showSection(util.select().position(extraSaw), Direction.DOWN);
         scene.idle(10);
         ParticleEmitter smoke = scene.effects().particleEmitterWithinBlockSpace(ParticleTypes.SMOKE, util.vector().of(0, 0, 0));
@@ -107,7 +107,7 @@ public class KineticBridgeScene {
 
         scene.world().hideSection(util.select().position(sourceExtraSaw), Direction.UP);
         scene.idle(20);
-        scene.world().setBlock(sourceExtraSaw, AllBlocks.MECHANICAL_SAW.getDefaultState().setValue(SawBlock.FACING, Direction.UP), false);
+        scene.world().setBlock(sourceExtraSaw, AllBlocks.MECHANICAL_SAW.defaultBlockState().setValue(SawBlock.FACING, Direction.UP), false);
         scene.world().showSection(util.select().position(sourceExtraSaw), Direction.DOWN);
         scene.idle(10);
         scene.effects().emitParticles(Vec3.atCenterOf(sourceExtraSaw), smoke, 15, 1);
@@ -169,7 +169,7 @@ public class KineticBridgeScene {
 
         scene.world().hideSection(util.select().position(sourceShaft), Direction.UP);
         scene.idle(20);
-        scene.world().setBlock(sourceShaft, CCBlocks.OVERSTRESS_CLUTCH.getDefaultState().setValue(OverstressClutchBlock.AXIS, Direction.Axis.Z), false);
+        scene.world().setBlock(sourceShaft, CCBlocks.OVERSTRESS_CLUTCH.defaultBlockState().setValue(OverstressClutchBlock.AXIS, Direction.Axis.Z), false);
         scene.world().showSection(util.select().position(sourceShaft), Direction.DOWN);
         scene.idle(20);
         scene.world().modifyBlock(sourceShaft, state -> state.setValue(OverstressClutchBlock.STATE, OverstressClutchBlock.ClutchState.UNCOUPLED), false);
