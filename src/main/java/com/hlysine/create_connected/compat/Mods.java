@@ -4,6 +4,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -45,12 +46,15 @@ public enum Mods {
         return Identifier.fromNamespaceAndPath(id, path);
     }
 
+    // Registry.get(Identifier) now returns Optional<Holder.Reference<T>> instead of a plain T
+    // (confirmed via javap) - unwrapped with .map(Holder.Reference::value), falling back to AIR to
+    // preserve the old behavior of returning a non-null sentinel for unregistered ids.
     public Item getItem(String id) {
-        return BuiltInRegistries.ITEM.get(rl(id));
+        return BuiltInRegistries.ITEM.get(rl(id)).map(net.minecraft.core.Holder.Reference::value).orElse(Items.AIR);
     }
 
     public Item getItem(Identifier id) {
-        return BuiltInRegistries.ITEM.get(id);
+        return BuiltInRegistries.ITEM.get(id).map(net.minecraft.core.Holder.Reference::value).orElse(Items.AIR);
     }
 
     /**

@@ -18,7 +18,7 @@ public class PlayContraptionJukeboxPacketClient {
 
     private static void handle(PlayContraptionJukeboxPacket payload, net.minecraft.client.Minecraft minecraft) {
         ClientLevel world = minecraft.level;
-        if (world == null || !world.dimension().location().equals(payload.level()))
+        if (world == null || !world.dimension().identifier().equals(payload.level()))
             return;
         if (!world.isLoaded(payload.worldPos()))
             return;

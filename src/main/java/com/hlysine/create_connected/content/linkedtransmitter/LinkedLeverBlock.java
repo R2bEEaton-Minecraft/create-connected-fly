@@ -103,13 +103,15 @@ public class LinkedLeverBlock extends LeverBlock implements IBE<LinkedTransmitte
         return LinkedTransmitterBlock.super.useWax(stack, state, level, pos, player, hand, hitResult);
     }
 
+    // See LinkedAnalogLeverBlock.java for the full writeup on onRemove -> affectNeighborsAfterRemoval
+    // and why the state-comparison guard is dropped rather than replaced.
     @Override
-    public void onRemove(@NotNull BlockState state, @NotNull Level world, @NotNull BlockPos pos, @NotNull BlockState newState, boolean isMoving) {
-        if (!state.is(newState.getBlock()) && !isMoving && getBlockEntityOptional(world, pos).map(be -> be.containsBase).orElse(false)) {
+    protected void affectNeighborsAfterRemoval(@NotNull BlockState state, @NotNull net.minecraft.server.level.ServerLevel world, @NotNull BlockPos pos, boolean isMoving) {
+        if (!isMoving && getBlockEntityOptional(world, pos).map(be -> be.containsBase).orElse(false)) {
             Block.popResource(world, pos, new ItemStack(CCItems.LINKED_TRANSMITTER));
         }
         withBlockEntityDo(world, pos, be -> be.transmit(0));
-        base.defaultBlockState().onRemove(world, pos, newState, isMoving);
+        base.defaultBlockState().affectNeighborsAfterRemoval(world, pos, isMoving);
     }
 
     @Override

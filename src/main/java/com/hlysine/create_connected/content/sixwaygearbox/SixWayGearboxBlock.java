@@ -22,13 +22,10 @@ import java.util.List;
 
 public class SixWayGearboxBlock extends RotatedPillarKineticBlock implements IBE<SixWayGearboxBlockEntity> {
 
+    // BlockBehaviour.getPistonPushReaction(BlockState) is gone - see BrassGearboxBlock.java for the
+    // full writeup; set via Properties.pushReaction(...) instead of an override.
     public SixWayGearboxBlock(Properties properties) {
-        super(properties);
-    }
-
-    @Override
-    public PushReaction getPistonPushReaction(@NotNull BlockState state) {
-        return PushReaction.PUSH_ONLY;
+        super(properties.pushReaction(PushReaction.PUSH_ONLY));
     }
 
     @Override

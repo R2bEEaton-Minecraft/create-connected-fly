@@ -1,6 +1,6 @@
 package com.hlysine.create_connected.content.kineticbattery;
 
-import com.hlysine.create_connected.ConnectedLang;
+import com.hlysine.create_connected.CreateConnected;
 import com.hlysine.create_connected.config.CServer;
 import com.hlysine.create_connected.content.ISplitShaftBlockEntity;
 import com.hlysine.create_connected.datagen.advancements.AdvancementBehaviour;
@@ -14,12 +14,12 @@ import com.zurrtum.create.content.kinetics.base.KineticBlockEntity;
 import com.zurrtum.create.content.kinetics.belt.BeltBlock;
 import com.zurrtum.create.content.redstone.thresholdSwitch.ThresholdSwitchObservable;
 import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
-import com.zurrtum.create.client.foundation.blockEntity.behaviour.scrollValue.ScrollOptionBehaviour;
-import com.zurrtum.create.client.foundation.utility.CreateLang;
+import com.zurrtum.create.foundation.blockEntity.behaviour.scrollValue.ServerScrollOptionBehaviour;
 import joptsimple.internal.Strings;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.world.level.storage.ValueInput;
@@ -46,7 +46,18 @@ public class KineticBatteryBlockEntity extends GeneratingKineticBlockEntity impl
     private float consumedStress = -1;
     private boolean applyMinStress = false;
 
-    protected ScrollOptionBehaviour<WindmillBearingBlockEntity.RotationDirection> movementDirection;
+    // Real Create Fly's own com.zurrtum.create.client...ScrollOptionBehaviour is client-only, is
+    // abstract (can't be instantiated directly), and has a completely different constructor shape
+    // (icon getter + label + ValueBoxTransform) than what was used here before - it's a *rendering
+    // wrapper* around a ServerScrollOptionBehaviour instance, not something to construct directly in
+    // common-sourceset addBehaviours(). The real common-sourceset value-storage type (used by Create
+    // Fly's own WindmillBearingBlockEntity, whose RotationDirection enum this field reuses) is
+    // com.zurrtum.create.foundation.blockEntity.behaviour.scrollValue.ServerScrollOptionBehaviour -
+    // see KineticBatteryScrollOptionBehaviour (src/client/java) for the client-side rendering
+    // counterpart, registered separately via BlockEntityBehaviour.addClient() in
+    // CreateConnectedClient.onInitializeClient() (mirrors the FluidVesselTooltipBehaviour /
+    // AllBlockEntityBehaviours pattern - see PORTING_NOTES.md session 15).
+    protected ServerScrollOptionBehaviour<WindmillBearingBlockEntity.RotationDirection> movementDirection;
 
     public KineticBatteryBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -55,10 +66,7 @@ public class KineticBatteryBlockEntity extends GeneratingKineticBlockEntity impl
     @Override
     public void addBehaviours(List<BlockEntityBehaviour<?>> behaviours) {
         super.addBehaviours(behaviours);
-        movementDirection = new ScrollOptionBehaviour<>(WindmillBearingBlockEntity.RotationDirection.class,
-                ConnectedLang.translateDirect("battery.rotation_direction"),
-                this,
-                new KineticBatteryValueBox(3));
+        movementDirection = new ServerScrollOptionBehaviour<>(WindmillBearingBlockEntity.RotationDirection.class, this);
         movementDirection.withCallback(i -> {
             updateGeneratedRotation();
             sendDataImmediately();
@@ -182,6 +190,13 @@ public class KineticBatteryBlockEntity extends GeneratingKineticBlockEntity impl
         }
     }
 
+    // Exposes the raw (pre min-stress-override) value for KineticBatteryTooltipBehaviour (client) to
+    // distinguish "the min-discharge override is why getConsumedStress() > 0" from "genuinely
+    // consuming stress" the same way the old in-class addToGoggleTooltip body used to.
+    public float getRawConsumedStress() {
+        return consumedStress;
+    }
+
     public float getConsumedStress() {
         if (applyMinStress) {
             return Math.max(CServer.BatteryMinDischarge.get().floatValue(), consumedStress);
@@ -228,7 +243,7 @@ public class KineticBatteryBlockEntity extends GeneratingKineticBlockEntity impl
     }
 
     @Override
-    protected void applyImplicitComponents(DataComponentInput componentInput) {
+    protected void applyImplicitComponents(DataComponentGetter componentInput) {
         setBatteryLevel(componentInput.getOrDefault(CCDataComponents.KINETIC_BATTERY_CHARGE, 0.0));
     }
 
@@ -309,62 +324,29 @@ public class KineticBatteryBlockEntity extends GeneratingKineticBlockEntity impl
         view.store("Components", DataComponentPatch.CODEC, componentPatch);
     }
 
-    @Override
-    public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-        ConnectedLang.translate("battery.status", getBatteryStatusTextComponent().withStyle(ChatFormatting.GREEN))
-                .forGoggles(tooltip);
-        ConnectedLang.builder().add(ConnectedLang.translateDirect("battery.charge")
-                        .withStyle(ChatFormatting.GRAY)
-                        .append(" ")
-                        .append(barComponent(0, getCrudeBatteryLevel(getBatteryLevel(), 20), 20)))
-                .forGoggles(tooltip);
-        ConnectedLang.number(batteryLevel / 3600 / 20)
-                .style(ChatFormatting.BLUE)
-                .add(ConnectedLang.text(" / ")
-                        .style(ChatFormatting.GRAY))
-                .add(ConnectedLang.number(getMaxBatteryLevel() / 3600 / 20)
-                        .add(Component.literal(" "))
-                        .add(ConnectedLang.translate("generic.unit.su_hours"))
-                        .style(ChatFormatting.DARK_GRAY))
-                .forGoggles(tooltip, 1);
-        if (isDischarging(getBlockState()) && getBatteryLevel() > 0) {
-            ConnectedLang.translate("battery.consumption")
-                    .style(ChatFormatting.GRAY)
-                    .forGoggles(tooltip);
-            if (consumedStress == 0 && getConsumedStress() > 0) {
-                CreateLang.number(getConsumedStress())
-                        .translate("generic.unit.stress")
-                        .style(ChatFormatting.BLUE)
-                        .space()
-                        .add(ConnectedLang.translate("battery.powering_belts").style(ChatFormatting.DARK_GRAY))
-                        .forGoggles(tooltip, 1);
-            } else {
-                CreateLang.number(getConsumedStress())
-                        .translate("generic.unit.stress")
-                        .style(ChatFormatting.BLUE)
-                        .forGoggles(tooltip, 1);
-            }
-        }
-
-
-        super.addToGoggleTooltip(tooltip, isPlayerSneaking);
-
-        return true;
-    }
+    // addToGoggleTooltip moved to the client-only KineticBatteryTooltipBehaviour (see
+    // CreateConnectedClient.onInitializeClient()) - this override never actually corresponded to any
+    // real supertype method to begin with (neither GeneratingKineticBlockEntity nor any of its
+    // ancestors declare addToGoggleTooltip - confirmed absent from the real sources jar), and
+    // ConnectedLang/CreateLang (used throughout the old body) are client-only, so this was always a
+    // cross-boundary bug, not just a stale @Override. Mirrors the FluidVesselTooltipBehaviour
+    // extraction pattern exactly (see PORTING_NOTES.md session 15).
 
     public MutableComponent getBatteryStatusTextComponent() {
         boolean complete = isCurrentStageComplete(getBlockState());
         boolean discharging = isDischarging(getBlockState());
 
+        String key;
         if (discharging && !complete) {
-            return ConnectedLang.translateDirect("battery.status.discharging");
+            key = "battery.status.discharging";
         } else if (!discharging && !complete) {
-            return ConnectedLang.translateDirect("battery.status.charging");
+            key = "battery.status.charging";
         } else if (!discharging && complete) {
-            return ConnectedLang.translateDirect("battery.status.full");
+            key = "battery.status.full";
         } else {
-            return ConnectedLang.translateDirect("battery.status.empty");
+            key = "battery.status.empty";
         }
+        return Component.translatable(CreateConnected.MODID + "." + key);
     }
 
     static MutableComponent barComponent(int minValue, int level, int maxValue) {
@@ -398,12 +380,15 @@ public class KineticBatteryBlockEntity extends GeneratingKineticBlockEntity impl
         return (int) (batteryLevel / 3600.0 / 20.0);
     }
 
+    // ConnectedLang (client-only LangBuilder wrapper) used to build this - replaced with plain
+    // vanilla Component composition (drops LangBuilder's number-formatting niceties like thousands
+    // separators, a minor disclosed simplification, not a functional regression: the translation key
+    // still resolves and pluralizes correctly).
     @Override
     public MutableComponent format(int value) {
-        return ConnectedLang.number(value)
-                .add(Component.literal(" "))
-                .add(ConnectedLang.translate("generic.unit.su_hours"))
-                .component();
+        return Component.literal(String.valueOf(value))
+                .append(Component.literal(" "))
+                .append(Component.translatable(CreateConnected.MODID + ".generic.unit.su_hours"));
     }
 }
 

@@ -82,7 +82,7 @@ public class KineticBatteryScene {
         scene.world().hideSection(rotation1, Direction.UP);
         scene.world().setKineticSpeed(util.select().position(battery).add(util.select().position(shaft)), 0);
         scene.idle(15);
-        scene.world().setBlock(saw, AllBlocks.MECHANICAL_SAW.getDefaultState().setValue(SawBlock.FACING, Direction.UP), false);
+        scene.world().setBlock(saw, AllBlocks.MECHANICAL_SAW.defaultBlockState().setValue(SawBlock.FACING, Direction.UP), false);
         scene.idle(10);
         scene.world().showSection(util.select().position(saw), Direction.DOWN);
         scene.idle(10);
@@ -108,7 +108,7 @@ public class KineticBatteryScene {
         scene.effects().indicateSuccess(battery);
         scene.idle(75);
 
-        scene.world().setBlock(saw2, AllBlocks.MECHANICAL_SAW.getDefaultState().setValue(SawBlock.FACING, Direction.UP), false);
+        scene.world().setBlock(saw2, AllBlocks.MECHANICAL_SAW.defaultBlockState().setValue(SawBlock.FACING, Direction.UP), false);
         scene.world().setKineticSpeed(util.select().position(saw2), -64);
         scene.world().showSection(util.select().position(saw2), Direction.DOWN);
 
@@ -121,7 +121,7 @@ public class KineticBatteryScene {
 
         scene.world().hideSection(util.select().position(saw2), Direction.UP);
         scene.idle(20);
-        scene.world().setBlock(saw2, CCBlocks.PARALLEL_GEARBOX.getDefaultState(), false);
+        scene.world().setBlock(saw2, CCBlocks.PARALLEL_GEARBOX.defaultBlockState(), false);
         scene.world().setKineticSpeed(util.select().position(saw2), 64);
         scene.idle(5);
         scene.world().showSection(util.select().position(cog1), Direction.DOWN);
@@ -139,8 +139,8 @@ public class KineticBatteryScene {
         scene.world().hideSection(rotation2, Direction.UP);
         scene.world().hideSection(util.select().position(cog1), Direction.UP);
         scene.idle(20);
-        scene.world().setBlock(saw, AllBlocks.BELT.getDefaultState(), false);
-        scene.world().setBlock(saw.relative(Direction.NORTH), AllBlocks.BELT.getDefaultState().setValue(BeltBlock.PART, BeltPart.END), false);
+        scene.world().setBlock(saw, AllBlocks.BELT.defaultBlockState(), false);
+        scene.world().setBlock(saw.relative(Direction.NORTH), AllBlocks.BELT.defaultBlockState().setValue(BeltBlock.PART, BeltPart.END), false);
         scene.world().setKineticSpeed(util.select().position(saw).add(util.select().position(saw.relative(Direction.NORTH))), -64);
         scene.world().showSection(util.select().position(saw).add(util.select().position(saw.relative(Direction.NORTH))), Direction.DOWN);
         scene.idle(10);
@@ -164,7 +164,7 @@ public class KineticBatteryScene {
 
         scene.world().hideSection(comparatorGroup, Direction.UP);
         scene.idle(20);
-        scene.world().setBlock(comparator, AllBlocks.THRESHOLD_SWITCH.getDefaultState().setValue(ThresholdSwitchBlock.FACING, Direction.SOUTH).setValue(ThresholdSwitchBlock.LEVEL, 3), false);
+        scene.world().setBlock(comparator, AllBlocks.THRESHOLD_SWITCH.defaultBlockState().setValue(ThresholdSwitchBlock.FACING, Direction.SOUTH).setValue(ThresholdSwitchBlock.LEVEL, 3), false);
         scene.world().showSection(util.select().position(comparator), Direction.DOWN);
         scene.idle(10);
 
@@ -176,7 +176,7 @@ public class KineticBatteryScene {
 
         scene.world().hideSection(util.select().position(comparator), Direction.UP);
         scene.idle(20);
-        scene.world().setBlock(battery.above(), AllBlocks.DISPLAY_LINK.getDefaultState().setValue(DisplayLinkBlock.FACING, Direction.UP), false);
+        scene.world().setBlock(battery.above(), AllBlocks.DISPLAY_LINK.defaultBlockState().setValue(DisplayLinkBlock.FACING, Direction.UP), false);
         scene.world().showSection(util.select().position(battery.above()), Direction.DOWN);
         scene.idle(20);
 
@@ -300,13 +300,13 @@ public class KineticBatteryScene {
         scene.world().hideSection(util.select().position(shaft), Direction.UP);
         scene.world().setKineticSpeed(util.select().position(battery), 0);
         scene.idle(30);
-        scene.world().setBlocks(parallelBatteries, CCBlocks.KINETIC_BATTERY.getDefaultState().setValue(KineticBatteryBlock.FACING, Direction.EAST).setValue(KineticBatteryBlock.LEVEL, 5), false);
+        scene.world().setBlocks(parallelBatteries, CCBlocks.KINETIC_BATTERY.defaultBlockState().setValue(KineticBatteryBlock.FACING, Direction.EAST).setValue(KineticBatteryBlock.LEVEL, 5), false);
         scene.world().showSection(parallelBatteries, Direction.DOWN);
         scene.idle(15);
-        scene.world().setBlocks(chainDrives, AllBlocks.ENCASED_CHAIN_DRIVE.getDefaultState().setValue(ChainDriveBlock.AXIS, Direction.Axis.X), false);
+        scene.world().setBlocks(chainDrives, AllBlocks.ENCASED_CHAIN_DRIVE.defaultBlockState().setValue(ChainDriveBlock.AXIS, Direction.Axis.X), false);
         scene.world().showSection(chainDrives, Direction.DOWN);
         scene.idle(15);
-        scene.world().setBlocks(casings2, AllBlocks.ANDESITE_CASING.getDefaultState(), false);
+        scene.world().setBlocks(casings2, AllBlocks.ANDESITE_CASING.defaultBlockState(), false);
         scene.world().showSection(casings2, Direction.DOWN);
         scene.idle(15);
         scene.world().setBlocks(redstone2, Blocks.REDSTONE_WIRE.defaultBlockState().setValue(RedStoneWireBlock.NORTH, RedstoneSide.SIDE).setValue(RedStoneWireBlock.SOUTH, RedstoneSide.SIDE), false);

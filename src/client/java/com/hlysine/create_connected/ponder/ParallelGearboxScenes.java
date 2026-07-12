@@ -57,8 +57,8 @@ public class ParallelGearboxScenes {
         scene.world().hideIndependentSection(topMovableCog, Direction.UP);
         scene.idle(20);
 
-        BlockState defaultState = AllBlocks.SHAFT.getDefaultState();
-        BlockState cogState = AllBlocks.COGWHEEL.getDefaultState();
+        BlockState defaultState = AllBlocks.SHAFT.defaultBlockState();
+        BlockState cogState = AllBlocks.COGWHEEL.defaultBlockState();
         scene.world().setBlock(cogBack, defaultState.setValue(CogWheelBlock.AXIS, Direction.Axis.Z), false);
         scene.world().setBlock(cogFront, defaultState.setValue(CogWheelBlock.AXIS, Direction.Axis.Z), false);
         scene.world().setBlock(cogRight, defaultState.setValue(CogWheelBlock.AXIS, Direction.Axis.X), false);

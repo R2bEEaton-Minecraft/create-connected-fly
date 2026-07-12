@@ -8,10 +8,11 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.block.Block;
 
 import java.text.NumberFormat;
-import java.util.List;
+import java.util.function.Consumer;
 import java.util.Locale;
 
 import static com.hlysine.create_connected.content.kineticbattery.KineticBatteryBlockEntity.*;
@@ -42,17 +43,20 @@ public class KineticBatteryBlockItem extends BlockItem {
         return stack.getOrDefault(CCDataComponents.KINETIC_BATTERY_CHARGE, 0.0);
     }
 
+    // Item.appendHoverText(ItemStack, TooltipContext, List<Component>, TooltipFlag) is gone - real
+    // signature gained a TooltipDisplay param and replaced the mutable List<Component> with a
+    // Consumer<Component> callback instead.
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
-        super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay tooltipDisplay, Consumer<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+        super.appendHoverText(stack, context, tooltipDisplay, tooltipComponents, tooltipFlag);
         double batteryLevel = getBatteryLevel(stack);
-        tooltipComponents.add(Component.translatable(CreateConnected.MODID + ".battery.charge")
+        tooltipComponents.accept(Component.translatable(CreateConnected.MODID + ".battery.charge")
                 .withStyle(ChatFormatting.GRAY)
                 .append(" ")
                 .append(barComponent(0, getCrudeBatteryLevel(batteryLevel, 20), 20)));
 
         NumberFormat format = NumberFormat.getNumberInstance(Locale.ROOT);
-        tooltipComponents.add(Component.literal(" ")
+        tooltipComponents.accept(Component.literal(" ")
                 .append(Component.literal(format.format(batteryLevel / 3600 / 20)).withStyle(ChatFormatting.BLUE))
                 .append(Component.literal(" / ").withStyle(ChatFormatting.GRAY))
                 .append(Component.literal(format.format(getMaxBatteryLevel() / 3600 / 20) + " ")

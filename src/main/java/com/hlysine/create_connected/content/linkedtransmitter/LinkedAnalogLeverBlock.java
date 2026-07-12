@@ -101,11 +101,20 @@ public class LinkedAnalogLeverBlock extends AnalogLeverBlock implements SpecialB
         return LinkedTransmitterBlock.super.useWax(stack, state, level, pos, player, hand, hitResult);
     }
 
+    // BlockBehaviour.onRemove(BlockState, Level, BlockPos, BlockState newState, boolean) was replaced by
+    // affectNeighborsAfterRemoval(BlockState, ServerLevel, BlockPos, boolean) (see
+    // MigratingCopycatBlock.java for the fuller writeup), and BlockState.onRemove(...) was replaced by
+    // the matching BlockState.affectNeighborsAfterRemoval(ServerLevel, BlockPos, boolean) - both losing
+    // the newState param. The `!state.is(newState.getBlock())` guard here (only pop the item when the
+    // block is genuinely being replaced by something else, not just transitioning between its own
+    // states) is dropped rather than replaced: per the new method's own name/contract, vanilla's call
+    // site now filters same-block state transitions before invoking affectNeighborsAfterRemoval at all,
+    // making this check redundant rather than unexpressable.
     @Override
-    public void onRemove(@NotNull BlockState state, @NotNull Level world, @NotNull BlockPos pos, @NotNull BlockState newState, boolean isMoving) {
-        if (!state.is(newState.getBlock()) && !isMoving && getBlockEntityOptional(world, pos).map(be -> ((LinkedAnalogLeverBlockEntity) be).containsBase).orElse(false))
+    public void affectNeighborsAfterRemoval(@NotNull BlockState state, @NotNull net.minecraft.server.level.ServerLevel world, @NotNull BlockPos pos, boolean isMoving) {
+        if (!isMoving && getBlockEntityOptional(world, pos).map(be -> ((LinkedAnalogLeverBlockEntity) be).containsBase).orElse(false))
             Block.popResource(world, pos, new ItemStack(CCItems.LINKED_TRANSMITTER));
-        getBase().defaultBlockState().onRemove(world, pos, newState, isMoving);
+        getBase().defaultBlockState().affectNeighborsAfterRemoval(world, pos, isMoving);
     }
 
     @Override

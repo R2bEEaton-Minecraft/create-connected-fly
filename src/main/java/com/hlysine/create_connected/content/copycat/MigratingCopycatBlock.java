@@ -11,11 +11,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.LootParams;
@@ -58,14 +56,18 @@ public abstract class MigratingCopycatBlock extends CopycatBlock {
         return Mods.COPYCATS.runIfInstalled(() -> () -> state.is(CopycatsManager.convertIfEnabled(this))).orElse(false);
     }
 
+    // BlockBehaviour.onRemove(BlockState, Level, BlockPos, BlockState newState, boolean isMoving) was
+    // replaced by affectNeighborsAfterRemoval(BlockState, ServerLevel, BlockPos, boolean movedByPiston)
+    // (confirmed via javap - neither vanilla's Block/BlockBehaviour nor real Create Fly's own CopycatBlock
+    // override either method under any name anymore). Note the new signature dropped the `newState`
+    // param entirely, so the original "skip cleanup when old and new states are equivalent Copycats+
+    // conversions" check can no longer be expressed here. This is not a real feature loss in practice:
+    // Copycats+ has no Fabric 1.21.11 build at all (confirmed elsewhere in this port, see
+    // CopycatBlockMixin/CopycatsManager), so Mods.COPYCATS.runIfInstalled(...) always evaluates to
+    // "not installed" on this port and the skipped branch was already permanently dead code.
     @Override
-    public void onRemove(BlockState pState, Level pLevel, BlockPos pPos, BlockState pNewState, boolean pIsMoving) {
-        if (Mods.COPYCATS.runIfInstalled(() -> () -> {
-            Block oldBlock = CopycatsManager.convertIfEnabled(pState.getBlock());
-            Block newBlock = CopycatsManager.convertIfEnabled(pNewState.getBlock());
-            return oldBlock.equals(newBlock);
-        }).orElse(false)) return;
-        super.onRemove(pState, pLevel, pPos, pNewState, pIsMoving);
+    protected void affectNeighborsAfterRemoval(BlockState pState, net.minecraft.server.level.ServerLevel pLevel, BlockPos pPos, boolean movedByPiston) {
+        super.affectNeighborsAfterRemoval(pState, pLevel, pPos, movedByPiston);
     }
 
     @Override

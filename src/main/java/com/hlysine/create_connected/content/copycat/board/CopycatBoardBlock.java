@@ -47,7 +47,10 @@ public class CopycatBoardBlock extends MigratingWaterloggedCopycatBlock implemen
     public static BooleanProperty EAST = BlockStateProperties.EAST;
     public static BooleanProperty WEST = BlockStateProperties.WEST;
     public static final Map<Direction, BooleanProperty> PROPERTY_BY_DIRECTION = PipeBlock.PROPERTY_BY_DIRECTION;
-    private final ImmutableMap<BlockState, VoxelShape> shapesCache;
+    // getShapeForEachState(Function<BlockState,VoxelShape>) now returns a caching Function wrapper
+    // rather than a precomputed ImmutableMap (confirmed via javap on Block) - field type updated to
+    // match, call site below switched from .get(state) to .apply(state).
+    private final Function<BlockState, VoxelShape> shapesCache;
 
     public CopycatBoardBlock(Properties properties) {
         super(properties);
@@ -104,7 +107,7 @@ public class CopycatBoardBlock extends MigratingWaterloggedCopycatBlock implemen
     @SuppressWarnings("deprecation")
     @Override
     public @NotNull VoxelShape getShape(@NotNull BlockState pState, @NotNull BlockGetter pLevel, @NotNull BlockPos pPos, @NotNull CollisionContext pContext) {
-        return Objects.requireNonNull(this.shapesCache.get(pState));
+        return Objects.requireNonNull(this.shapesCache.apply(pState));
     }
 
     @Override
@@ -131,7 +134,7 @@ public class CopycatBoardBlock extends MigratingWaterloggedCopycatBlock implemen
         if (!pState.getValue(byDirection(pUseContext.getClickedFace().getOpposite()))) {
             Direction direction = pUseContext.getClickedFace().getOpposite();
             double pos = getByAxis(pUseContext.getClickedPos(), direction.getAxis());
-            if (getByAxis(direction.getNormal(), direction.getAxis()) > 0) pos += 1;
+            if (getByAxis(direction.getUnitVec3i(), direction.getAxis()) > 0) pos += 1;
             double loc = getByAxis(pUseContext.getClickLocation(), direction.getAxis());
             if (Math.abs(pos - loc) < 2 / 16.0) {
                 return true;
@@ -139,7 +142,7 @@ public class CopycatBoardBlock extends MigratingWaterloggedCopycatBlock implemen
         }
         if (!pState.getValue(byDirection(pUseContext.getClickedFace()))) {
             double hitLoc = getByAxis(pUseContext.getClickLocation(), pUseContext.getClickedFace().getAxis());
-            int direction = getByAxis(pUseContext.getClickedFace().getNormal(), pUseContext.getClickedFace().getAxis());
+            int direction = getByAxis(pUseContext.getClickedFace().getUnitVec3i(), pUseContext.getClickedFace().getAxis());
             double offset = hitLoc - Math.round(hitLoc);
             if (Mth.sign(direction) == Mth.sign(offset) && Math.abs(offset) < 2 / 16.0) {
                 return true;
@@ -160,7 +163,7 @@ public class CopycatBoardBlock extends MigratingWaterloggedCopycatBlock implemen
         for (Direction direction : Iterate.directions) {
             if (!state.getValue(byDirection(direction))) continue;
             double pos = getByAxis(context.getClickedPos(), direction.getAxis());
-            if (getByAxis(direction.getNormal(), direction.getAxis()) > 0) pos += 1;
+            if (getByAxis(direction.getUnitVec3i(), direction.getAxis()) > 0) pos += 1;
             double loc = getByAxis(context.getClickLocation(), direction.getAxis());
             if (Math.abs(pos - loc) < 2 / 16.0) {
                 options.add(direction);
@@ -215,17 +218,11 @@ public class CopycatBoardBlock extends MigratingWaterloggedCopycatBlock implemen
         };
     }
 
-    @Override
-    public boolean hidesNeighborFace(BlockGetter level, BlockPos pos, BlockState state, BlockState neighborState,
-                                     Direction dir) {
-        if (state.is(this) && !state.getValue(byDirection(dir))) return false;
-        if (neighborState.is(this) && !neighborState.getValue(byDirection(dir.getOpposite()))) return false;
-        if (state.is(this) == neighborState.is(this)) {
-            return (getMaterial(level, pos).skipRendering(getMaterial(level, pos.relative(dir)), dir.getOpposite()));
-        }
-
-        return getMaterial(level, pos).skipRendering(neighborState, dir.getOpposite());
-    }
+    // hidesNeighborFace(BlockGetter, BlockPos, BlockState, BlockState, Direction) does not exist anywhere
+    // in this Fabric API surface (confirmed via javap; see CopycatWallBlock.java for the full writeup) -
+    // a NeoForge-only IBlockExtension face-culling hook with no Fabric replacement. Feature reduction:
+    // adjacent copycat boards sharing material/direction will render their shared internal faces instead
+    // of culling them (a fill-rate optimization loss only).
 
     @SuppressWarnings("deprecation")
     @Override

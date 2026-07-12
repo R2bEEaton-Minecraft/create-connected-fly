@@ -8,6 +8,7 @@ import com.zurrtum.create.content.kinetics.RotationPropagator;
 import com.zurrtum.create.content.kinetics.base.IRotate;
 import com.zurrtum.create.content.kinetics.transmission.SplitShaftBlockEntity;
 import com.zurrtum.create.content.redstone.diodes.BrassDiodeBlock;
+import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
 import com.zurrtum.create.foundation.blockEntity.behaviour.*;
 import com.zurrtum.create.foundation.blockEntity.behaviour.scrollValue.ServerScrollValueBehaviour;
 import net.minecraft.core.BlockPos;
@@ -113,17 +114,16 @@ public class OverstressClutchBlockEntity extends SplitShaftBlockEntity {
     public static java.util.function.BiConsumer<OverstressClutchBlockEntity, List<Component>> uncoupledTooltipHook = (be, tooltip) -> {
     };
 
-    @Override
-    public boolean addToTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-        boolean added = super.addToTooltip(tooltip, isPlayerSneaking);
-
-        if (getBlockState().getValue(STATE) == ClutchState.UNCOUPLED) {
-            uncoupledTooltipHook.accept(this, tooltip);
-            added = true;
-        }
-
-        return added;
-    }
+    // FURTHER CORRECTION: the addToTooltip(List<Component>, boolean) override itself doesn't exist
+    // either - that was never a real SmartBlockEntity/KineticBlockEntity method, it's actually
+    // IHaveGoggleInformation.addToGoggleTooltip(...), a client-only interface (confirmed by reading
+    // real com.zurrtum.create.client.api.goggles.IHaveGoggleInformation) - the same cross-boundary
+    // "main imports client" bug already fixed for FluidVesselBlockEntity/KineticBatteryBlockEntity
+    // elsewhere in this port. Fixed the same way: the override itself moved to a new client class,
+    // OverstressClutchTooltipBehaviour, registered via BlockEntityBehaviour.addClient(...) in
+    // CreateConnectedClient.onInitializeClient(). The uncoupledTooltipHook indirection above remains
+    // in place unchanged (it solves a separate, narrower problem: letting the *content* of the
+    // tooltip live client-side while this field stays referenceable from common code).
 
     public void resetClutch() {
         if (getBlockState().getValue(STATE) == ClutchState.UNCOUPLED && !isOverStressed()) {

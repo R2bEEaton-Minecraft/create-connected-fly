@@ -27,6 +27,15 @@ repositories {
 loom {
     splitEnvironmentSourceSets()
 
+    // fabric.mod.json's own "accessWidener" key only covers *runtime* widening (Fabric Loader
+    // applying it when loading this mod) - Loom needs this separate, explicit reference so the
+    // widened accessors (ButtonBlock.type/ticksToStayPressed, JukeboxBlockEntity.jukeboxSongPlayer)
+    // are visible to *this project's own* compileJava/compileClientJava, not just at runtime. This
+    // was flagged as "not started" early in the port and apparently never actually got wired up
+    // despite the .accesswidener file itself existing - confirmed missing, real compileJava was
+    // failing on all 3 widened accessors with "has private access" until this was added.
+    accessWidenerPath = file("src/main/resources/create_connected.accesswidener")
+
     mods {
         "create_connected" {
             sourceSet sourceSets.main

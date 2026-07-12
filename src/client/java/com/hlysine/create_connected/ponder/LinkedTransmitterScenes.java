@@ -61,7 +61,7 @@ public class LinkedTransmitterScenes {
                 .rightClick()
                 .withItem(new ItemStack(CCItems.LINKED_TRANSMITTER));
         scene.idle(10);
-        scene.world().modifyBlock(lever, s -> CCBlocks.LINKED_LEVER.getDefaultState()
+        scene.world().modifyBlock(lever, s -> CCBlocks.LINKED_LEVER.defaultBlockState()
                         .setValue(ATTACH_FACE, s.getValue(ATTACH_FACE))
                         .setValue(HORIZONTAL_FACING, s.getValue(HORIZONTAL_FACING))
                         .setValue(POWERED, s.getValue(POWERED))
@@ -221,12 +221,12 @@ public class LinkedTransmitterScenes {
                 .rightClick()
                 .withItem(new ItemStack(CCItems.LINKED_TRANSMITTER));
         scene.idle(20);
-        scene.world().modifyBlock(analogLever, s -> CCBlocks.LINKED_ANALOG_LEVER.getDefaultState()
+        scene.world().modifyBlock(analogLever, s -> CCBlocks.LINKED_ANALOG_LEVER.defaultBlockState()
                         .setValue(ATTACH_FACE, s.getValue(ATTACH_FACE))
                         .setValue(HORIZONTAL_FACING, s.getValue(HORIZONTAL_FACING))
                 , true);
         scene.idle(5);
-        scene.world().modifyBlock(button, s -> CCBlocks.LINKED_BUTTONS.get(BlockSetType.STONE).getDefaultState()
+        scene.world().modifyBlock(button, s -> CCBlocks.LINKED_BUTTONS.get(BlockSetType.STONE).defaultBlockState()
                         .setValue(ATTACH_FACE, s.getValue(ATTACH_FACE))
                         .setValue(HORIZONTAL_FACING, s.getValue(HORIZONTAL_FACING))
                         .setValue(POWERED, s.getValue(POWERED))

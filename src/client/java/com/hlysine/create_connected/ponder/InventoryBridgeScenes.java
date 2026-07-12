@@ -344,8 +344,8 @@ public class InventoryBridgeScenes {
         scene.idle(20);
         scene.world().hideSection(util.select().position(funnelOut).add(util.select().position(funnelOut.above())), Direction.NORTH);
         scene.idle(20);
-        scene.world().setBlock(funnelOut, AllBlocks.PACKAGER.getDefaultState(), false);
-        scene.world().setBlock(funnelOut.above(), AllBlocks.STOCK_LINK.getDefaultState(), false);
+        scene.world().setBlock(funnelOut, AllBlocks.PACKAGER.defaultBlockState(), false);
+        scene.world().setBlock(funnelOut.above(), AllBlocks.STOCK_LINK.defaultBlockState(), false);
 
         scene.addKeyframe();
 

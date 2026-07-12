@@ -1,5 +1,6 @@
 package com.hlysine.create_connected.content.copycat.verticalstep;
 
+import com.hlysine.create_connected.content.DirectionHelper;
 import com.hlysine.create_connected.registries.CCBlocks;
 import com.hlysine.create_connected.registries.CCShapes;
 import com.hlysine.create_connected.content.copycat.MigratingWaterloggedCopycatBlock;
@@ -97,7 +98,7 @@ public class CopycatVerticalStepBlock extends MigratingWaterloggedCopycatBlock {
         if (diff.equals(Vec3i.ZERO)) {
             return true;
         }
-        Direction face = Direction.fromDelta(diff.getX(), diff.getY(), diff.getZ());
+        Direction face = DirectionHelper.fromDelta(diff.getX(), diff.getY(), diff.getZ());
         if (face == null) {
             return false;
         }
@@ -172,22 +173,12 @@ public class CopycatVerticalStepBlock extends MigratingWaterloggedCopycatBlock {
         return CCShapes.CASING_8PX_VERTICAL.get(pState.getValue(FACING));
     }
 
-    @Override
-    public boolean supportsExternalFaceHiding(BlockState state) {
-        return true;
-    }
-
-    @Override
-    public boolean hidesNeighborFace(BlockGetter level, BlockPos pos, BlockState state, BlockState neighborState,
-                                     Direction dir) {
-        if (state.is(this) == neighborState.is(this)) {
-            if (getMaterial(level, pos).skipRendering(getMaterial(level, pos.relative(dir)), dir.getOpposite())) {
-                return dir.getAxis().isVertical() && neighborState.getValue(FACING) == state.getValue(FACING);
-            }
-        }
-
-        return false;
-    }
+    // supportsExternalFaceHiding(BlockState)/hidesNeighborFace(BlockGetter, BlockPos, BlockState,
+    // BlockState, Direction) do not exist anywhere in this Fabric API surface (confirmed via javap; see
+    // CopycatWallBlock.java for the full writeup) - NeoForge-only IBlockExtension face-culling hooks
+    // with no Fabric replacement. Feature reduction: adjacent copycat vertical steps sharing material/
+    // facing will render their shared internal faces instead of culling them (a fill-rate optimization
+    // loss only).
 
     @Override
     public @NotNull BlockState rotate(@NotNull BlockState pState, Rotation pRot) {

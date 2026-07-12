@@ -1,5 +1,6 @@
 package com.hlysine.create_connected.content.copycat.beam;
 
+import com.hlysine.create_connected.content.DirectionHelper;
 import com.hlysine.create_connected.registries.CCBlocks;
 import com.hlysine.create_connected.registries.CCShapes;
 import com.hlysine.create_connected.content.copycat.MigratingWaterloggedCopycatBlock;
@@ -90,7 +91,7 @@ public class CopycatBeamBlock extends MigratingWaterloggedCopycatBlock {
         if (diff.equals(Vec3i.ZERO)) {
             return true;
         }
-        Direction face = Direction.fromDelta(diff.getX(), diff.getY(), diff.getZ());
+        Direction face = DirectionHelper.fromDelta(diff.getX(), diff.getY(), diff.getZ());
         if (face == null) {
             return false;
         }
@@ -135,22 +136,13 @@ public class CopycatBeamBlock extends MigratingWaterloggedCopycatBlock {
         return CCShapes.CASING_8PX_CENTERED.get(pState.getValue(AXIS));
     }
 
-    @Override
-    public boolean supportsExternalFaceHiding(BlockState state) {
-        return true;
-    }
-
-    @Override
-    public boolean hidesNeighborFace(BlockGetter level, BlockPos pos, BlockState state, BlockState neighborState,
-                                     Direction dir) {
-        if (state.is(this) == neighborState.is(this)) {
-            if (getMaterial(level, pos).skipRendering(getMaterial(level, pos.relative(dir)), dir.getOpposite())) {
-                return state.getValue(AXIS) == dir.getAxis() && neighborState.getValue(AXIS) == dir.getAxis();
-            }
-        }
-
-        return false;
-    }
+    // supportsExternalFaceHiding(BlockState)/hidesNeighborFace(BlockGetter, BlockPos, BlockState,
+    // BlockState, Direction) do not exist anywhere in this Fabric API surface (confirmed via javap on
+    // Block/BlockBehaviour/FabricBlock/FabricBlockState, and absent from real Create Fly's own compiled
+    // CopycatBlock.class; see CopycatWallBlock.java for the full writeup) - NeoForge-only IBlockExtension
+    // face-culling hooks with no Fabric replacement. Feature reduction: adjacent copycat beams sharing
+    // an axis will render their shared internal faces instead of culling them (a fill-rate optimization
+    // loss only; shape/appearance/texture-connection behavior is unaffected).
 
     @Override
     public @NotNull BlockState rotate(@NotNull BlockState state, Rotation rot) {

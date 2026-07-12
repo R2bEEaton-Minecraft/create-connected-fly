@@ -14,6 +14,7 @@ import com.zurrtum.create.catnip.placement.PlacementOffset;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
@@ -44,30 +45,39 @@ public class CrankWheelItem extends BlockItem {
                 PlacementHelpers.register(large ? new IntegratedLargeCogHelper() : new IntegratedSmallCogHelper());
     }
 
-    @Override
-    public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context) {
-        Level world = context.getLevel();
-        BlockPos pos = context.getClickedPos();
+    // Item.onItemUseFirst(ItemStack, UseOnContext) was a NeoForge-only IItemExtension hook (run before
+    // the target block's own click handling) - it does not exist in Fabric at all (confirmed via javap;
+    // see LinkedTransmitterItem.java for the fuller writeup on the general pattern). Unlike
+    // LinkedTransmitterItem's fixed set of "module" blocks, this logic needs to intercept clicks on any
+    // matching cogwheel-adjacent block state (checked via IPlacementHelper.matchesState), so the same
+    // net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT approach applies here too - registered
+    // once in CreateConnected.onInitialize() and delegating to this static helper.
+    public static InteractionResult onUseBlockFirst(Player player, Level world, InteractionHand hand, BlockHitResult ray) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (!(stack.getItem() instanceof CrankWheelItem item))
+            return InteractionResult.PASS;
+
+        BlockPos pos = ray.getBlockPos();
         BlockState state = world.getBlockState(pos);
 
-        IPlacementHelper helper = PlacementHelpers.get(placementHelperId);
-        Player player = context.getPlayer();
-        BlockHitResult ray = new BlockHitResult(context.getClickLocation(), context.getClickedFace(), pos, true);
-        if (helper.matchesState(state) && player != null && !player.isShiftKeyDown()) {
+        IPlacementHelper helper = PlacementHelpers.get(item.placementHelperId);
+        if (helper.matchesState(state) && !player.isShiftKeyDown()) {
             return helper.getOffset(player, world, state, pos, ray)
-                    .placeInWorld(world, this, player, context.getHand());
+                    .placeInWorld(world, item, player, hand);
         }
 
-        if (integratedCogHelperId != -1) {
-            helper = PlacementHelpers.get(integratedCogHelperId);
+        if (item.integratedCogHelperId != -1) {
+            helper = PlacementHelpers.get(item.integratedCogHelperId);
 
-            if (helper.matchesState(state) && player != null && !player.isShiftKeyDown()) {
+            if (helper.matchesState(state) && !player.isShiftKeyDown()) {
                 return helper.getOffset(player, world, state, pos, ray)
-                        .placeInWorld(world, this, player, context.getHand());
+                        .placeInWorld(world, item, player, hand);
             }
         }
 
-        return super.onItemUseFirst(stack, context);
+        // The original fell back to super.onItemUseFirst(...), NeoForge Item's default no-op
+        // implementation, which simply returns PASS - preserved directly.
+        return InteractionResult.PASS;
     }
 
     public static boolean isCrankWheelItem(ItemStack item) {
