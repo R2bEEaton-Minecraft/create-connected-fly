@@ -63,7 +63,7 @@ public record ItemDamageAttribute(int maxDamage) implements ItemAttribute {
         }
 
         @Override
-        public StreamCodec<? super RegistryFriendlyByteBuf, ? extends ItemAttribute> streamCodec() {
+        public StreamCodec<? super RegistryFriendlyByteBuf, ? extends ItemAttribute> packetCodec() {
             return STREAM_CODEC;
         }
     }

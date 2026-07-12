@@ -11,13 +11,16 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.JukeboxBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +63,11 @@ public class JukeboxInteractionBehaviour extends MovingInteractionBehaviour {
         AbstractContraptionEntity contraptionEntity = contraption.entity;
         BlockPos realPos = BlockPos.containing(contraptionEntity.toGlobalVector(Vec3.atCenterOf(contraptionPos), 1));
         JukeboxBlockEntity be = new JukeboxBlockEntity(realPos, currentState);
-        be.loadWithComponents(contraption.getBlocks().get(contraptionPos).nbt(), contraptionEntity.level().registryAccess());
+        // BlockEntity.loadWithComponents(CompoundTag, RegistryAccess) was replaced by a single-arg
+        // loadWithComponents(ValueInput) (confirmed via javap) - built via TagValueInput.create(...),
+        // matching the real construction idiom used across the rest of the ValueInput/ValueOutput API
+        // this port has already adopted elsewhere.
+        be.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING, contraptionEntity.level().registryAccess(), contraption.getBlocks().get(contraptionPos).nbt()));
         be.setLevel(new WrappedLevel(contraptionEntity.level()) {
             @Override
             public boolean setBlock(BlockPos pos, BlockState newState, int flags) {
@@ -78,8 +85,11 @@ public class JukeboxInteractionBehaviour extends MovingInteractionBehaviour {
                 return super.getBlockState(pos);
             }
 
+            // LevelAccessor.levelEvent's first param is Entity, not (Nullable) Player specifically
+            // (confirmed via javap) - widened to match; a Player is still a valid Entity argument at
+            // every real call site.
             @Override
-            public void levelEvent(@Nullable Player player, int type, BlockPos pos, int data) {
+            public void levelEvent(@Nullable Entity player, int type, BlockPos pos, int data) {
                 if (type == 1010 || type == 1011) {
                     PlayContraptionJukeboxPacket payload = new PlayContraptionJukeboxPacket(dimension().identifier(),
                             contraptionEntity.getId(),

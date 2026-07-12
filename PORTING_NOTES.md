@@ -2308,6 +2308,132 @@ mismatch), `CCBlockEntityTypes.java` line ~154-area residual errors (worth re-ch
 `BlockState` import fix above - may already be resolved). Recipe-conditions replacement (274 recipes)
 and a full `./gradlew build` attempt remain not started.
 
+## MILESTONE: real `./gradlew compileJava` is fully clean (BUILD SUCCESSFUL, exit code 0)
+
+Finished working down the remaining ~60 errors from the previous session's stopping point, in order:
+
+- **`BoilerData.java`**: confirmed a 4th instance of the client-import-from-common cross-boundary bug -
+  `import com.zurrtum.create.client.foundation.utility.CreateLang` from this common-sourceset class.
+  Real common-sourceset `BoilerData` (base class) has no `addToGoggleTooltip` at all and builds its
+  other text-producing methods (`getHeatLevelTextComponent`/`getSizeComponent`/etc.) with plain vanilla
+  `Component.translatable(...)`/`.withStyle()`/`.append()`, not the client-only `CreateLang` fluent
+  builder - matched that pattern here too. Widened `maxHeatForSize`/`maxHeatForWater`/`minValue`/
+  `maxValue`/`configLevelCap`/`waterSupplyPerLevel` from `private` to package-private so the client
+  sibling can read them directly (same package name across source sets - established pattern), and
+  moved `addToGoggleTooltip`'s body into a new `addBoilerToGoggleTooltip(...)` static method on
+  `FluidVesselTooltipBehaviour` (client), using `ConnectedLang` there instead.
+- **`attributefilter/Item*Attribute.java` trio**: `ItemAttributeType.streamCodec()` doesn't exist - real
+  interface method is `packetCodec()` (confirmed via reading the real interface source). Mechanical
+  rename across all 3 files.
+- **`Dashboard*` `DisplayHolder` conversions**: `DashboardDisplayTarget`'s `reserve(...)`/`isReserved(...)`
+  calls require a real `DisplayHolder` (confirmed via javap: `getDisplayLinkData()`/
+  `setDisplayLinkData(CompoundTag)` + default `writeDisplayLink`/`readDisplayLink` methods, matching
+  real Create Fly's own `FlapDisplayBlockEntity` pattern exactly) - `DashboardBlockEntity` now
+  implements it with a plain `CompoundTag displayLink` field, wired into its existing `write`/`read`.
+  Also found and fixed a 5th cross-boundary bug in the same file: `DashboardBlockEntity.displayStatus()`/
+  `lazyTick()` called `ClientPlayerAccess.getPlayer()` (a client-only class) directly from common code -
+  fixed with the same static-hook-field pattern as `OverstressClutchBlockEntity.uncoupledTooltipHook`
+  (`DashboardBlockEntity.localPlayerHook`, populated from `CreateConnectedClient.onInitializeClient()`).
+  Also: `AllBlocks.CLIPBOARD.isIn(stack)` doesn't exist (Registrate convenience) - real idiom needed
+  `stack.is(AllBlocks.CLIPBOARD.asItem())` (`ItemStack.is(...)` has no `Block`/`ItemLike` overload,
+  only `Item`/`TagKey<Item>`/`Holder<Item>`).
+- **Block-entity constructor-arity mismatches** (`LinkedAnalogLeverBlockEntity`, `InvertedClutchBlockEntity`,
+  `InvertedGearshiftBlockEntity`, `ShearPinBlockEntity`): confirmed via javap that real
+  `AnalogLeverBlockEntity`/`ClutchBlockEntity`/`GearshiftBlockEntity`/`BracketedKineticBlockEntity` all
+  dropped their `BlockEntityType` constructor param already (same pattern as `CopycatBlockEntity` found
+  last session) - each subclass kept its own 3-arg constructor (for the `CCBlockEntityTypes` registration
+  helper) but stopped forwarding `type` to `super(...)`.
+- **`ShearPinBlock.java`**: `Block.has(BlockState)` doesn't exist (Registrate convenience) -> `state.is(block)`;
+  Guava `Predicates.or(Predicates.or(...), ...)` became ambiguous once nested with mixed lambda types -
+  switched to plain `java.util.function.Predicate.or(...)` instance-method chaining, which resolves
+  unambiguously.
+- **The `onRemove` -> `affectNeighborsAfterRemoval` pattern, 2 more instances**: `CrossConnectorBlock`
+  (guard never load-bearing, dropped) and confirmed `KineticBridgeDestinationBlock`/
+  `EncasedCrossConnectorBlock`/`KineticBatteryBlock` all needed the related `getCloneItemStack` signature
+  fix too (`(LevelReader, BlockPos, BlockState, boolean includeData)`, confirmed via javap on real
+  `CopycatBlock`) - `EncasedCrossConnectorBlock`'s version genuinely lost information (which face the
+  pick-block raycast hit, connector vs casing) with no replacement; disclosed as a real feature
+  reduction (always returns the casing item now) rather than guessing.
+- **`ItemSiloBlockEntity.java`**: `com.zurrtum.create.foundation.item.ItemHelper.dropContents(...)`
+  genuinely doesn't exist (confirmed via full javap dump of the class - not renamed, just absent) -
+  replaced with plain vanilla `net.minecraft.world.Containers.dropContents(Level, BlockPos,
+  NonNullList<ItemStack>)` against `ItemStackHandler.getStacks()`.
+- **`ContraptionMixin.java` (itemsilo)**: `NbtUtils.writeBlockPos(BlockPos)` is gone entirely (confirmed
+  via javap) - real Create Fly's own `NBTHelper.readBlockPos` reads via `CompoundTag.read(key,
+  BlockPos.CODEC)`, so wrote it with the matching `CompoundTag.store(key, BlockPos.CODEC, pos)`.
+- **`ManualApplicationRecipeMixin.java`**: `ItemStack.hasCraftingRemainingItem()`/
+  `getCraftingRemainingItem()` are gone - the concept moved to `Item.getCraftingRemainder()` (a plain
+  `Item`-level accessor that already returns `ItemStack.EMPTY` when there is none).
+- **`CCCreativeTabs.java`**: `CreativeModeTab.Builder.withTabsBefore(...)` doesn't exist at all anymore
+  (confirmed via javap) - tab ordering moved entirely into the `(Row, int)` constructor params already
+  fixed last round; and `Builder.icon(...)` now takes `Supplier<ItemStack>`, not `Supplier<Item>`.
+- **`JukeboxInteractionBehaviour.java`**: `BlockEntity.loadWithComponents(CompoundTag, RegistryAccess)`
+  was replaced by a single-arg `loadWithComponents(ValueInput)` (built via
+  `TagValueInput.create(ProblemReporter.DISCARDING, registryAccess, nbt)`); `LevelAccessor.levelEvent`'s
+  first param is `Entity`, not `@Nullable Player` (a `Player` is still a valid argument, just the
+  override signature needed widening).
+- **`BrakeBlockEntity.java`**: `Level.addParticle(ParticleOptions, boolean, double,double,double,
+  double,double,double)` (a single "decreased" flag, 8 args) is gone - real overloads are a plain 7-arg
+  form or a 9-arg form with two booleans; used the plain 7-arg form since the original flag was `false`.
+
+**Verified via real `./gradlew compileJava`: `BUILD SUCCESSFUL in 1s`, exit code 0, zero errors.**
+
+## Next: real `./gradlew compileClientJava` attempted for the first time this port (real signal, not yet fixed)
+
+This is the first time `compileClientJava` has been run for real in this port (previous verification was
+always `compileJava` only, or the earlier javac-direct combined-classpath workaround, which cannot see
+client-sourceset-only problems). Result: **110 errors across 25 files** in `src/client/java`. Categorized
+by root cause (not yet fixed, next session should start here):
+
+- **Genuine leftover NeoForge-only imports never converted for the client sourceset** (the same class of
+  problem already fully cleaned out of `src/main/java` across earlier sessions, just not yet swept
+  through `src/client/java`): `net.neoforged.neoforge.client.model.data.ModelData`,
+  `net.neoforged.neoforge.fluids.capability.templates.FluidTank`, `net.neoforged.neoforge.fluids.*`,
+  `net.neoforged.neoforge.network.PacketDistributor` - at minimum in `FluidVesselRenderer.java`,
+  `SequencedPulseGeneratorScreen.java`, and likely others in the same 25-file list.
+- **Real Create Fly client-package path changes not yet chased down**: `com.zurrtum.create.catnip.gui`/
+  `com.zurrtum.create.catnip.gui.element` (used by `CCGuiTextures.java`) and
+  `com.zurrtum.create.foundation.blockEntity.renderer` both report "package does not exist" - these are
+  almost certainly real Create Fly classes that simply moved to a `client.` sub-package (matching the
+  general pattern this whole port has followed: `com.zurrtum.create.catnip.*` common utilities have
+  `com.zurrtum.create.client.catnip.*` counterparts for client-only concerns) - needs the real path
+  confirmed via listing the real client jar's contents, not guessed.
+- **`NeoForgeCatnipServices`/`ClipboardOverrides`/`ClipboardContent` unresolved** (in
+  `FluidVesselRenderer.java`/`DashboardScenes.java`) - likely missing imports for real Create Fly classes
+  that do exist somewhere, or (for `NeoForgeCatnipServices` specifically) a NeoForge-only platform
+  services class needing its real Fabric equivalent identified the same way `FakePlayerHandler`/
+  `RedStoneConnectBlock`/etc. were found this session.
+- Full file list with errors (for the next session to work through systematically, same methodology as
+  this session - `javap` real signatures, cross-check real Create Fly decompiled sources, fix, re-verify):
+  `ClutchValueBox`, `ContraptionMusicManager`, `PlayContraptionJukeboxPacketClient`, `CopycatBeamModel`,
+  `CopycatSlabModel`, `CrankWheelVisual`, `DashboardRenderer`, `FanCatalystRotatingHeadRenderer`,
+  `SkullTypes`, `FluidVesselModel`, `FluidVesselRenderer`, `FluidVesselTooltipBehaviour` (the file this
+  session just added/edited - likely a fresh import needed for `BoilerData`'s new package-private field
+  access, or an unrelated pre-existing issue, check first), `KineticBatteryOverrides`,
+  `KineticBatteryValueBox`, `KineticBridgeBlockItemClient`, `StressImpactScrollValueBehaviour`,
+  `LinkedAnalogLeverRenderer`, `LinkedTransmitterFrequencySlot`, `SequencedPulseGeneratorScreen`,
+  `ChainCogwheelScenes`, `DashboardScenes`, `KineticBatteryScene`, `LinkedTransmitterScenes`,
+  `CCColorHandlers`, `CCGuiTextures`.
+
+Started on this list: fixed `CCGuiTextures.java`'s `com.zurrtum.create.catnip.gui`/`.gui.element`
+imports by confirming (via listing the real client jar's contents) they moved to
+`com.zurrtum.create.client.catnip.gui`/`.gui.element` - `com.zurrtum.create.catnip.theme.Color` stays
+unprefixed (confirmed present in the *common* jar, not client). Also found, but NOT yet fixed, something
+more significant while investigating `DashboardRenderer.java`/`FanCatalystRotatingHeadRenderer.java`'s
+`com.zurrtum.create.foundation.blockEntity.renderer.SafeBlockEntityRenderer` import: **that class
+appears to be gone entirely**, not just moved - the real client jar's
+`com.zurrtum.create.client.foundation.blockEntity.renderer` package only contains
+`SmartBlockEntityRenderer` and `ColoredOverlayBlockEntityRenderer`, both of which have nested
+`...RenderState` classes (e.g. `SmartBlockEntityRenderer$SmartRenderState`), suggesting vanilla's
+`BlockEntityRenderer` interface itself moved to MC 1.21.x's newer two-phase extract-state/render-state
+architecture (a real, nontrivial rendering API migration, not a simple rename) - this needs proper
+investigation (read `SmartBlockEntityRenderer`'s real decompiled source, compare to
+`BlockEntityRenderer`'s new interface shape via javap) before attempting a fix, flagged honestly as
+unresolved rather than guessed at under time pressure.
+
+Recipe-conditions replacement (274 recipes) and the final full `./gradlew build` remain not started,
+blocked behind `compileClientJava` reaching zero errors first.
+
 ## Constraints / house rules
 - Don't add speculative abstractions or backwards-compat shims. Match the existing
   code's structure/intent as closely as Fabric + Create Fly allow.

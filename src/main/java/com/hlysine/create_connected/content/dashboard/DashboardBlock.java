@@ -72,11 +72,11 @@ public class DashboardBlock extends HorizontalDirectionalBlock implements IWrenc
             return InteractionResult.SUCCESS;
         }
 
-        if (stack.getItem() == Items.NAME_TAG && stack.has(DataComponents.CUSTOM_NAME) || AllBlocks.CLIPBOARD.isIn(stack)) {
+        if (stack.getItem() == Items.NAME_TAG && stack.has(DataComponents.CUSTOM_NAME) || stack.is(AllBlocks.CLIPBOARD.asItem())) {
             if (level.isClientSide())
                 return InteractionResult.SUCCESS;
             Component customName = stack.get(DataComponents.CUSTOM_NAME);
-            if (AllBlocks.CLIPBOARD.isIn(stack)) {
+            if (stack.is(AllBlocks.CLIPBOARD.asItem())) {
                 this.withBlockEntityDo(level, blockPos, be -> {
                     List<ClipboardEntry> entries = ClipboardEntry.getLastViewedEntries(stack);
                     int line = 0;

@@ -10,9 +10,9 @@ import com.zurrtum.create.content.decoration.steamWhistle.WhistleBlockEntity;
 import com.zurrtum.create.content.fluids.tank.FluidTankBlockEntity;
 import com.zurrtum.create.content.fluids.tank.SoundPool;
 import com.zurrtum.create.content.kinetics.steamEngine.SteamEngineBlock;
+import com.hlysine.create_connected.CreateConnected;
 import com.zurrtum.create.foundation.advancement.AdvancementBehaviour;
 import com.zurrtum.create.AllAdvancements;
-import com.zurrtum.create.client.foundation.utility.CreateLang;
 import joptsimple.internal.Strings;
 import com.zurrtum.create.catnip.animation.LerpedFloat;
 import com.zurrtum.create.catnip.data.Iterate;
@@ -41,7 +41,9 @@ public class BoilerData extends com.zurrtum.create.content.fluids.tank.BoilerDat
 
     static final int SAMPLE_RATE = 5;
 
-    private static final int waterSupplyPerLevel = 10;
+    // Package-private (not private): the client-side FluidVesselTooltipBehaviour (same package name,
+    // different source set) needs direct access - see the addToGoggleTooltip removal note below.
+    static final int waterSupplyPerLevel = 10;
     private static final float passiveEngineEfficiency = 1 / 8f;
 
     // pooled water supply
@@ -51,11 +53,11 @@ public class BoilerData extends com.zurrtum.create.content.fluids.tank.BoilerDat
     int currentIndex;
     int configLevelCap = 18;
 
-    // display
-    private int maxHeatForSize = 0;
-    private int maxHeatForWater = 0;
-    private int minValue = 0;
-    private int maxValue = 0;
+    // display (package-private, not private - same reason as waterSupplyPerLevel above)
+    int maxHeatForSize = 0;
+    int maxHeatForWater = 0;
+    int minValue = 0;
+    int maxValue = 0;
 
     // client only sound control
 
@@ -183,65 +185,18 @@ public class BoilerData extends com.zurrtum.create.content.fluids.tank.BoilerDat
         return actualHeat;
     }
 
-    // Not an override - real com.zurrtum.create.content.fluids.tank.BoilerData has no
-    // addToGoggleTooltip at all (Create Fly moved this to a separate FluidTankTooltipBehaviour
-    // client class instead); this mod's own BoilerData subclass adds it directly as a new method,
-    // called straight off the `boiler` field from FluidVesselBlockEntity.addToGoggleTooltip().
-    public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking, int boilerSize) {
-        if (!isActive())
-            return false;
-
-        calcMinMaxForSize(boilerSize);
-
-        if (configLevelCap < 18)
-            CreateLang.translate("boiler.status", getHeatLevelTextComponent().withStyle(ChatFormatting.GREEN).append(Component.literal(" / " + configLevelCap).withStyle(ChatFormatting.GRAY)))
-                    .forGoggles(tooltip);
-        else
-            CreateLang.translate("boiler.status", getHeatLevelTextComponent().withStyle(ChatFormatting.GREEN))
-                    .forGoggles(tooltip);
-        CreateLang.builder().add(getSizeComponent(true, false)).forGoggles(tooltip, 1);
-        CreateLang.builder().add(getWaterComponent(true, false)).forGoggles(tooltip, 1);
-        CreateLang.builder().add(getHeatComponent(true, false)).forGoggles(tooltip, 1);
-
-        if (attachedEngines == 0)
-            return true;
-
-        int boilerLevel = Math.min(activeHeat, Math.min(maxHeatForWater, maxHeatForSize));
-        double totalSU = getEngineEfficiency(boilerSize) * 16 * Math.max(boilerLevel, attachedEngines)
-                * BlockStressValues.getCapacity(AllBlocks.STEAM_ENGINE);
-
-        tooltip.add(CommonComponents.EMPTY);
-
-        if (attachedEngines > 0 && maxHeatForSize > 0 && maxHeatForWater == 0 && (passiveHeat ? 1 : activeHeat) > 0) {
-            CreateLang.translate("boiler.water_input_rate")
-                    .style(ChatFormatting.GRAY)
-                    .forGoggles(tooltip);
-            CreateLang.number(waterSupply)
-                    .style(ChatFormatting.BLUE)
-                    .add(CreateLang.translate("generic.unit.millibuckets"))
-                    .add(CreateLang.text(" / ")
-                            .style(ChatFormatting.GRAY))
-                    .add(CreateLang.translate("boiler.per_tick", CreateLang.number(waterSupplyPerLevel)
-                                    .add(CreateLang.translate("generic.unit.millibuckets")))
-                            .style(ChatFormatting.DARK_GRAY))
-                    .forGoggles(tooltip, 1);
-            return true;
-        }
-
-        CreateLang.translate("tooltip.capacityProvided")
-                .style(ChatFormatting.GRAY)
-                .forGoggles(tooltip);
-
-        CreateLang.number(totalSU)
-                .translate("generic.unit.stress")
-                .style(ChatFormatting.AQUA)
-                .space()
-                .add((attachedEngines == 1 ? CreateLang.translate("boiler.via_one_engine")
-                        : CreateLang.translate("boiler.via_engines", attachedEngines)).style(ChatFormatting.DARK_GRAY))
-                .forGoggles(tooltip, 1);
-
-        return true;
-    }
+    // addToGoggleTooltip used to live directly here using the client-only CreateLang/LangBuilder
+    // fluent API (com.zurrtum.create.client.foundation.utility.CreateLang) from this common-sourceset
+    // class - a real cross-boundary bug, the same class already caught 3 times this session
+    // (FluidVesselBlockEntity/KineticBatteryBlockEntity/OverstressClutchBlockEntity). Confirmed real
+    // Create Fly's own common-sourceset BoilerData has no addToGoggleTooltip at all either - moved
+    // entirely to a separate client FluidTankTooltipBehaviour class instead. Followed the same real
+    // split here: moved to FluidVesselTooltipBehaviour (client), which now calls
+    // addBoilerToGoggleTooltip(this, tooltip, isPlayerSneaking, boilerSize) - see that file. The
+    // maxHeatForSize/maxHeatForWater/minValue/maxValue/configLevelCap/waterSupplyPerLevel fields above
+    // were widened from private to package-private so that client-side method can read them directly
+    // (same package name across source sets, an established pattern this session -
+    // KineticBatteryBlockEntity/KineticBatteryTooltipBehaviour use the same trick).
 
     @Override
     public void calcMinMaxForSize(int boilerSize) {
@@ -257,10 +212,13 @@ public class BoilerData extends com.zurrtum.create.content.fluids.tank.BoilerDat
     public MutableComponent getHeatLevelTextComponent() {
         int boilerLevel = Math.min(Math.min(activeHeat, Math.min(maxHeatForWater, maxHeatForSize)), configLevelCap);
 
-        return isPassive() ? CreateLang.translateDirect("boiler.passive")
-                : (boilerLevel == 0 ? CreateLang.translateDirect("boiler.idle")
-                : boilerLevel == 18 ? CreateLang.translateDirect("boiler.max_lvl")
-                : CreateLang.translateDirect("boiler.lvl", String.valueOf(boilerLevel)));
+        // CreateLang.translateDirect(...) (client-only) replaced with plain Component.translatable(...)
+        // using this mod's own MODID prefix - matches real Create Fly's own common-sourceset BoilerData,
+        // which builds this exact text with plain vanilla Component calls, not CreateLang.
+        return isPassive() ? Component.translatable(CreateConnected.MODID + ".boiler.passive")
+                : (boilerLevel == 0 ? Component.translatable(CreateConnected.MODID + ".boiler.idle")
+                : boilerLevel == 18 ? Component.translatable(CreateConnected.MODID + ".boiler.max_lvl")
+                : Component.translatable(CreateConnected.MODID + ".boiler.lvl", String.valueOf(boilerLevel)));
     }
 
     @Override
@@ -288,9 +246,9 @@ public class BoilerData extends com.zurrtum.create.content.fluids.tank.BoilerDat
         ChatFormatting style1 = styles.length >= 1 ? styles[0] : ChatFormatting.GRAY;
         ChatFormatting style2 = styles.length >= 2 ? styles[1] : ChatFormatting.DARK_GRAY;
 
-        return CreateLang.translateDirect("boiler." + label)
+        return Component.translatable(CreateConnected.MODID + ".boiler." + label)
                 .withStyle(style1)
-                .append(CreateLang.translateDirect("boiler." + label + "_dots")
+                .append(Component.translatable(CreateConnected.MODID + ".boiler." + label + "_dots")
                         .withStyle(style2))
                 .append(base);
     }

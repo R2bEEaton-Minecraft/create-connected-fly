@@ -17,8 +17,10 @@ public class ShearPinBlockEntity extends BracketedKineticBlockEntity {
 
     static final int RANDOM_DELAY = 5;
 
+    // Real BracketedKineticBlockEntity's constructor is 2-arg (BlockPos, BlockState) - see
+    // LinkedAnalogLeverBlockEntity.java for the full writeup on this pattern.
     public ShearPinBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
-        super(type, pos, state);
+        super(pos, state);
     }
 
     @Override

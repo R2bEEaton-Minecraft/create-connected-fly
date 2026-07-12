@@ -49,12 +49,16 @@ public class EncasedCrossConnectorBlock extends CrossConnectorBlock implements S
         return Shapes.block();
     }
 
+    // Real getCloneItemStack's signature is (LevelReader, BlockPos, BlockState, boolean includeData) -
+    // it lost the HitResult param entirely (confirmed via javap on real Create Fly's own CopycatBlock;
+    // see KineticBridgeDestinationBlock.java for the fuller writeup), so the original "which face did
+    // the player's pick-block raycast hit" distinction (connector vs casing) can no longer be
+    // expressed. Real feature reduction, disclosed: always returns the casing item now (matching what
+    // was previously the more common case - clicking the visible casing face rather than the thin
+    // connector shaft), rather than guessing which one the player meant.
     @Override
     public @NotNull ItemStack getCloneItemStack(@NotNull LevelReader level, @NotNull BlockPos pos, @NotNull BlockState state, boolean includeData) {
-        if (target instanceof BlockHitResult)
-            return ((BlockHitResult) target).getDirection()
-                    .getAxis() == getRotationAxis(state) ? CCBlocks.CROSS_CONNECTOR.asStack() : getCasing().asItem().getDefaultInstance();
-        return super.getCloneItemStack(level, pos, state, includeData);
+        return getCasing().asItem().getDefaultInstance();
     }
 
     @Override

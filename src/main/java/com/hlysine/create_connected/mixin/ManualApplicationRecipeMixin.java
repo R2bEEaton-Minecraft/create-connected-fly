@@ -29,7 +29,10 @@ public class ManualApplicationRecipeMixin {
                                                              BlockHitResult hit, BlockPos pos, CallbackInfoReturnable<InteractionResult> cir) {
         if (!CServer.ApplicationRemainingItemFix.get()) return;
 
-        ItemStack leftover = heldItem.hasCraftingRemainingItem() ? heldItem.getCraftingRemainingItem() : ItemStack.EMPTY;
+        // ItemStack.hasCraftingRemainingItem()/getCraftingRemainingItem() are gone - the concept moved
+        // to a plain Item-level accessor, Item.getCraftingRemainder() (confirmed via javap), which
+        // already returns ItemStack.EMPTY when there is none, so no separate "has" check is needed.
+        ItemStack leftover = heldItem.getItem().getCraftingRemainder();
 
         heldItem.shrink(1);
 

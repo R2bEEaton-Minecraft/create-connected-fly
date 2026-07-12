@@ -2,8 +2,11 @@ package com.hlysine.create_connected.registries;
 
 import com.hlysine.create_connected.CreateConnected;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.zurrtum.create.catnip.gui.UIRenderHelper;
-import com.zurrtum.create.catnip.gui.element.ScreenElement;
+// com.zurrtum.create.catnip.gui/.gui.element moved to com.zurrtum.create.client.catnip.gui/.gui.element
+// (confirmed present only under the client jar's client. prefix, absent from the common jar) - these
+// are inherently client-only rendering utilities, consistent with the rest of this port's pattern.
+import com.zurrtum.create.client.catnip.gui.UIRenderHelper;
+import com.zurrtum.create.client.catnip.gui.element.ScreenElement;
 import com.zurrtum.create.catnip.theme.Color;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
