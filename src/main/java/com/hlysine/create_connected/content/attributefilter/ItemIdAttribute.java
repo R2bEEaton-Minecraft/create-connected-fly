@@ -69,7 +69,7 @@ public record ItemIdAttribute(String word) implements ItemAttribute {
         }
 
         @Override
-        public StreamCodec<? super RegistryFriendlyByteBuf, ? extends ItemAttribute> streamCodec() {
+        public StreamCodec<? super RegistryFriendlyByteBuf, ? extends ItemAttribute> packetCodec() {
             return STREAM_CODEC;
         }
     }

@@ -106,7 +106,11 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
     @Override
     public void preRemoveSideEffects(BlockPos pos, BlockState state) {
         super.preRemoveSideEffects(pos, state);
-        com.zurrtum.create.foundation.item.ItemHelper.dropContents(level, pos, inventory);
+        // com.zurrtum.create.foundation.item.ItemHelper has no dropContents(...) at all (confirmed via
+        // javap - genuinely doesn't exist, not renamed) - real Create Fly's own inventory-dropping
+        // blocks use plain vanilla net.minecraft.world.Containers.dropContents(Level, BlockPos,
+        // NonNullList<ItemStack>) against ItemStackHandler's own getStacks() accessor instead.
+        net.minecraft.world.Containers.dropContents(level, pos, inventory.getStacks());
         ConnectivityHandler.splitMulti(this);
     }
 

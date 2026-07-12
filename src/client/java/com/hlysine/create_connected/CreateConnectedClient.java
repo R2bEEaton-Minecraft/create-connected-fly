@@ -2,6 +2,8 @@ package com.hlysine.create_connected;
 
 import com.hlysine.create_connected.config.CCConfigsClient;
 import com.hlysine.create_connected.content.contraption.jukebox.PlayContraptionJukeboxPacketClient;
+import com.hlysine.create_connected.content.dashboard.ClientPlayerAccess;
+import com.hlysine.create_connected.content.dashboard.DashboardBlockEntity;
 import com.hlysine.create_connected.content.fluidvessel.FluidVesselTooltipBehaviour;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryDisplaySourceRender;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryOverrides;
@@ -35,6 +37,9 @@ public class CreateConnectedClient implements ClientModInitializer {
         CCConfigsClient.register();
         KineticBridgeBlockItemClient.register();
         OverstressClutchBlockEntityClient.register();
+        // Replaces the removed direct client-only-class reference DashboardBlockEntity used to make
+        // from common code - see DashboardBlockEntity.localPlayerHook for the full writeup.
+        DashboardBlockEntity.localPlayerHook = ClientPlayerAccess::getPlayer;
         PlayContraptionJukeboxPacketClient.register();
         Instruction.i18nExistsHook = I18n::exists;
         CCDisplaySources.KINETIC_BATTERY.attachRender = new KineticBatteryDisplaySourceRender();

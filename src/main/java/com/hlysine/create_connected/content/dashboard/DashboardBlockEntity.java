@@ -2,9 +2,11 @@ package com.hlysine.create_connected.content.dashboard;
 
 import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
 import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
+import com.zurrtum.create.api.behaviour.display.DisplayHolder;
 import com.zurrtum.create.catnip.data.Iterate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.network.chat.Component;
@@ -20,18 +22,45 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
-public class DashboardBlockEntity extends SmartBlockEntity {
+// DashboardDisplayTarget.reserve(...)/isReserved(...) (the real DisplayTarget base class helpers used
+// to track which display-link line already targets which line on a block) require a DisplayHolder
+// (confirmed via javap on the real interface: getDisplayLinkData()/setDisplayLinkData(CompoundTag),
+// backed by a single stored CompoundTag field - matches real Create Fly's own FlapDisplayBlockEntity
+// pattern exactly), not a plain BlockEntity - implemented here.
+public class DashboardBlockEntity extends SmartBlockEntity implements DisplayHolder {
 
     SignText text = new SignText().setColor(DyeColor.WHITE);
     int cycleTimer = 0;
     boolean wasDisplaying;
     private static final int LAZY_TICK_RATE = 4;
     private static final int CYCLE_INTERVAL = 40;
+    private CompoundTag displayLink;
+
+    // com.hlysine.create_connected.content.dashboard.ClientPlayerAccess (Minecraft.getInstance().player)
+    // is a client-only class - calling it directly from this common-sourceset block entity was a real
+    // cross-boundary bug (same class of bug as the addToGoggleTooltip cases elsewhere this session),
+    // caught only by real per-sourceset ./gradlew compileJava. Rather than moving all of
+    // displayStatus()/lazyTick()'s logic to a client wrapper class (nontrivial - it reads several
+    // private fields), used the same static-hook indirection already established for
+    // OverstressClutchBlockEntity.uncoupledTooltipHook: populated with the real
+    // Minecraft.getInstance().player accessor from CreateConnectedClient.onInitializeClient().
+    public static Supplier<Player> localPlayerHook = () -> null;
 
     public DashboardBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
         setLazyTickRate(LAZY_TICK_RATE);
+    }
+
+    @Override
+    public CompoundTag getDisplayLinkData() {
+        return displayLink;
+    }
+
+    @Override
+    public void setDisplayLinkData(CompoundTag data) {
+        displayLink = data;
     }
 
     @Override
@@ -118,7 +147,7 @@ public class DashboardBlockEntity extends SmartBlockEntity {
         if (seatPos == null)
             return false;
 
-        Player player = ClientPlayerAccess.getPlayer();
+        Player player = localPlayerHook.get();
         if (player == null)
             return false;
         if (!player.isPassenger())
@@ -148,7 +177,7 @@ public class DashboardBlockEntity extends SmartBlockEntity {
         if (getLevel().isClientSide()) {
             boolean success = displayStatus();
             if (!success && wasDisplaying) {
-                Player player = ClientPlayerAccess.getPlayer();
+                Player player = localPlayerHook.get();
                 if (player != null) {
                     if (!getBlockState().getValue(DashboardBlock.OPEN))
                         displayOpenStatus(player, false); // avoid flickering on wrench by displaying the open status instead of empty
@@ -164,11 +193,13 @@ public class DashboardBlockEntity extends SmartBlockEntity {
     public void write(ValueOutput view, boolean clientPacket) {
         super.write(view, clientPacket);
         view.store("text", SignText.DIRECT_CODEC, this.text);
+        writeDisplayLink(view);
     }
 
     @Override
     protected void read(ValueInput view, boolean clientPacket) {
         super.read(view, clientPacket);
         view.read("text", SignText.DIRECT_CODEC).ifPresent(signText -> this.text = signText);
+        readDisplayLink(view);
     }
 }

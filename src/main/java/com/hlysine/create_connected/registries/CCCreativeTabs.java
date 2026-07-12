@@ -100,14 +100,15 @@ public class CCCreativeTabs {
 
     public static final ResourceKey<CreativeModeTab> MAIN_KEY = ResourceKey.create(Registries.CREATIVE_MODE_TAB, CreateConnected.asResource("main"));
 
-    // CreativeModeTab.builder() gained required (Row, int) params (confirmed via javap) - these only
-    // affect the tab's position within the creative-inventory tab bar (purely cosmetic), so Row.TOP/0
-    // (append after vanilla's own top-row tabs) is a safe default; withTabsBefore(...) below still
-    // controls the actual ordering relative to other mod tabs.
+    // CreativeModeTab.builder() gained required (Row, int) params (confirmed via javap) - tab ordering
+    // moved entirely into that (Row, column-index) scheme, replacing the old withTabsBefore(...)/
+    // withTabsAfter(...) mechanism entirely (confirmed absent from the real Builder class via javap) -
+    // Row.TOP/0 (append after vanilla's own top-row tabs) is a safe, purely cosmetic default position.
     public static final CreativeModeTab MAIN = Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, MAIN_KEY, CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)
             .title(Component.translatable("itemGroup.create_connected.main"))
-            .withTabsBefore(AllCreativeModeTabs.PALETTES_GROUP)
-            .icon(CCBlocks.BRASS_GEARBOX::asItem)
+            // Builder.icon(...) now takes a Supplier<ItemStack>, not Supplier<Item> (confirmed via
+            // javap) - wrapped with new ItemStack(...).
+            .icon(() -> new ItemStack(CCBlocks.BRASS_GEARBOX))
             .displayItems(new DisplayItemsGenerator())
             .build());
 

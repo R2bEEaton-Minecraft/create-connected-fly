@@ -143,8 +143,10 @@ public class KineticBatteryBlock extends DirectionalKineticBlock implements IBE<
                 .toList();
     }
 
+    // getCloneItemStack gained a trailing boolean includeData param (confirmed via javap on real
+    // Create Fly's own CopycatBlock - see KineticBridgeDestinationBlock.java for the fuller writeup).
     @Override
-    public @NotNull ItemStack getCloneItemStack(@NotNull LevelReader pLevel, @NotNull BlockPos pos, @NotNull BlockState state) {
+    public @NotNull ItemStack getCloneItemStack(@NotNull LevelReader pLevel, @NotNull BlockPos pos, @NotNull BlockState state, boolean includeData) {
         Item item = asItem();
 
         Optional<KineticBatteryBlockEntity> blockEntityOptional = getBlockEntityOptional(pLevel, pos);

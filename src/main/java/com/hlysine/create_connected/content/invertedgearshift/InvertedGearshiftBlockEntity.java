@@ -9,8 +9,10 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 public class InvertedGearshiftBlockEntity extends GearshiftBlockEntity {
 
+    // Real GearshiftBlockEntity's constructor is 2-arg (BlockPos, BlockState) - see
+    // LinkedAnalogLeverBlockEntity.java for the full writeup on this pattern.
     public InvertedGearshiftBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
-        super(type, pos, state);
+        super(pos, state);
     }
 
     @Override

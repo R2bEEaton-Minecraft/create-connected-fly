@@ -65,7 +65,11 @@ public class BrakeBlockEntity extends SplitShaftBlockEntity {
             if (level.isClientSide()) {
                 if (isBraking && absSpeed > 0) {
                     Vec3 loc = Vec3.atBottomCenterOf(getBlockPos());
-                    level.addParticle(ParticleTypes.LARGE_SMOKE, false, loc.x, loc.y + 0.5, loc.z, 0, 0.05, 0);
+                    // Level.addParticle(ParticleOptions, boolean, double,double,double, double,double,double)
+                    // (a single "decreased" flag) is gone - real overloads are either the plain 7-arg
+                    // form or a 9-arg form with two booleans (confirmed via javap); used the plain 7-arg
+                    // form since the original single flag was already false (no special behavior).
+                    level.addParticle(ParticleTypes.LARGE_SMOKE, loc.x, loc.y + 0.5, loc.z, 0, 0.05, 0);
                 }
             } else {
                 if (isBraking && absSpeed > MIN_ADVANCEMENT_SPEED && !advancementAwarded) {

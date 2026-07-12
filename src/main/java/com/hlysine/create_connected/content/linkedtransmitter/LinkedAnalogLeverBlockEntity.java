@@ -19,12 +19,16 @@ public class LinkedAnalogLeverBlockEntity extends AnalogLeverBlockEntity {
     public boolean containsBase = true;
     private ServerLinkBehaviour link;
 
+    // Real AnalogLeverBlockEntity's constructor is 2-arg (BlockPos, BlockState) - it already dropped
+    // the BlockEntityType param (see CCBlockEntityTypes.java's CopycatBlockEntity note for the general
+    // pattern); this mod's own subclass keeps its own 3-arg constructor (matching the
+    // CCBlockEntityTypes registration helper's Factory3 shape) but no longer forwards `type` to super.
     public LinkedAnalogLeverBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
-        super(type, pos, state);
+        super(pos, state);
     }
 
     @Override
-    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+    public void addBehaviours(List<BlockEntityBehaviour<?>> behaviours) {
         createLink();
         behaviours.add(link);
     }

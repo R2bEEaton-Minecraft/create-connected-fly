@@ -72,7 +72,9 @@ public class ShearPinBlock extends AbstractBEShaftBlock<ShearPinBlockEntity> {
     }
 
     public static boolean isShaft(BlockState state) {
-        return CCBlocks.SHEAR_PIN.has(state);
+        // Block.has(BlockState) (Registrate-era convenience) doesn't exist - real idiom is
+        // state.is(block), matching the fix already applied elsewhere in this port.
+        return state.is(CCBlocks.SHEAR_PIN);
     }
 
     @Override
@@ -108,8 +110,13 @@ public class ShearPinBlock extends AbstractBEShaftBlock<ShearPinBlockEntity> {
         // used for extending a shaft in its axis, like the piston poles. works with
         // shafts and cogs
 
+        // Guava's Predicates.or(...) has multiple generic overloads that become ambiguous once nested
+        // this deeply with mixed lambda types - switched to plain java.util.function.Predicate.or(...)
+        // instance-method chaining instead, which resolves unambiguously.
         private PlacementHelper() {
-            super(Predicates.or(Predicates.or((java.util.function.Predicate<BlockState>) state -> state.is(AllBlocks.SHAFT), (java.util.function.Predicate<BlockState>) state -> state.is(AllBlocks.POWERED_SHAFT)), (java.util.function.Predicate<BlockState>) state -> state.is(CCBlocks.SHEAR_PIN)),
+            super(((java.util.function.Predicate<BlockState>) state -> state.is(AllBlocks.SHAFT))
+                            .or(state -> state.is(AllBlocks.POWERED_SHAFT))
+                            .or(state -> state.is(CCBlocks.SHEAR_PIN)),
                     state -> state.getValue(AXIS), AXIS);
         }
 

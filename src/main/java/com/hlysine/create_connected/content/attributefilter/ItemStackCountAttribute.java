@@ -64,7 +64,7 @@ public record ItemStackCountAttribute(int stackSize) implements ItemAttribute {
         }
 
         @Override
-        public StreamCodec<? super RegistryFriendlyByteBuf, ? extends ItemAttribute> streamCodec() {
+        public StreamCodec<? super RegistryFriendlyByteBuf, ? extends ItemAttribute> packetCodec() {
             return STREAM_CODEC;
         }
     }

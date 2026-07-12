@@ -142,10 +142,12 @@ public class CrossConnectorBlock extends Block implements IWrenchable, IConnecti
         updateConnections(level, pos, state);
     }
 
+    // See MigratingCopycatBlock.java for the full writeup on onRemove -> affectNeighborsAfterRemoval;
+    // this override never used the dropped newState param either.
     @Override
-    protected void onRemove(@NotNull BlockState state, @NotNull Level level, @NotNull BlockPos pos, @NotNull BlockState newState, boolean movedByPiston) {
+    protected void affectNeighborsAfterRemoval(@NotNull BlockState state, @NotNull net.minecraft.server.level.ServerLevel level, @NotNull BlockPos pos, boolean movedByPiston) {
         updateConnections(level, pos, state);
-        super.onRemove(state, level, pos, newState, movedByPiston);
+        super.affectNeighborsAfterRemoval(state, level, pos, movedByPiston);
     }
 
     @Override
