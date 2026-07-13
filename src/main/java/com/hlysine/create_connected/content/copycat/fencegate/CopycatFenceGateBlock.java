@@ -16,6 +16,7 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.FenceGateBlock;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
@@ -33,7 +34,7 @@ import static net.minecraft.world.level.block.FenceGateBlock.*;
 
 public class CopycatFenceGateBlock extends WaterloggedCopycatWrappedBlock {
 
-    public static FenceGateBlock fenceGate;
+    public static FenceGateBlock fenceGate = (FenceGateBlock) Blocks.OAK_FENCE_GATE;
 
     public CopycatFenceGateBlock(Properties properties) {
         super(properties);

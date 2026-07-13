@@ -2434,6 +2434,66 @@ unresolved rather than guessed at under time pressure.
 Recipe-conditions replacement (274 recipes) and the final full `./gradlew build` remain not started,
 blocked behind `compileClientJava` reaching zero errors first.
 
+## MVP launch profile: client and integrated world now run
+
+The quickest-useful-route profile is active and deliberately favors a runnable common-content
+baseline over unfinished client presentation features. Verified results:
+
+- `./gradlew compileClientJava`: **BUILD SUCCESSFUL**, zero errors (previously 107 errors across 25
+  client files).
+- `./gradlew runClient`: Minecraft 1.21.11 loaded Create Fly and Create: Connected, completed resource
+  loading, started an integrated server, loaded 47 spawn chunks, and joined the local world.
+- `./gradlew build`: **BUILD SUCCESSFUL**. Loom still prints remapping warnings for obsolete targets
+  in the preserved, currently inactive full mixin configuration; they do not fail the MVP build.
+
+### Temporarily excluded/no-op client functionality
+
+`build.gradle` contains the authoritative `sourceSets.client.java.exclude(...)` list. It excludes:
+
+- all Ponder scenes and `CCPonderPlugin`;
+- custom copycat model wrappers and their `BlockStateModelLoaderMixin`;
+- custom block-entity render registration, Dashboard rendering, Fan Catalyst skull rendering,
+  Fluid Vessel model/rendering, and Crank Wheel visualization;
+- Fluid Vessel tooltip behavior and color handlers;
+- Kinetic Battery model predicates/value box;
+- Kinetic Bridge placement outline/stress scroll UI;
+- Linked Transmitter frequency/value-box and analog-lever rendering;
+- Sequenced Pulse Generator screen/GUI textures;
+- contraption jukebox client playback.
+
+Matching calls were removed/no-oped in `CreateConnectedClient.onInitializeClient()` so no excluded
+class is loaded reflectively or from an entrypoint. Common block/item/block-entity registration remains
+enabled.
+
+### Temporarily disabled common/runtime integration
+
+- `fabric.mod.json` points to `create_connected.mvp.mixins.json`, an empty mixin configuration. The
+  full `create_connected.mixins.json` remains intact for incremental restoration. This was required
+  because the first required runtime mixin tested, `fluidvessel.SteamEngineBlockMixin`, still targets
+  the removed `SteamEngineBlock.onRemove(...)` signature and aborts bootstrap.
+- `CCTransfer.register()` is not called. One incomplete block-entity type supplies a null block to
+  Fabric's lookup registration, so external item/fluid automation access is disabled for the MVP.
+- Three obsolete access-widener methods (`RecipeProvider.getName`,
+  `LevelRenderer.notifyNearbyEntities`, and `Ingredient(Stream)`) were removed because none exists in
+  1.21.11. Their remaining call sites are in excluded/not-yet-ported client or datagen code; the two
+  still-required `ButtonBlock` field wideners remain active.
+- Copycat stairs/fence/wall/fence-gate wrapper references now start with vanilla representatives and
+  are replaced with this mod's hidden wrapped blocks after registration. Minecraft 1.21.11 initializes
+  block-state caches during registry insertion, earlier than the old nullable static assignments.
+
+### Expected MVP limitations/warnings
+
+- Copycat blocks using the excluded model wrappers report missing model variants and may render as
+  missing models.
+- Interlude/elevator sound events currently report missing sounds.
+- Features whose behavior depends on any of the disabled mixins must be treated as untested or
+  nonfunctional even though their blocks/items are registered.
+- Recipe-condition conversion is still outstanding; recipes loaded during the MVP run, but feature
+  toggle/optional-mod semantics have not been validated.
+
+Recommended restoration order: fix and re-enable one mixin at a time, then small client UI/value-box
+classes, transfer lookups, block-entity renderers, copycat model wrappers, and finally Ponder scenes.
+
 ## Constraints / house rules
 - Don't add speculative abstractions or backwards-compat shims. Match the existing
   code's structure/intent as closely as Fabric + Create Fly allow.

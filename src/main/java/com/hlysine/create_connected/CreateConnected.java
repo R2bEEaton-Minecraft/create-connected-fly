@@ -21,7 +21,6 @@ import com.hlysine.create_connected.registries.CCMountedStorageTypes;
 import com.hlysine.create_connected.registries.CCMovementBehaviours;
 import com.hlysine.create_connected.registries.CCPackets;
 import com.hlysine.create_connected.registries.CCSoundEvents;
-import com.hlysine.create_connected.registries.CCTransfer;
 import com.mojang.logging.LogUtils;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
@@ -54,7 +53,9 @@ public class CreateConnected implements ModInitializer {
         CCMovementBehaviours.register();
         CCCreativeTabs.register();
         CCSoundEvents.register();
-        CCTransfer.register();
+        // MVP no-op: at least one still-incomplete block-entity type contributes a null
+        // block mapping to Fabric's lookup registration and aborts game bootstrap.
+        // External item/fluid capability access is disabled until those mappings are fixed.
 
         CCConfigs.register();
         LinkWildcardNetworkHandler.register();

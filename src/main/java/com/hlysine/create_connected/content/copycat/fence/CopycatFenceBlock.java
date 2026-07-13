@@ -28,7 +28,7 @@ import static net.minecraft.world.level.block.CrossCollisionBlock.*;
 
 public class CopycatFenceBlock extends WaterloggedCopycatWrappedBlock {
 
-    public static FenceBlock fence;
+    public static FenceBlock fence = (FenceBlock) Blocks.OAK_FENCE;
 
     public CopycatFenceBlock(Properties properties) {
         super(properties);

@@ -12,6 +12,3 @@ accessWidener v2 named
 # so the 2 real call sites were switched to that instead of removed.
 accessible field net/minecraft/world/level/block/ButtonBlock type Lnet/minecraft/world/level/block/state/properties/BlockSetType;
 accessible field net/minecraft/world/level/block/ButtonBlock ticksToStayPressed I
-accessible method net/minecraft/data/recipes/RecipeProvider getName ()Ljava/lang/String;
-accessible method net/minecraft/client/renderer/LevelRenderer notifyNearbyEntities (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Z)V
-accessible method net/minecraft/world/item/crafting/Ingredient <init> (Ljava/util/stream/Stream;)V

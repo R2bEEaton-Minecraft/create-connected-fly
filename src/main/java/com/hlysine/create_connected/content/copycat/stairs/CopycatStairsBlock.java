@@ -28,7 +28,9 @@ import static net.minecraft.world.level.block.StairBlock.HALF;
 
 public class CopycatStairsBlock extends WaterloggedCopycatWrappedBlock {
 
-    public static StairBlock stairs;
+    // Registry freeze initializes state caches before CCBlocks can replace this with the
+    // hidden wrapped block. A vanilla representative prevents bootstrap-time null access.
+    public static StairBlock stairs = (StairBlock) Blocks.STONE_STAIRS;
 
     public CopycatStairsBlock(Properties properties) {
         super(properties);

@@ -33,7 +33,7 @@ import static net.minecraft.world.level.block.WallBlock.*;
 
 public class CopycatWallBlock extends WaterloggedCopycatWrappedBlock {
 
-    public static WallBlock wall;
+    public static WallBlock wall = (WallBlock) Blocks.COBBLESTONE_WALL;
 
     public CopycatWallBlock(Properties properties) {
         super(properties);
