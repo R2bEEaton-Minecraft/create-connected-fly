@@ -2494,6 +2494,71 @@ enabled.
 Recommended restoration order: fix and re-enable one mixin at a time, then small client UI/value-box
 classes, transfer lookups, block-entity renderers, copycat model wrappers, and finally Ponder scenes.
 
+## MVP resource restoration: names and inventory icons
+
+The initial runnable profile registered content but showed untranslated keys and missing-texture icons
+throughout the creative tab. Root causes and fixes:
+
+- Most English language, blockstate, model, and sound definitions live in `src/generated/resources`,
+  which was not part of Gradle's runtime resources. `processResources` now copies only that tree's
+  `assets/**` content. Its `data/**` content remains deliberately excluded because it contains
+  unported NeoForge conditions, old Create recipe shapes, and an obsolete advancement trigger that
+  prevents integrated-server datapack loading.
+- Minecraft 1.21.11 requires `assets/create_connected/items/<id>.json` item definitions in addition
+  to the legacy `models/item/<id>.json` files. Added 106 basic model-backed item definitions for the
+  existing generated item models. Custom predicates remain disabled with the MVP client render code.
+- Added the missing `linked_pale_oak_button` blockstate by adapting the existing linked cherry-button
+  multipart definition to Minecraft's new pale-oak button models.
+
+Verified with a clean build and fresh client launch: the integrated world loads again, generated
+recipe parse errors are absent, and the previous catalog-wide missing-model warnings are eliminated.
+
+## MVP kinetic renderer restoration
+
+Placed Encased Chain Cogwheels initially appeared as solid casing blocks. This was not a block-model
+asset failure: their static JSON intentionally contains only the casing, while Create renders the
+shaftless cogwheel and half-shafts through a block-entity renderer/Flywheel visual. The original
+Registrate `.renderer()`/`.visual()` wiring had been lost with the registry rewrite and the broad MVP
+client-render exclusion.
+
+Added `CCMvpBlockEntityRenders` and registered Create Fly's current renderer/visual pairs through
+Fabric's `BlockEntityRendererRegistry` and `SimpleBlockEntityVisualizer`:
+
+- Encased Chain Cogwheel: `EncasedCogRenderer.small` + `EncasedCogVisual.small`.
+- Overstress Clutch, Inverted Clutch, Inverted Gearshift, Centrifugal Clutch, Freewheel Clutch, and
+  Brake: shared `SplitShaftRenderer` + `SplitShaftVisual`.
+
+Both registrations retain the vanilla renderer fallback when Flywheel visualization is unavailable.
+The same original Registrate definitions also used `.addLayer(RenderType::cutoutMipped)`. That state
+was lost in the direct registry rewrite, causing transparent casing pixels to render opaque even after
+the rotating internals were restored. `CCMvpBlockEntityRenders` now maps the Encased Chain Cogwheel
+and the six restored split-shaft blocks to Fabric's 1.21.11 `ChunkSectionLayer.CUTOUT` through
+`BlockRenderLayerMap`.
+
+The Cog and Large Cog Hand Cranks also lost both dynamic pieces when their original Registrate
+renderer/visual wiring was removed: the static block model contains neither the visible crank handle
+nor a rotating cog. Restored their shared `CRANK_WHEEL` block-entity registration with:
+
+- `CrankWheelRenderer` as the non-Flywheel fallback, selecting the small or large handle partial;
+- `CrankWheelVisual` for the normal Flywheel path, selecting the matching handle/base partial and a
+  `RotatingInstance` for the cog;
+- Create Fly 1.21.11's `HandCrankRenderer.getHandCrankIndependentAngle(...)` helper in place of the
+  removed block-entity angle method; and
+- the `CUTOUT` render layer for both block variants.
+
+Both variants intentionally share one block-entity type; `ICogWheel.isLargeCog(...)` selects their
+correct geometry at render time. `CCPartialModels.register()` is invoked during client initialization
+so the handle and rotating-base partials exist before Minecraft's model-bake phase; relying on the
+renderer's later first access left the handle model unbaked and invisible. Failed cog placement-helper
+offsets now return `PASS` from the Fabric use-first callback, preserving normal block-item placement
+on an exposed shaft face without requiring crouch. Their placed-block blockstates now use geometry-empty
+`static.json` models (retaining only the correct break particle); the original `block.json` cog models
+are reserved for Flywheel's rotating instances. This prevents a baked static cog from overlapping the
+animated one without changing either inventory model. Custom Parallel/Six-Way/Brass Gearbox, Shear Pin, Kinetic Bridge,
+and Kinetic Battery visuals still require their own 1.21.11 ports and were not substituted with
+generic renderers. Verified `compileClientJava` and full `build` successful; client initialization
+and integrated-world join also succeeded with the earlier renderer registrations active.
+
 ## Constraints / house rules
 - Don't add speculative abstractions or backwards-compat shims. Match the existing
   code's structure/intent as closely as Fabric + Create Fly allow.

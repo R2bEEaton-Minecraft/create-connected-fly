@@ -62,16 +62,18 @@ public class CrankWheelItem extends BlockItem {
 
         IPlacementHelper helper = PlacementHelpers.get(item.placementHelperId);
         if (helper.matchesState(state) && !player.isShiftKeyDown()) {
-            return helper.getOffset(player, world, state, pos, ray)
-                    .placeInWorld(world, item, player, hand);
+            PlacementOffset offset = helper.getOffset(player, world, state, pos, ray);
+            if (offset.isSuccessful())
+                return offset.placeInWorld(world, item, player, hand);
         }
 
         if (item.integratedCogHelperId != -1) {
             helper = PlacementHelpers.get(item.integratedCogHelperId);
 
             if (helper.matchesState(state) && !player.isShiftKeyDown()) {
-                return helper.getOffset(player, world, state, pos, ray)
-                        .placeInWorld(world, item, player, hand);
+                PlacementOffset offset = helper.getOffset(player, world, state, pos, ray);
+                if (offset.isSuccessful())
+                    return offset.placeInWorld(world, item, player, hand);
             }
         }
 

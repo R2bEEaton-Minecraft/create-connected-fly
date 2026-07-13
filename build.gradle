@@ -60,7 +60,6 @@ sourceSets.client.java.exclude(
         "com/hlysine/create_connected/content/contraption/jukebox/ContraptionMusicManager.java",
         "com/hlysine/create_connected/content/contraption/jukebox/PlayContraptionJukeboxPacketClient.java",
         "com/hlysine/create_connected/content/copycat/**/*Model.java",
-        "com/hlysine/create_connected/content/crankwheel/CrankWheelVisual.java",
         "com/hlysine/create_connected/content/dashboard/DashboardRenderer.java",
         "com/hlysine/create_connected/content/fancatalyst/FanCatalystRotatingHeadRenderer.java",
         "com/hlysine/create_connected/content/fancatalyst/SkullTypes.java",
@@ -94,7 +93,15 @@ dependencies {
 }
 
 processResources {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     inputs.property "version", project.version
+
+    // The generated client assets are valid and contain most models/lang/sounds. Generated data
+    // still contains NeoForge recipe conditions and pre-1.21.11 recipe shapes, so keep it out of
+    // the MVP runtime pack until that conversion is complete.
+    from("src/generated/resources") {
+        include "assets/**"
+    }
 
     filesMatching("fabric.mod.json") {
         expand "version": inputs.properties.version
@@ -104,6 +111,10 @@ processResources {
 tasks.withType(JavaCompile).configureEach {
     it.options.release = 21
     it.options.compilerArgs << "-Xmaxerrs" << "5000"
+}
+
+tasks.withType(Jar).configureEach {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 // NOTE: while compileJava has errors, `./gradlew compileClientJava` cannot give real signal for

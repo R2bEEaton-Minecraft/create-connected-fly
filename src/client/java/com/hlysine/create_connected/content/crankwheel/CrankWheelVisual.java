@@ -3,6 +3,7 @@ package com.hlysine.create_connected.content.crankwheel;
 import com.hlysine.create_connected.registries.CCPartialModels;
 import com.zurrtum.create.client.content.kinetics.base.KineticBlockEntityVisual;
 import com.zurrtum.create.client.content.kinetics.base.RotatingInstance;
+import com.zurrtum.create.client.content.kinetics.crank.HandCrankRenderer;
 import com.zurrtum.create.content.kinetics.simpleRelays.ICogWheel;
 import com.zurrtum.create.client.foundation.render.AllInstanceTypes;
 import com.zurrtum.create.client.flywheel.api.instance.Instance;
@@ -20,11 +21,13 @@ import org.joml.Quaternionf;
 import java.util.function.Consumer;
 
 public class CrankWheelVisual extends KineticBlockEntityVisual<CrankWheelBlockEntity> implements SimpleDynamicVisual {
+    private final CrankWheelBlockEntity crankWheel;
     private final RotatingInstance rotatingModel;
     private final TransformedInstance crank;
 
     public CrankWheelVisual(VisualizationContext modelManager, CrankWheelBlockEntity blockEntity, float partialTick) {
         super(modelManager, blockEntity, partialTick);
+        this.crankWheel = blockEntity;
 
         final boolean isLarge = ICogWheel.isLargeCog(blockEntity.getBlockState());
 
@@ -49,7 +52,7 @@ public class CrankWheelVisual extends KineticBlockEntityVisual<CrankWheelBlockEn
 
     private void rotateCrank(float pt) {
         var facing = blockState.getValue(BlockStateProperties.FACING);
-        float angle = Math.toRadians(blockEntity.getIndependentAngle(pt));
+        float angle = Math.toRadians(HandCrankRenderer.getHandCrankIndependentAngle(crankWheel, pt));
 
         crank.setIdentityTransform()
                 .translate(getVisualPosition())
