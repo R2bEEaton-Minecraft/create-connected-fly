@@ -111,6 +111,10 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
         // blocks use plain vanilla net.minecraft.world.Containers.dropContents(Level, BlockPos,
         // NonNullList<ItemStack>) against ItemStackHandler's own getStacks() accessor instead.
         net.minecraft.world.Containers.dropContents(level, pos, inventory.getStacks());
+        // Match Create Fly's vertical FluidTankBlockEntity lifecycle exactly: remove this part from
+        // the level lookup before splitting, otherwise ConnectivityHandler can rediscover the block
+        // being removed and write its controller/state back during the same break.
+        level.removeBlockEntity(pos);
         ConnectivityHandler.splitMulti(this);
     }
 

@@ -21,22 +21,43 @@ public class ItemSiloCTBehaviour extends ConnectedTextureBehaviour.Base {
         if (vaultBlockAxis == null)
             return null;
 
-        if (direction == Direction.DOWN)
-            return AllSpriteShifts.VAULT_BOTTOM.get(small);
         if (direction.getAxis() == vaultBlockAxis)
             return AllSpriteShifts.VAULT_FRONT.get(small);
+        if (direction == Direction.UP)
+            return AllSpriteShifts.VAULT_TOP.get(small);
+        if (direction == Direction.DOWN)
+            return AllSpriteShifts.VAULT_BOTTOM.get(small);
 
+        // The silo model deliberately maps vault_top_small onto its vertical sides. Use the matching
+        // shift entry; returning VAULT_SIDE here cannot transform those quads because its source
+        // sprite is vault_side_small.
         return AllSpriteShifts.VAULT_TOP.get(small);
     }
 
     public boolean buildContextForOccludedDirections() {
-        return super.buildContextForOccludedDirections();
+        return true;
+    }
+
+    @Override
+    protected Direction getUpDirection(BlockAndTintGetter reader, BlockPos pos, BlockState state, Direction face) {
+        // The silo is a vault whose multiblock axis is vertical. On its four side faces, texture-grid
+        // vertical must therefore follow world Y so stacked layers participate in the CT context.
+        if (face.getAxis().isHorizontal())
+            return Direction.UP;
+        return super.getUpDirection(reader, pos, state, face);
     }
 
     @Override
     public boolean connectsTo(BlockState state, BlockState other, BlockAndTintGetter reader, BlockPos pos,
                               BlockPos otherPos, Direction face) {
-        return state == other && ConnectivityHandler.isConnected(reader, pos, otherPos); //ItemVaultConnectivityHandler.isConnected(reader, pos, otherPos);
+        if (state.getBlock() != other.getBlock())
+            return false;
+
+        // Client-side controller data can briefly describe each completed horizontal layer as a
+        // separate multiblock. Directly stacked silo parts are nevertheless one continuous vertical
+        // skin, so do not let that transient controller boundary leave a horizontal seam. Keep the
+        // stricter controller check in X/Z so adjacent independent silos do not visually merge.
+        return pos.getY() != otherPos.getY() || ConnectivityHandler.isConnected(reader, pos, otherPos);
     }
 
 }

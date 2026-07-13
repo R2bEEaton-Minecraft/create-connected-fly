@@ -9,8 +9,10 @@ import com.hlysine.create_connected.content.copycat.slab.CopycatSlabModel;
 import com.hlysine.create_connected.content.copycat.stairs.CopycatStairsModel;
 import com.hlysine.create_connected.content.copycat.verticalstep.CopycatVerticalStepModel;
 import com.hlysine.create_connected.content.copycat.wall.CopycatWallModel;
+import com.hlysine.create_connected.content.itemsilo.ItemSiloCTBehaviour;
 import com.zurrtum.create.client.AllExtensions;
 import com.zurrtum.create.client.infrastructure.model.CopycatModel;
+import com.zurrtum.create.client.infrastructure.model.CTModel;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -38,6 +40,10 @@ public class CCModels {
     }
 
     public static void register() {
+        // Connected-texture models use the same wrapper pipeline as copycats, but keep their normal
+        // static render layer. This mirrors Create Fly's ITEM_VAULT -> CTModel registration.
+        ALL.put(CCBlocks.ITEM_SILO, CTModel.of(new ItemSiloCTBehaviour()));
+
         register(CCBlocks.COPYCAT_BLOCK, CopycatBlockModel::new);
         register(CCBlocks.COPYCAT_SLAB, CopycatSlabModel::new);
         register(CCBlocks.COPYCAT_BEAM, CopycatBeamModel::new);
