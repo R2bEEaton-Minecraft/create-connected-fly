@@ -2,6 +2,10 @@ package com.hlysine.create_connected.registries;
 
 import com.hlysine.create_connected.content.crankwheel.CrankWheelRenderer;
 import com.hlysine.create_connected.content.crankwheel.CrankWheelVisual;
+import com.hlysine.create_connected.content.parallelgearbox.ParallelGearboxRenderer;
+import com.hlysine.create_connected.content.parallelgearbox.ParallelGearboxVisual;
+import com.hlysine.create_connected.content.sixwaygearbox.SixWayGearboxRenderer;
+import com.hlysine.create_connected.content.sixwaygearbox.SixWayGearboxVisual;
 import com.zurrtum.create.client.content.kinetics.simpleRelays.encased.EncasedCogRenderer;
 import com.zurrtum.create.client.content.kinetics.simpleRelays.encased.EncasedCogVisual;
 import com.zurrtum.create.client.content.kinetics.crank.HandCrankRenderer;
@@ -32,7 +36,8 @@ public final class CCMvpBlockEntityRenders {
                 CCBlocks.INVERTED_GEARSHIFT,
                 CCBlocks.CENTRIFUGAL_CLUTCH,
                 CCBlocks.FREEWHEEL_CLUTCH,
-                CCBlocks.BRAKE
+                CCBlocks.BRAKE,
+                CCBlocks.SIX_WAY_GEARBOX
         );
         // Railway's 1.21.11 conductor vent registers this explicitly in addition to its model's
         // render_type. This keeps the empty copycat indicator's transparent pixels out of SOLID.
@@ -88,6 +93,18 @@ public final class CCMvpBlockEntityRenders {
         BlockEntityRendererRegistry.register(CCBlockEntityTypes.CRANK_WHEEL, crankRenderer);
         SimpleBlockEntityVisualizer.builder(CCBlockEntityTypes.CRANK_WHEEL)
                 .factory(CrankWheelVisual::new)
+                .skipVanillaRender(be -> false)
+                .apply();
+
+        BlockEntityRendererRegistry.register(CCBlockEntityTypes.PARALLEL_GEARBOX, ParallelGearboxRenderer::new);
+        SimpleBlockEntityVisualizer.builder(CCBlockEntityTypes.PARALLEL_GEARBOX)
+                .factory(ParallelGearboxVisual::new)
+                .skipVanillaRender(be -> false)
+                .apply();
+
+        BlockEntityRendererRegistry.register(CCBlockEntityTypes.SIX_WAY_GEARBOX, SixWayGearboxRenderer::new);
+        SimpleBlockEntityVisualizer.builder(CCBlockEntityTypes.SIX_WAY_GEARBOX)
+                .factory(SixWayGearboxVisual::new)
                 .skipVanillaRender(be -> false)
                 .apply();
 
