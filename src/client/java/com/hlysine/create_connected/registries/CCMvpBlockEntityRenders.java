@@ -1,5 +1,7 @@
 package com.hlysine.create_connected.registries;
 
+import com.hlysine.create_connected.content.brassgearbox.BrassGearboxRenderer;
+import com.hlysine.create_connected.content.brassgearbox.BrassGearboxVisual;
 import com.hlysine.create_connected.content.crankwheel.CrankWheelRenderer;
 import com.hlysine.create_connected.content.crankwheel.CrankWheelVisual;
 import com.hlysine.create_connected.content.parallelgearbox.ParallelGearboxRenderer;
@@ -105,6 +107,12 @@ public final class CCMvpBlockEntityRenders {
         BlockEntityRendererRegistry.register(CCBlockEntityTypes.SIX_WAY_GEARBOX, SixWayGearboxRenderer::new);
         SimpleBlockEntityVisualizer.builder(CCBlockEntityTypes.SIX_WAY_GEARBOX)
                 .factory(SixWayGearboxVisual::new)
+                .skipVanillaRender(be -> false)
+                .apply();
+
+        BlockEntityRendererRegistry.register(CCBlockEntityTypes.BRASS_GEARBOX, BrassGearboxRenderer::new);
+        SimpleBlockEntityVisualizer.builder(CCBlockEntityTypes.BRASS_GEARBOX)
+                .factory(BrassGearboxVisual::new)
                 .skipVanillaRender(be -> false)
                 .apply();
 
