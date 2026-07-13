@@ -2568,6 +2568,12 @@ and integrated-world join also succeeded with the earlier renderer registrations
 
 ## MVP inventory fallbacks
 
+`CCItemTooltips` registers every `create_connected` item with Create Fly's current
+`AllItemTooltips` client registry. `ItemDescription.Modifier` resolves block-item or item translation
+keys lazily and only adds the Shift prompt when an authored `.tooltip.summary` exists; its chained
+kinetic modifier also restores stress/RPM details for applicable blocks. This replaces the tooltip
+attachment previously supplied implicitly by Registrate.
+
 The Kinetic Battery item definition points directly at its level-0 model. Its old root model contains
 only legacy predicate overrides, while the custom battery-level item property remains excluded with
 the unfinished client predicate port. Fan Washing Catalyst's NeoForge-only composite model was

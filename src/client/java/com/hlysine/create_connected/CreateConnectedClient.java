@@ -12,6 +12,7 @@ import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCBlocks;
 import com.hlysine.create_connected.registries.CCColorHandlers;
 import com.hlysine.create_connected.registries.CCDisplaySources;
+import com.hlysine.create_connected.registries.CCItemTooltips;
 import com.hlysine.create_connected.registries.CCMvpBlockEntityRenders;
 import com.hlysine.create_connected.registries.CCPartialModels;
 import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
@@ -31,6 +32,7 @@ public class CreateConnectedClient implements ClientModInitializer {
         CCDisplaySources.KINETIC_BATTERY.attachRender = new KineticBatteryDisplaySourceRender();
         CCPartialModels.register();
         CCMvpBlockEntityRenders.register();
+        CCItemTooltips.register();
         ColorProviderRegistry.BLOCK.register(CCColorHandlers.waterBlockTint(), CCBlocks.FAN_SPLASHING_CATALYST);
         // MVP no-ops: custom block-entity rendering, kinetic-battery item predicates,
         // the sequenced-pulse-generator screen, copycat model wrappers, and Ponder scenes
