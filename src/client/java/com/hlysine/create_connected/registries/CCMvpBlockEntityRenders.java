@@ -6,6 +6,8 @@ import com.hlysine.create_connected.content.crankwheel.CrankWheelRenderer;
 import com.hlysine.create_connected.content.crankwheel.CrankWheelVisual;
 import com.hlysine.create_connected.content.parallelgearbox.ParallelGearboxRenderer;
 import com.hlysine.create_connected.content.parallelgearbox.ParallelGearboxVisual;
+import com.hlysine.create_connected.content.shearpin.ShearPinVisual;
+import com.hlysine.create_connected.content.shearpin.ShearPinRenderer;
 import com.hlysine.create_connected.content.sixwaygearbox.SixWayGearboxRenderer;
 import com.hlysine.create_connected.content.sixwaygearbox.SixWayGearboxVisual;
 import com.zurrtum.create.client.content.kinetics.simpleRelays.encased.EncasedCogRenderer;
@@ -116,6 +118,12 @@ public final class CCMvpBlockEntityRenders {
                 .skipVanillaRender(be -> false)
                 .apply();
 
+        BlockEntityRendererRegistry.register(CCBlockEntityTypes.SHEAR_PIN, ShearPinRenderer::new);
+        SimpleBlockEntityVisualizer.builder(CCBlockEntityTypes.SHEAR_PIN)
+                .factory(ShearPinVisual::new)
+                .skipVanillaRender(be -> false)
+                .apply();
+
         registerSplitShaft(CCBlockEntityTypes.OVERSTRESS_CLUTCH);
         registerSplitShaft(CCBlockEntityTypes.INVERTED_CLUTCH);
         registerSplitShaft(CCBlockEntityTypes.INVERTED_GEARSHIFT);
@@ -132,4 +140,5 @@ public final class CCMvpBlockEntityRenders {
                 .skipVanillaRender(be -> false)
                 .apply();
     }
+
 }
