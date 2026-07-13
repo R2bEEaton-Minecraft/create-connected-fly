@@ -6,6 +6,8 @@ import com.hlysine.create_connected.content.crankwheel.CrankWheelRenderer;
 import com.hlysine.create_connected.content.crankwheel.CrankWheelVisual;
 import com.hlysine.create_connected.content.kineticbridge.KineticBridgeRenderer;
 import com.hlysine.create_connected.content.kineticbridge.KineticBridgeVisual;
+import com.hlysine.create_connected.content.kineticbattery.KineticBatteryRenderer;
+import com.hlysine.create_connected.content.kineticbattery.KineticBatteryVisual;
 import com.hlysine.create_connected.content.parallelgearbox.ParallelGearboxRenderer;
 import com.hlysine.create_connected.content.parallelgearbox.ParallelGearboxVisual;
 import com.hlysine.create_connected.content.shearpin.ShearPinVisual;
@@ -125,6 +127,12 @@ public final class CCMvpBlockEntityRenders {
         BlockEntityRendererRegistry.register(CCBlockEntityTypes.SHEAR_PIN, ShearPinRenderer::new);
         SimpleBlockEntityVisualizer.builder(CCBlockEntityTypes.SHEAR_PIN)
                 .factory(ShearPinVisual::new)
+                .skipVanillaRender(be -> false)
+                .apply();
+
+        BlockEntityRendererRegistry.register(CCBlockEntityTypes.KINETIC_BATTERY, KineticBatteryRenderer::new);
+        SimpleBlockEntityVisualizer.builder(CCBlockEntityTypes.KINETIC_BATTERY)
+                .factory(KineticBatteryVisual::new)
                 .skipVanillaRender(be -> false)
                 .apply();
 

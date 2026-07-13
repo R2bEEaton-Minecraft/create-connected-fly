@@ -5,6 +5,7 @@ import com.hlysine.create_connected.content.dashboard.ClientPlayerAccess;
 import com.hlysine.create_connected.content.ClutchValueBox;
 import com.hlysine.create_connected.content.centrifugalclutch.CentrifugalClutchScrollValueBehaviour;
 import com.hlysine.create_connected.content.dashboard.DashboardBlockEntity;
+import com.hlysine.create_connected.content.fluidvessel.FluidVesselTooltipBehaviour;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryDisplaySourceRender;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryTooltipBehaviour;
 import com.hlysine.create_connected.content.overstressclutch.OverstressClutchBlockEntityClient;
@@ -21,6 +22,7 @@ import com.hlysine.create_connected.registries.CCModels;
 import com.hlysine.create_connected.registries.CCPartialModels;
 import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
 import com.zurrtum.create.client.foundation.blockEntity.behaviour.scrollValue.RotationDirectionScrollBehaviour;
+import com.zurrtum.create.client.foundation.blockEntity.behaviour.tooltip.ChuteTooltipBehaviour;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.minecraft.client.resources.language.I18n;
@@ -45,6 +47,9 @@ public class CreateConnectedClient implements ClientModInitializer {
         // the sequenced-pulse-generator screen and Ponder scenes
         // are excluded in build.gradle until their 1.21.11 client API ports are complete.
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.KINETIC_BATTERY, KineticBatteryTooltipBehaviour::new);
+        BlockEntityBehaviour.addClient(CCBlockEntityTypes.BRASS_CHUTE, ChuteTooltipBehaviour::new);
+        BlockEntityBehaviour.addClient(CCBlockEntityTypes.FLUID_VESSEL, FluidVesselTooltipBehaviour::new);
+        BlockEntityBehaviour.addClient(CCBlockEntityTypes.CREATIVE_FLUID_VESSEL, FluidVesselTooltipBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.OVERSTRESS_CLUTCH, OverstressClutchTooltipBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.CENTRIFUGAL_CLUTCH,
                 CentrifugalClutchScrollValueBehaviour::new);

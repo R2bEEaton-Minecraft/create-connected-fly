@@ -40,18 +40,19 @@ public class FluidVesselTooltipBehaviour extends TooltipBehaviour<FluidVesselBlo
     // all, it's a separate client-only FluidTankTooltipBehaviour there too). Logic is otherwise
     // unchanged, just using ConnectedLang (legal here) instead of CreateLang, and reading BoilerData's
     // package-private fields directly (same package name across source sets).
-    private static boolean addBoilerToGoggleTooltip(BoilerData boiler, List<Component> tooltip, boolean isPlayerSneaking, int boilerSize) {
+    private static boolean addBoilerToGoggleTooltip(
+            com.zurrtum.create.content.fluids.tank.BoilerData boiler,
+            List<Component> tooltip,
+            boolean isPlayerSneaking,
+            int boilerSize
+    ) {
         if (!boiler.isActive())
             return false;
 
         boiler.calcMinMaxForSize(boilerSize);
 
-        if (boiler.configLevelCap < 18)
-            ConnectedLang.translate("boiler.status", boiler.getHeatLevelTextComponent().withStyle(ChatFormatting.GREEN).append(Component.literal(" / " + boiler.configLevelCap).withStyle(ChatFormatting.GRAY)))
-                    .forGoggles(tooltip);
-        else
-            ConnectedLang.translate("boiler.status", boiler.getHeatLevelTextComponent().withStyle(ChatFormatting.GREEN))
-                    .forGoggles(tooltip);
+        ConnectedLang.translate("boiler.status", boiler.getHeatLevelTextComponent().withStyle(ChatFormatting.GREEN))
+                .forGoggles(tooltip);
         ConnectedLang.builder().add(boiler.getSizeComponent(true, false)).forGoggles(tooltip, 1);
         ConnectedLang.builder().add(boiler.getWaterComponent(true, false)).forGoggles(tooltip, 1);
         ConnectedLang.builder().add(boiler.getHeatComponent(true, false)).forGoggles(tooltip, 1);
@@ -74,7 +75,7 @@ public class FluidVesselTooltipBehaviour extends TooltipBehaviour<FluidVesselBlo
                     .add(ConnectedLang.translate("generic.unit.millibuckets"))
                     .add(ConnectedLang.text(" / ")
                             .style(ChatFormatting.GRAY))
-                    .add(ConnectedLang.translate("boiler.per_tick", ConnectedLang.number(BoilerData.waterSupplyPerLevel)
+                    .add(ConnectedLang.translate("boiler.per_tick", ConnectedLang.number(com.zurrtum.create.content.fluids.tank.BoilerData.waterSupplyPerLevel)
                                     .add(ConnectedLang.translate("generic.unit.millibuckets")))
                             .style(ChatFormatting.DARK_GRAY))
                     .forGoggles(tooltip, 1);
