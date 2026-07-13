@@ -4,6 +4,8 @@ import com.hlysine.create_connected.content.brassgearbox.BrassGearboxRenderer;
 import com.hlysine.create_connected.content.brassgearbox.BrassGearboxVisual;
 import com.hlysine.create_connected.content.crankwheel.CrankWheelRenderer;
 import com.hlysine.create_connected.content.crankwheel.CrankWheelVisual;
+import com.hlysine.create_connected.content.kineticbridge.KineticBridgeRenderer;
+import com.hlysine.create_connected.content.kineticbridge.KineticBridgeVisual;
 import com.hlysine.create_connected.content.parallelgearbox.ParallelGearboxRenderer;
 import com.hlysine.create_connected.content.parallelgearbox.ParallelGearboxVisual;
 import com.hlysine.create_connected.content.shearpin.ShearPinVisual;
@@ -41,7 +43,9 @@ public final class CCMvpBlockEntityRenders {
                 CCBlocks.CENTRIFUGAL_CLUTCH,
                 CCBlocks.FREEWHEEL_CLUTCH,
                 CCBlocks.BRAKE,
-                CCBlocks.SIX_WAY_GEARBOX
+                CCBlocks.SIX_WAY_GEARBOX,
+                CCBlocks.KINETIC_BRIDGE,
+                CCBlocks.KINETIC_BRIDGE_DESTINATION
         );
         // Railway's 1.21.11 conductor vent registers this explicitly in addition to its model's
         // render_type. This keeps the empty copycat indicator's transparent pixels out of SOLID.
@@ -124,6 +128,20 @@ public final class CCMvpBlockEntityRenders {
                 .skipVanillaRender(be -> false)
                 .apply();
 
+        registerKineticBridgeRenderer(CCBlockEntityTypes.KINETIC_BRIDGE, false);
+        SimpleBlockEntityVisualizer.builder(CCBlockEntityTypes.KINETIC_BRIDGE)
+                .factory((context, blockEntity, partialTick) ->
+                        new KineticBridgeVisual(context, blockEntity, partialTick, false))
+                .skipVanillaRender(be -> false)
+                .apply();
+
+        registerKineticBridgeRenderer(CCBlockEntityTypes.KINETIC_BRIDGE_DESTINATION, true);
+        SimpleBlockEntityVisualizer.builder(CCBlockEntityTypes.KINETIC_BRIDGE_DESTINATION)
+                .factory((context, blockEntity, partialTick) ->
+                        new KineticBridgeVisual(context, blockEntity, partialTick, true))
+                .skipVanillaRender(be -> false)
+                .apply();
+
         registerSplitShaft(CCBlockEntityTypes.OVERSTRESS_CLUTCH);
         registerSplitShaft(CCBlockEntityTypes.INVERTED_CLUTCH);
         registerSplitShaft(CCBlockEntityTypes.INVERTED_GEARSHIFT);
@@ -139,6 +157,14 @@ public final class CCMvpBlockEntityRenders {
                 .factory(SplitShaftVisual::new)
                 .skipVanillaRender(be -> false)
                 .apply();
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void registerKineticBridgeRenderer(BlockEntityType<?> type, boolean destination) {
+        BlockEntityRendererProvider renderer = destination
+                ? (BlockEntityRendererProvider) KineticBridgeRenderer::destination
+                : (BlockEntityRendererProvider) KineticBridgeRenderer::source;
+        BlockEntityRendererRegistry.register(type, renderer);
     }
 
 }
