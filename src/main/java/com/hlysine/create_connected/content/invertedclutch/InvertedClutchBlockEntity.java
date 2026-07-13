@@ -1,18 +1,16 @@
 package com.hlysine.create_connected.content.invertedclutch;
 
-import com.zurrtum.create.content.kinetics.transmission.ClutchBlockEntity;
+import com.zurrtum.create.content.kinetics.transmission.SplitShaftBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
-public class InvertedClutchBlockEntity extends ClutchBlockEntity {
+public class InvertedClutchBlockEntity extends SplitShaftBlockEntity {
 
-    // Real ClutchBlockEntity's constructor is 2-arg (BlockPos, BlockState) - see
-    // LinkedAnalogLeverBlockEntity.java for the full writeup on this pattern.
     public InvertedClutchBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
-        super(pos, state);
+        super(type, pos, state);
     }
 
     @Override

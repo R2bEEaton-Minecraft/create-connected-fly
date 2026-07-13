@@ -2535,6 +2535,13 @@ the rotating internals were restored. `CCMvpBlockEntityRenders` now maps the Enc
 and the six restored split-shaft blocks to Fabric's 1.21.11 `ChunkSectionLayer.CUTOUT` through
 `BlockRenderLayerMap`.
 
+The Inverted Clutch and Inverted Gearshift cannot subclass Create's concrete clutch/gearshift block
+entities on 1.21.11: those constructors hard-code `create:clutch` and `create:gearshift`, causing
+constructor-time block-state validation to crash when either mod block is placed. They now extend
+`SplitShaftBlockEntity` directly, pass their actual registered type to its constructor, and retain
+their existing inverted speed-modifier rules. Their item models now inherit Create's relocated
+`block/clutch/item` and `block/gearshift/item` models instead of the removed `item/*` paths.
+
 The Cog and Large Cog Hand Cranks also lost both dynamic pieces when their original Registrate
 renderer/visual wiring was removed: the static block model contains neither the visible crank handle
 nor a rotating cog. Restored their shared `CRANK_WHEEL` block-entity registration with:
