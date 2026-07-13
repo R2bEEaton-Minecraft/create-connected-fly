@@ -53,7 +53,6 @@ sourceSets.client.java.exclude(
         "com/hlysine/create_connected/registries/CCPonderPlugin.java",
         "com/hlysine/create_connected/registries/CCBlockEntityRenders.java",
         "com/hlysine/create_connected/registries/CCGuiTextures.java",
-        "com/hlysine/create_connected/content/ClutchValueBox.java",
         "com/hlysine/create_connected/content/contraption/jukebox/ContraptionMusicManager.java",
         "com/hlysine/create_connected/content/contraption/jukebox/PlayContraptionJukeboxPacketClient.java",
         "com/hlysine/create_connected/content/dashboard/DashboardRenderer.java",

@@ -2,11 +2,14 @@ package com.hlysine.create_connected;
 
 import com.hlysine.create_connected.config.CCConfigsClient;
 import com.hlysine.create_connected.content.dashboard.ClientPlayerAccess;
+import com.hlysine.create_connected.content.ClutchValueBox;
+import com.hlysine.create_connected.content.centrifugalclutch.CentrifugalClutchScrollValueBehaviour;
 import com.hlysine.create_connected.content.dashboard.DashboardBlockEntity;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryDisplaySourceRender;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryTooltipBehaviour;
 import com.hlysine.create_connected.content.overstressclutch.OverstressClutchBlockEntityClient;
 import com.hlysine.create_connected.content.overstressclutch.OverstressClutchTooltipBehaviour;
+import com.hlysine.create_connected.content.overstressclutch.OverstressClutchScrollValueBehaviour;
 import com.hlysine.create_connected.content.sequencedpulsegenerator.instructions.Instruction;
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCBlocks;
@@ -17,9 +20,11 @@ import com.hlysine.create_connected.registries.CCMvpBlockEntityRenders;
 import com.hlysine.create_connected.registries.CCModels;
 import com.hlysine.create_connected.registries.CCPartialModels;
 import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
+import com.zurrtum.create.client.foundation.blockEntity.behaviour.scrollValue.RotationDirectionScrollBehaviour;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.Component;
 
 public class CreateConnectedClient implements ClientModInitializer {
     @Override
@@ -41,5 +46,14 @@ public class CreateConnectedClient implements ClientModInitializer {
         // are excluded in build.gradle until their 1.21.11 client API ports are complete.
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.KINETIC_BATTERY, KineticBatteryTooltipBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.OVERSTRESS_CLUTCH, OverstressClutchTooltipBehaviour::new);
+        BlockEntityBehaviour.addClient(CCBlockEntityTypes.CENTRIFUGAL_CLUTCH,
+                CentrifugalClutchScrollValueBehaviour::new);
+        BlockEntityBehaviour.addClient(CCBlockEntityTypes.FREEWHEEL_CLUTCH,
+                be -> new RotationDirectionScrollBehaviour(
+                        be,
+                        Component.translatable("create.contraptions.windmill.rotation_direction"),
+                        new ClutchValueBox()));
+        BlockEntityBehaviour.addClient(CCBlockEntityTypes.OVERSTRESS_CLUTCH,
+                OverstressClutchScrollValueBehaviour::new);
     }
 }
