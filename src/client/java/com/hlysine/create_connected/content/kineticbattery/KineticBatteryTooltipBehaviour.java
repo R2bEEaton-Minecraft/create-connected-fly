@@ -2,7 +2,7 @@ package com.hlysine.create_connected.content.kineticbattery;
 
 import com.hlysine.create_connected.ConnectedLang;
 import com.zurrtum.create.client.api.goggles.IHaveGoggleInformation;
-import com.zurrtum.create.client.foundation.blockEntity.behaviour.tooltip.TooltipBehaviour;
+import com.zurrtum.create.client.foundation.blockEntity.behaviour.tooltip.KineticTooltipBehaviour;
 import com.zurrtum.create.client.foundation.utility.CreateLang;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -16,7 +16,7 @@ import java.util.List;
 // here, mirroring FluidVesselTooltipBehaviour/Create Fly's own FluidTankTooltipBehaviour pattern:
 // registered per-block-entity-type via BlockEntityBehaviour.addClient() in
 // CreateConnectedClient.onInitializeClient(), not implemented on the block entity itself.
-public class KineticBatteryTooltipBehaviour extends TooltipBehaviour<KineticBatteryBlockEntity> implements IHaveGoggleInformation {
+public class KineticBatteryTooltipBehaviour extends KineticTooltipBehaviour<KineticBatteryBlockEntity> implements IHaveGoggleInformation {
     public KineticBatteryTooltipBehaviour(KineticBatteryBlockEntity be) {
         super(be);
     }
@@ -57,6 +57,7 @@ public class KineticBatteryTooltipBehaviour extends TooltipBehaviour<KineticBatt
                         .forGoggles(tooltip, 1);
             }
         }
+        super.addToGoggleTooltip(tooltip, isPlayerSneaking);
         return true;
     }
 }

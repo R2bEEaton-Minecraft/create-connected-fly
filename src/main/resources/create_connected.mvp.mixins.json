@@ -6,7 +6,8 @@
     "RotationPropagatorMixin",
     "compat.CopycatBlockEntityMixin",
     "compat.CopycatBlockEntityTypeMixin",
-    "copycat.fencegate.FenceGateBlockAccessor"
+    "copycat.fencegate.FenceGateBlockAccessor",
+    "kineticbattery.KineticNetworkAccessor"
   ],
   "client": [
     "copycat.BlockStateModelLoaderMixin"
