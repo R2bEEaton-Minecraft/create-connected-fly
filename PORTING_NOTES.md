@@ -2566,6 +2566,14 @@ and Kinetic Battery visuals still require their own 1.21.11 ports and were not s
 generic renderers. Verified `compileClientJava` and full `build` successful; client initialization
 and integrated-world join also succeeded with the earlier renderer registrations active.
 
+## MVP inventory fallbacks
+
+The Kinetic Battery item definition points directly at its level-0 model. Its old root model contains
+only legacy predicate overrides, while the custom battery-level item property remains excluded with
+the unfinished client predicate port. Fan Washing Catalyst's NeoForge-only composite model was
+reduced to its valid catalyst-frame parent, restoring its block and inventory geometry while
+intentionally omitting the translucent internal water cube until the composite model family is ported.
+
 ## Constraints / house rules
 - Don't add speculative abstractions or backwards-compat shims. Match the existing
   code's structure/intent as closely as Fabric + Create Fly allow.
