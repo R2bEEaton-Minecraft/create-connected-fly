@@ -26,7 +26,7 @@ import com.hlysine.create_connected.content.parallelgearbox.ParallelGearboxBlock
 import com.hlysine.create_connected.content.sequencedpulsegenerator.SequencedPulseGeneratorBlockEntity;
 import com.hlysine.create_connected.content.shearpin.ShearPinBlockEntity;
 import com.hlysine.create_connected.content.sixwaygearbox.SixWayGearboxBlockEntity;
-import com.zurrtum.create.content.decoration.copycat.CopycatBlockEntity;
+import com.zurrtum.create.AllBlockEntityTypes;
 import com.zurrtum.create.content.kinetics.simpleRelays.SimpleKineticBlockEntity;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -152,14 +152,6 @@ public class CCBlockEntityTypes {
     public static final BlockEntityType<DashboardBlockEntity> DASHBOARD =
             register("dashboard", DashboardBlockEntity::new, CCBlocks.DASHBOARD);
 
-    // Real Create Fly's own CopycatBlockEntity constructor is 2-arg (BlockPos, BlockState) - it already
-    // dropped the BlockEntityType param entirely (per the "forward-reference holder" note at the top of
-    // this file), unlike this mod's own block entities which still take the 3-arg shape - adapted with
-    // an explicit lambda instead of a direct method reference.
-    public static final BlockEntityType<CopycatBlockEntity> COPYCAT = register("copycat", (type, pos, state) -> new CopycatBlockEntity(pos, state),
-            CCBlocks.COPYCAT_BLOCK, CCBlocks.COPYCAT_SLAB, CCBlocks.COPYCAT_BEAM, CCBlocks.COPYCAT_VERTICAL_STEP,
-            CCBlocks.COPYCAT_STAIRS, CCBlocks.COPYCAT_FENCE, CCBlocks.COPYCAT_FENCE_GATE, CCBlocks.COPYCAT_WALL, CCBlocks.COPYCAT_BOARD);
-
     public static final BlockEntityType<FanCatalystRotatingHeadBlockEntity> FAN_ENDING_CATALYST_DRAGON_HEAD =
             register("fan_ending_catalyst_dragon_head", FanCatalystRotatingHeadBlockEntity::new, CCBlocks.FAN_ENDING_CATALYST_DRAGON_HEAD);
 
@@ -167,5 +159,15 @@ public class CCBlockEntityTypes {
             register("fan_exploding_catalyst", FanCatalystRotatingHeadBlockEntity::new, CCBlocks.FAN_EXPLODING_CATALYST);
 
     public static void register() {
+        // CopycatBlockEntity's two-argument constructor hardcodes Create's COPYCAT type. Registering a
+        // second Connected type therefore produces an entity whose actual type rejects our block state
+        // during placement. Fabric explicitly supports extending an existing type's valid-block set;
+        // keep Create's implementation and teach it about every Connected copycat variant instead.
+        net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityType createCopycatType =
+                (net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityType) AllBlockEntityTypes.COPYCAT;
+        Stream.of(CCBlocks.COPYCAT_BLOCK, CCBlocks.COPYCAT_SLAB, CCBlocks.COPYCAT_BEAM,
+                        CCBlocks.COPYCAT_VERTICAL_STEP, CCBlocks.COPYCAT_STAIRS, CCBlocks.COPYCAT_FENCE,
+                        CCBlocks.COPYCAT_FENCE_GATE, CCBlocks.COPYCAT_WALL, CCBlocks.COPYCAT_BOARD)
+                .forEach(createCopycatType::addSupportedBlock);
     }
 }

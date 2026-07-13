@@ -9,6 +9,8 @@ import com.hlysine.create_connected.content.copycat.slab.CopycatSlabModel;
 import com.hlysine.create_connected.content.copycat.stairs.CopycatStairsModel;
 import com.hlysine.create_connected.content.copycat.verticalstep.CopycatVerticalStepModel;
 import com.hlysine.create_connected.content.copycat.wall.CopycatWallModel;
+import com.zurrtum.create.client.AllExtensions;
+import com.zurrtum.create.client.infrastructure.model.CopycatModel;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -29,6 +31,10 @@ public class CCModels {
 
     private static void register(Block block, BiFunction<BlockState, BlockStateModel.UnbakedRoot, BlockStateModel.UnbakedRoot> resolver) {
         ALL.put(block, resolver);
+        // Copycats must compile into the copied material's chunk layer. Without this dynamic layer
+        // resolver, transparent pixels from glass, leaves, etc. are treated as opaque because the
+        // section compiler falls back to the Connected block's own (solid) layer.
+        AllExtensions.LAYER.put(block, CopycatModel::getLayer);
     }
 
     public static void register() {

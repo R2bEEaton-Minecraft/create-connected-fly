@@ -14,6 +14,7 @@ import com.hlysine.create_connected.registries.CCColorHandlers;
 import com.hlysine.create_connected.registries.CCDisplaySources;
 import com.hlysine.create_connected.registries.CCItemTooltips;
 import com.hlysine.create_connected.registries.CCMvpBlockEntityRenders;
+import com.hlysine.create_connected.registries.CCModels;
 import com.hlysine.create_connected.registries.CCPartialModels;
 import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
 import net.fabricmc.api.ClientModInitializer;
@@ -31,11 +32,12 @@ public class CreateConnectedClient implements ClientModInitializer {
         Instruction.i18nExistsHook = I18n::exists;
         CCDisplaySources.KINETIC_BATTERY.attachRender = new KineticBatteryDisplaySourceRender();
         CCPartialModels.register();
+        CCModels.register();
         CCMvpBlockEntityRenders.register();
         CCItemTooltips.register();
         ColorProviderRegistry.BLOCK.register(CCColorHandlers.waterBlockTint(), CCBlocks.FAN_SPLASHING_CATALYST);
         // MVP no-ops: custom block-entity rendering, kinetic-battery item predicates,
-        // the sequenced-pulse-generator screen, copycat model wrappers, and Ponder scenes
+        // the sequenced-pulse-generator screen and Ponder scenes
         // are excluded in build.gradle until their 1.21.11 client API ports are complete.
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.KINETIC_BATTERY, KineticBatteryTooltipBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.OVERSTRESS_CLUTCH, OverstressClutchTooltipBehaviour::new);

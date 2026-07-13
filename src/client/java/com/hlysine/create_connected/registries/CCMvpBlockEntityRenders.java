@@ -34,6 +34,20 @@ public final class CCMvpBlockEntityRenders {
                 CCBlocks.FREEWHEEL_CLUTCH,
                 CCBlocks.BRAKE
         );
+        // Railway's 1.21.11 conductor vent registers this explicitly in addition to its model's
+        // render_type. This keeps the empty copycat indicator's transparent pixels out of SOLID.
+        BlockRenderLayerMap.putBlocks(
+                ChunkSectionLayer.CUTOUT,
+                CCBlocks.COPYCAT_BLOCK,
+                CCBlocks.COPYCAT_SLAB,
+                CCBlocks.COPYCAT_BEAM,
+                CCBlocks.COPYCAT_VERTICAL_STEP,
+                CCBlocks.COPYCAT_STAIRS,
+                CCBlocks.COPYCAT_FENCE,
+                CCBlocks.COPYCAT_FENCE_GATE,
+                CCBlocks.COPYCAT_WALL,
+                CCBlocks.COPYCAT_BOARD
+        );
         BlockRenderLayerMap.putBlocks(
                 ChunkSectionLayer.CUTOUT,
                 CCBlocks.EMPTY_FAN_CATALYST,

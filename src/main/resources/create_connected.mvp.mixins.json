@@ -2,8 +2,14 @@
   "required": false,
   "package": "com.hlysine.create_connected.mixin",
   "compatibilityLevel": "JAVA_21",
-  "mixins": [],
-  "client": [],
+  "mixins": [
+    "compat.CopycatBlockEntityMixin",
+    "compat.CopycatBlockEntityTypeMixin",
+    "copycat.fencegate.FenceGateBlockAccessor"
+  ],
+  "client": [
+    "copycat.BlockStateModelLoaderMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }

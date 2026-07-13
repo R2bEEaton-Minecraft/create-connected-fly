@@ -45,7 +45,7 @@ public class CopycatBeamModel extends CopycatModel {
     ) {
         Axis axis = state.getOptionalValue(CopycatBeamBlock.AXIS).orElse(Axis.Y);
 
-        Vec3 normal = Vec3.atLowerCornerOf(Direction.fromAxisAndDirection(axis, AxisDirection.POSITIVE).getNormal());
+        Vec3 normal = Vec3.atLowerCornerOf(Direction.fromAxisAndDirection(axis, AxisDirection.POSITIVE).getUnitVec3i());
         Vec3 rowNormal = axis.isVertical() ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
         Vec3 columnNormal = axis.isVertical() || axis == Axis.X ? new Vec3(0, 0, 1) : new Vec3(1, 0, 0);
         AABB bb = CUBE_AABB.contract((1 - normal.x) * 12 / 16, (1 - normal.y) * 12 / 16, (1 - normal.z) * 12 / 16);
@@ -97,9 +97,9 @@ public class CopycatBeamModel extends CopycatModel {
         for (BakedQuad quad : quads) {
             Direction direction = quad.direction();
 
-            if (rowShiftNormal.equals(direction.getNormal()))
+            if (rowShiftNormal.equals(direction.getUnitVec3i()))
                 continue;
-            if (columnShiftNormal.equals(direction.getNormal()))
+            if (columnShiftNormal.equals(direction.getUnitVec3i()))
                 continue;
 
             consumer.accept(BakedModelHelper.cropAndMove(quad, bb, offset));

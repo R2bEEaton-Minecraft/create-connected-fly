@@ -1,6 +1,7 @@
 {
 	"credit": "Made with Blockbench",
-	"parent": "block/block",
+  "parent": "block/block",
+  "render_type": "minecraft:cutout_mipped",
 	"textures": {
 		"0": "create:block/copycat_base",
 		"particle": "create:block/copycat_base"

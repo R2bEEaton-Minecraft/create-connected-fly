@@ -1,11 +1,11 @@
 package com.hlysine.create_connected.content.copycat;
 
-import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.compat.CopycatsManager;
 import com.hlysine.create_connected.compat.Mods;
 import com.hlysine.create_connected.config.CCConfigs;
 import com.zurrtum.create.content.decoration.copycat.CopycatBlock;
 import com.zurrtum.create.content.decoration.copycat.CopycatBlockEntity;
+import com.zurrtum.create.AllBlockEntityTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.Item;
@@ -87,6 +87,6 @@ public abstract class MigratingCopycatBlock extends CopycatBlock {
 
     @Override
     public BlockEntityType<? extends CopycatBlockEntity> getBlockEntityType() {
-        return CCBlockEntityTypes.COPYCAT;
+        return AllBlockEntityTypes.COPYCAT;
     }
 }

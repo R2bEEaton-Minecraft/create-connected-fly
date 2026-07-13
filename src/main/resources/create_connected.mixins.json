@@ -12,6 +12,7 @@
     "brasschute.ChuteBlockEntityAccessor",
     "chaincogwheel.RotationPropagatorMixin",
     "compat.CopycatBlockEntityMixin",
+    "compat.CopycatBlockEntityTypeMixin",
     "compat.CopycatBlockMixin",
     "contraption.AbstractContainerMenuMixin",
     "contraption.ContainerLevelAccessMixin",

@@ -2611,3 +2611,35 @@ provided by Create or an installed integration, without re-enabling broken recip
 - This is a big mechanical+judgment task — work through it methodically, verify each
   package compiles before moving to the next, and don't declare the port "done" until
   `./gradlew build` actually succeeds.
+## Copycat placement crash: reuse Create's block-entity type
+
+- Connected's temporary `create_connected:copycat` block-entity registration was invalid with Create
+  Fly: `CopycatBlockEntity(BlockPos, BlockState)` hardcodes `AllBlockEntityTypes.COPYCAT`, so its
+  constructor rejected Connected copycat block states during placement.
+- All Connected copycat blocks now return Create's `COPYCAT` type, and `CCBlockEntityTypes.register()`
+  adds all nine variants to that type through Fabric's `addSupportedBlock` extension API. No copycat
+  behavior is stubbed or made a no-op by this fix.
+- The copycat client model cluster (`CCModels`, all nine `Copycat*Model` wrappers, and
+  `BlockStateModelLoaderMixin`) is now included in the MVP build and initialized from
+  `CreateConnectedClient`. It had already been ported to Create Fly's 1.21.11 unbaked-model pipeline
+  but was still excluded, which made placed copycats invisible.
+- Each Connected copycat is also registered in Create Fly's `AllExtensions.LAYER` with
+  `CopycatModel::getLayer`. This is the 1.21.11 equivalent of Railway's Fabric copycat material
+  fixer: chunk compilation follows the copied block's solid/cutout/translucent layer instead of the
+  copycat base block's layer, preserving transparent pixels.
+- Railway's direct-default-model branch is specific to its simple cube vent and must not be applied
+  to Connected's stateful shapes. Connected always runs the selected material (including the empty
+  `COPYCAT_BASE` indicator) through its shape assembler, keeping fence arms, slab orientation, gate
+  state, etc. aligned with their blockstate outline.
+- Also matching Railway exactly, `CopycatBlockEntityTypeMixin` makes Create's `COPYCAT` type accept
+  Connected copycat subclasses through `BlockEntityType.isValid`, ensuring the entity needed for
+  right-click material storage exists. All nine blocks are explicitly registered as `CUTOUT` with
+  Fabric's `BlockRenderLayerMap` so the empty indicator's alpha is honored.
+- The active runtime config is `create_connected.mvp.mixins.json`, not the dormant full config.
+  It now includes the copycat model-loader hook, copycat block-entity compatibility hooks, and the
+  fence-gate accessor. Without the loader hook, captured materials were stored but the static base
+  JSON remained rendered; without the accessor entry, right-clicking a gate crashed at class load.
+- `ISimpleCopycatModel.MutableAABB` intentionally retains directionally reversed raw bounds after
+  rotation/Y-flip, matching the original implementation. Minecraft's `AABB` constructor normalizes
+  the final crop box, while `assemblePiece` uses the raw transformed minimum as its movement anchor;
+  normalizing early displaced rotated fence and gate pieces.
