@@ -53,7 +53,6 @@ sourceSets.client.java.exclude(
         "com/hlysine/create_connected/registries/CCPonderPlugin.java",
         "com/hlysine/create_connected/registries/CCModels.java",
         "com/hlysine/create_connected/registries/CCBlockEntityRenders.java",
-        "com/hlysine/create_connected/registries/CCColorHandlers.java",
         "com/hlysine/create_connected/registries/CCGuiTextures.java",
         "com/hlysine/create_connected/mixin/copycat/BlockStateModelLoaderMixin.java",
         "com/hlysine/create_connected/content/ClutchValueBox.java",
@@ -101,6 +100,7 @@ processResources {
     // the MVP runtime pack until that conversion is complete.
     from("src/generated/resources") {
         include "assets/**"
+        include "data/**/tags/block/**"
     }
 
     filesMatching("fabric.mod.json") {

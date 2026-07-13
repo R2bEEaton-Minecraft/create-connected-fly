@@ -14,6 +14,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.BlockRenderLayerMap;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 
 public final class CCMvpBlockEntityRenders {
@@ -33,6 +34,35 @@ public final class CCMvpBlockEntityRenders {
                 CCBlocks.FREEWHEEL_CLUTCH,
                 CCBlocks.BRAKE
         );
+        BlockRenderLayerMap.putBlocks(
+                ChunkSectionLayer.CUTOUT,
+                CCBlocks.EMPTY_FAN_CATALYST,
+                CCBlocks.FAN_BLASTING_CATALYST,
+                CCBlocks.FAN_SMOKING_CATALYST,
+                CCBlocks.FAN_SPLASHING_CATALYST,
+                CCBlocks.FAN_HAUNTING_CATALYST,
+                CCBlocks.FAN_FREEZING_CATALYST,
+                CCBlocks.FAN_SEETHING_CATALYST,
+                CCBlocks.FAN_SANDING_CATALYST,
+                CCBlocks.FAN_ENRICHED_CATALYST,
+                CCBlocks.FAN_ENDING_CATALYST_DRAGONS_BREATH,
+                CCBlocks.FAN_ENDING_CATALYST_DRAGON_HEAD,
+                CCBlocks.FAN_WITHERING_CATALYST,
+                CCBlocks.FAN_CHOCOLATE_COATING_CATALYST,
+                CCBlocks.FAN_HONEY_COATING_CATALYST,
+                CCBlocks.FAN_EXPLODING_CATALYST,
+                CCBlocks.FAN_RESONANCE_CATALYST,
+                CCBlocks.FAN_SCULKING_CATALYST,
+                CCBlocks.FAN_PURIFYING_CATALYST,
+                CCBlocks.FAN_TRANSMUTATION_CATALYST,
+                CCBlocks.FAN_GLOOMING_CATALYST,
+                CCBlocks.FAN_SOUL_STRIPPING_CATALYST
+        );
+        BlockRenderLayerMap.putBlocks(
+                ChunkSectionLayer.CUTOUT,
+                CCBlocks.FAN_DYEING_CATALYSTS.values().toArray(Block[]::new)
+        );
+        BlockRenderLayerMap.putBlocks(ChunkSectionLayer.TRANSLUCENT, CCBlocks.FAN_SPLASHING_CATALYST);
 
         BlockEntityRendererRegistry.register(CCBlockEntityTypes.ENCASED_CHAIN_COGWHEEL, EncasedCogRenderer::small);
         SimpleBlockEntityVisualizer.builder(CCBlockEntityTypes.ENCASED_CHAIN_COGWHEEL)

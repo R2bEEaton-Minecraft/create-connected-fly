@@ -31,6 +31,7 @@ import com.hlysine.create_connected.content.crossconnector.CrossConnectorBlock;
 import com.hlysine.create_connected.content.crossconnector.EncasedCrossConnectorBlock;
 import com.hlysine.create_connected.content.dashboard.DashboardBlock;
 import com.hlysine.create_connected.content.fancatalyst.FanCatalystRotatingHeadBlock;
+import com.hlysine.create_connected.content.fancatalyst.EmptyFanCatalystBlock;
 import com.hlysine.create_connected.content.fluidvessel.FluidVesselBlock;
 import com.hlysine.create_connected.content.fluidvessel.FluidVesselItem;
 import com.hlysine.create_connected.content.freewheelclutch.FreewheelClutchBlock;
@@ -315,7 +316,7 @@ public class CCBlocks {
         PreciseItemUseOverrides.addBlock(LINKED_ANALOG_LEVER);
     }
 
-    public static final WrenchableBlock EMPTY_FAN_CATALYST = CCRegistrate.block("empty_fan_catalyst", WrenchableBlock::new,
+    public static final EmptyFanCatalystBlock EMPTY_FAN_CATALYST = CCRegistrate.block("empty_fan_catalyst", EmptyFanCatalystBlock::new,
             net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).mapColor(MapColor.TERRACOTTA_YELLOW).requiresCorrectToolForDrops().noOcclusion()
                     .isRedstoneConductor((state, level, pos) -> false));
     static {
@@ -332,7 +333,7 @@ public class CCBlocks {
         return block;
     }
 
-    public static final WrenchableBlock FAN_BLASTING_CATALYST = fanCatalyst("fan_blasting_catalyst", 0);
+    public static final WrenchableBlock FAN_BLASTING_CATALYST = fanCatalyst("fan_blasting_catalyst", 15);
     public static final WrenchableBlock FAN_SMOKING_CATALYST = fanCatalyst("fan_smoking_catalyst", 10);
     public static final WrenchableBlock FAN_SPLASHING_CATALYST = fanCatalyst("fan_splashing_catalyst", 0);
     public static final WrenchableBlock FAN_HAUNTING_CATALYST = fanCatalyst("fan_haunting_catalyst", 5);

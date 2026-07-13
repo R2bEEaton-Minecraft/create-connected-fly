@@ -9,11 +9,14 @@ import com.hlysine.create_connected.content.overstressclutch.OverstressClutchBlo
 import com.hlysine.create_connected.content.overstressclutch.OverstressClutchTooltipBehaviour;
 import com.hlysine.create_connected.content.sequencedpulsegenerator.instructions.Instruction;
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
+import com.hlysine.create_connected.registries.CCBlocks;
+import com.hlysine.create_connected.registries.CCColorHandlers;
 import com.hlysine.create_connected.registries.CCDisplaySources;
 import com.hlysine.create_connected.registries.CCMvpBlockEntityRenders;
 import com.hlysine.create_connected.registries.CCPartialModels;
 import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.minecraft.client.resources.language.I18n;
 
 public class CreateConnectedClient implements ClientModInitializer {
@@ -28,6 +31,7 @@ public class CreateConnectedClient implements ClientModInitializer {
         CCDisplaySources.KINETIC_BATTERY.attachRender = new KineticBatteryDisplaySourceRender();
         CCPartialModels.register();
         CCMvpBlockEntityRenders.register();
+        ColorProviderRegistry.BLOCK.register(CCColorHandlers.waterBlockTint(), CCBlocks.FAN_SPLASHING_CATALYST);
         // MVP no-ops: custom block-entity rendering, kinetic-battery item predicates,
         // the sequenced-pulse-generator screen, copycat model wrappers, and Ponder scenes
         // are excluded in build.gradle until their 1.21.11 client API ports are complete.

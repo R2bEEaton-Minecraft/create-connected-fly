@@ -2574,6 +2574,29 @@ the unfinished client predicate port. Fan Washing Catalyst's NeoForge-only compo
 reduced to its valid catalyst-frame parent, restoring its block and inventory geometry while
 intentionally omitting the translucent internal water cube until the composite model family is ported.
 
+All registered fan catalysts are mapped to Fabric's `CUTOUT` block render layer, including the dye
+catalysts created in the color loop. Their old JSON `render_type` field was NeoForge metadata and was
+ignored on Fabric, making the transparent brass frame render as a filled cube. The Purifying and
+Sculking catalysts' unsupported NeoForge composite models now use the shared frame/content geometry
+with representative vanilla beacon and sculk textures. Rotating dragon/creeper heads remain omitted
+under the MVP because their custom block-entity renderer is still excluded; those blocks retain the
+visible catalyst frame rather than an unsupported composite model.
+
+`EmptyFanCatalystBlock` restores manual catalyst creation independently of the excluded NeoForge
+recipe data. It maps all base and optional integration inputs by registry ID, consumes ordinary
+ingredients, returns an empty bucket for bucket inputs, and preserves inputs in creative mode. Dye
+bucket/resin inputs resolve their color dynamically into the registered dye-catalyst map. The
+transformation emits the same target-block destruction particle event used by Create's manual item
+application path before replacing the Empty Catalyst. The
+Blasting Catalyst now emits lava-level light (15), and the Washing Catalyst uses its internal water
+model on Fabric's translucent layer. Its content faces carry tint index 0 and a Fabric block color
+provider applies the biome water color in-world.
+The 1.21.11 item definition separately supplies an opaque `0xFF3F76E4` constant tint, since runtime
+item color providers were removed from this version's client API.
+Generated block tags are selectively packaged for every
+namespace so catalysts remain transparent to fan airflow and participate in the processing type
+provided by Create or an installed integration, without re-enabling broken recipes or advancements.
+
 ## Constraints / house rules
 - Don't add speculative abstractions or backwards-compat shims. Match the existing
   code's structure/intent as closely as Fabric + Create Fly allow.
