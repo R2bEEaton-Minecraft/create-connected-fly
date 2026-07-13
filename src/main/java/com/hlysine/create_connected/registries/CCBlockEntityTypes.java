@@ -159,6 +159,15 @@ public class CCBlockEntityTypes {
             register("fan_exploding_catalyst", FanCatalystRotatingHeadBlockEntity::new, CCBlocks.FAN_EXPLODING_CATALYST);
 
     public static void register() {
+        // ShearPinBlockEntity extends Create's BracketedKineticBlockEntity, whose two-argument
+        // constructor hardcodes BRACKETED_KINETIC as its actual type. Our custom factory still
+        // creates the subclass (and therefore preserves the shear-pin behaviour), but modern
+        // Minecraft validates that hardcoded type against the placed block immediately. Teach
+        // Create's type about the Connected block before any placement can occur.
+        net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityType createBracketedKineticType =
+                (net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityType) AllBlockEntityTypes.BRACKETED_KINETIC;
+        createBracketedKineticType.addSupportedBlock(CCBlocks.SHEAR_PIN);
+
         // CopycatBlockEntity's two-argument constructor hardcodes Create's COPYCAT type. Registering a
         // second Connected type therefore produces an entity whose actual type rejects our block state
         // during placement. Fabric explicitly supports extending an existing type's valid-block set;
