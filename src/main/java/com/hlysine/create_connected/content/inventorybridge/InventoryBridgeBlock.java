@@ -19,6 +19,7 @@ import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.redstone.Orientation;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class InventoryBridgeBlock extends Block implements IBE<InventoryBridgeBlockEntity>, IWrenchable {
 
@@ -74,10 +75,18 @@ public class InventoryBridgeBlock extends Block implements IBE<InventoryBridgeBl
     @Override
     public void neighborChanged(
             @NotNull BlockState pState, @NotNull Level pLevel, @NotNull BlockPos pPos,
-            @NotNull Block pBlock, @NotNull Orientation orientation, boolean pIsMoving
+            @NotNull Block pBlock, @Nullable Orientation orientation, boolean pIsMoving
     ) {
         withBlockEntityDo(pLevel, pPos, InventoryBridgeBlockEntity::updateConnectedInventory);
         super.neighborChanged(pState, pLevel, pPos, pBlock, orientation, pIsMoving);
+
+        // Placement updates such as ChuteItem's can have no redstone propagation orientation.
+        // In that case there is no originating face to exclude, so notify every neighbor.
+        if (orientation == null) {
+            pLevel.updateNeighborsAt(pPos, this, null);
+            return;
+        }
+
         Direction fromSide = orientation.getFront();
         if (fromSide == null)
             pLevel.updateNeighborsAt(pPos, this, orientation);

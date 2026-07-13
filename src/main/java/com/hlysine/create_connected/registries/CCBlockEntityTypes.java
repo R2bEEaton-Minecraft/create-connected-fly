@@ -76,6 +76,13 @@ public class CCBlockEntityTypes {
         return Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, key, type);
     }
 
+    @SuppressWarnings("rawtypes")
+    private static void addSupported(BlockEntityType<?> type, Block... blocks) {
+        net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityType fabricType =
+                (net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityType) type;
+        Stream.of(blocks).filter(java.util.Objects::nonNull).forEach(fabricType::addSupportedBlock);
+    }
+
     public static final BlockEntityType<SimpleKineticBlockEntity> ENCASED_CHAIN_COGWHEEL =
             register("encased_chain_cogwheel", SimpleKineticBlockEntity::new, CCBlocks.ENCASED_CHAIN_COGWHEEL);
 
@@ -159,6 +166,41 @@ public class CCBlockEntityTypes {
             register("fan_exploding_catalyst", FanCatalystRotatingHeadBlockEntity::new, CCBlocks.FAN_EXPLODING_CATALYST);
 
     public static void register() {
+        // CCBlockEntityTypes can initialize while CCBlocks is still assigning its later fields.
+        // Any null observed by a builder then produces an incomplete valid-block set, which modern
+        // Minecraft rejects immediately on placement. Reconcile every Connected type here, after
+        // both registry classes are fully initialized, instead of patching crashes one block at a
+        // time. Re-adding an already-supported block is harmless.
+        addSupported(ENCASED_CHAIN_COGWHEEL, CCBlocks.ENCASED_CHAIN_COGWHEEL);
+        addSupported(CRANK_WHEEL, CCBlocks.CRANK_WHEEL, CCBlocks.LARGE_CRANK_WHEEL);
+        addSupported(PARALLEL_GEARBOX, CCBlocks.PARALLEL_GEARBOX);
+        addSupported(SIX_WAY_GEARBOX, CCBlocks.SIX_WAY_GEARBOX);
+        addSupported(OVERSTRESS_CLUTCH, CCBlocks.OVERSTRESS_CLUTCH);
+        addSupported(SHEAR_PIN, CCBlocks.SHEAR_PIN);
+        addSupported(INVERTED_CLUTCH, CCBlocks.INVERTED_CLUTCH);
+        addSupported(INVERTED_GEARSHIFT, CCBlocks.INVERTED_GEARSHIFT);
+        addSupported(CENTRIFUGAL_CLUTCH, CCBlocks.CENTRIFUGAL_CLUTCH);
+        addSupported(FREEWHEEL_CLUTCH, CCBlocks.FREEWHEEL_CLUTCH);
+        addSupported(KINETIC_BRIDGE, CCBlocks.KINETIC_BRIDGE);
+        addSupported(KINETIC_BRIDGE_DESTINATION, CCBlocks.KINETIC_BRIDGE_DESTINATION);
+        addSupported(BRASS_GEARBOX, CCBlocks.BRASS_GEARBOX);
+        addSupported(BRAKE, CCBlocks.BRAKE);
+        addSupported(KINETIC_BATTERY, CCBlocks.KINETIC_BATTERY);
+        addSupported(ITEM_SILO, CCBlocks.ITEM_SILO);
+        addSupported(FLUID_VESSEL, CCBlocks.FLUID_VESSEL);
+        addSupported(CREATIVE_FLUID_VESSEL, CCBlocks.CREATIVE_FLUID_VESSEL);
+        addSupported(INVENTORY_ACCESS_PORT, CCBlocks.INVENTORY_ACCESS_PORT);
+        addSupported(INVENTORY_BRIDGE, CCBlocks.INVENTORY_BRIDGE);
+        addSupported(SEQUENCED_PULSE_GENERATOR, CCBlocks.SEQUENCED_PULSE_GENERATOR);
+        addSupported(LINKED_TRANSMITTER,
+                Stream.concat(Stream.of(CCBlocks.LINKED_LEVER), CCBlocks.LINKED_BUTTONS.values().stream())
+                        .toArray(Block[]::new));
+        addSupported(LINKED_ANALOG_LEVER, CCBlocks.LINKED_ANALOG_LEVER);
+        addSupported(BRASS_CHUTE, CCBlocks.BRASS_CHUTE);
+        addSupported(DASHBOARD, CCBlocks.DASHBOARD);
+        addSupported(FAN_ENDING_CATALYST_DRAGON_HEAD, CCBlocks.FAN_ENDING_CATALYST_DRAGON_HEAD);
+        addSupported(FAN_EXPLODING_CATALYST, CCBlocks.FAN_EXPLODING_CATALYST);
+
         // CopycatBlockEntity's two-argument constructor hardcodes Create's COPYCAT type. Registering a
         // second Connected type therefore produces an entity whose actual type rejects our block state
         // during placement. Fabric explicitly supports extending an existing type's valid-block set;
