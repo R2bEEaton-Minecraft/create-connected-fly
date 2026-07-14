@@ -50,14 +50,7 @@ public class ItemSiloCTBehaviour extends ConnectedTextureBehaviour.Base {
     @Override
     public boolean connectsTo(BlockState state, BlockState other, BlockAndTintGetter reader, BlockPos pos,
                               BlockPos otherPos, Direction face) {
-        if (state.getBlock() != other.getBlock())
-            return false;
-
-        // Client-side controller data can briefly describe each completed horizontal layer as a
-        // separate multiblock. Directly stacked silo parts are nevertheless one continuous vertical
-        // skin, so do not let that transient controller boundary leave a horizontal seam. Keep the
-        // stricter controller check in X/Z so adjacent independent silos do not visually merge.
-        return pos.getY() != otherPos.getY() || ConnectivityHandler.isConnected(reader, pos, otherPos);
+        return state.getBlock() == other.getBlock() && ConnectivityHandler.isConnected(reader, pos, otherPos);
     }
 
 }
