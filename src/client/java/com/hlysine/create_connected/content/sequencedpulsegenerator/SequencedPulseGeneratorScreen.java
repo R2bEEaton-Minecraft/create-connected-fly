@@ -11,11 +11,11 @@ import com.zurrtum.create.client.foundation.gui.widget.ScrollInput;
 import com.zurrtum.create.client.foundation.gui.widget.SelectionScrollInput;
 import com.zurrtum.create.client.catnip.gui.AbstractSimiScreen;
 import com.zurrtum.create.client.catnip.gui.element.GuiGameElement;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.Vector;
 import java.util.function.Function;
@@ -24,7 +24,7 @@ import static com.hlysine.create_connected.content.sequencedpulsegenerator.Seque
 
 public class SequencedPulseGeneratorScreen extends AbstractSimiScreen {
 
-    private final ItemStack renderedItem = CCBlocks.SEQUENCED_PULSE_GENERATOR.asStack();
+    private final ItemStack renderedItem = new ItemStack(CCBlocks.SEQUENCED_PULSE_GENERATOR);
     private final CCGuiTextures background = CCGuiTextures.SEQUENCER;
     private IconButton confirmButton;
     private final SequencedPulseGeneratorBlockEntity be;
@@ -110,7 +110,9 @@ public class SequencedPulseGeneratorScreen extends AbstractSimiScreen {
                     .setState(instruction.getParam())
                     .onChanged();
             if (instruction.paramConfig.stepFunction() != null) {
-                param.withStepFunction(instruction.paramConfig.stepFunction());
+                param.withStepFunction(context -> instruction.paramConfig.stepFunction()
+                        .apply(new Instruction.StepContext(context.currentValue, context.forward, context.shift,
+                                context.control)));
             } else
                 param.withStepFunction(param.standardStep());
         }
@@ -160,7 +162,8 @@ public class SequencedPulseGeneratorScreen extends AbstractSimiScreen {
                 label(graphics, 209, yOffset - 1, Component.literal(String.valueOf(instruction.getSignal())));
         }
 
-        graphics.drawString(font, title, x + (background.width - 8) / 2 - font.width(title) / 2, y + 4, 0x592424, false);
+        graphics.drawString(font, title, x + (background.width - 8) / 2 - font.width(title) / 2, y + 4,
+                0xFF592424, false);
         renderAdditional(graphics, mouseX, mouseY, partialTicks, x, y, background);
     }
 
@@ -173,14 +176,14 @@ public class SequencedPulseGeneratorScreen extends AbstractSimiScreen {
     }
 
     private void label(GuiGraphics graphics, int x, int y, Component text) {
-        graphics.drawString(font, text, guiLeft + x, guiTop + 26 + y, 0xFFFFEE);
+        graphics.drawString(font, text, guiLeft + x, guiTop + 26 + y, 0xFFFFFFEE);
     }
 
     public void sendPacket() {
         ListTag serialized = Instruction.serializeAll(instructions);
         if (serialized.equals(compareTag))
             return;
-        PacketDistributor.sendToServer(new ConfigureSequencedPulseGeneratorPacket(be.getBlockPos(), serialized));
+        ClientPlayNetworking.send(new ConfigureSequencedPulseGeneratorPacket(be.getBlockPos(), serialized));
     }
 
     @Override

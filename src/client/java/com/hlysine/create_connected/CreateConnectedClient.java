@@ -11,6 +11,8 @@ import com.hlysine.create_connected.content.kineticbattery.KineticBatteryTooltip
 import com.hlysine.create_connected.content.overstressclutch.OverstressClutchBlockEntityClient;
 import com.hlysine.create_connected.content.overstressclutch.OverstressClutchTooltipBehaviour;
 import com.hlysine.create_connected.content.overstressclutch.OverstressClutchScrollValueBehaviour;
+import com.hlysine.create_connected.content.sequencedpulsegenerator.SequencedPulseGeneratorBlock;
+import com.hlysine.create_connected.content.sequencedpulsegenerator.SequencedPulseGeneratorBlockClient;
 import com.hlysine.create_connected.content.sequencedpulsegenerator.instructions.Instruction;
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCBlocks;
@@ -36,6 +38,7 @@ public class CreateConnectedClient implements ClientModInitializer {
         // Replaces the removed direct client-only-class reference DashboardBlockEntity used to make
         // from common code - see DashboardBlockEntity.localPlayerHook for the full writeup.
         DashboardBlockEntity.localPlayerHook = ClientPlayerAccess::getPlayer;
+        SequencedPulseGeneratorBlock.displayScreenHook = SequencedPulseGeneratorBlockClient::displayScreen;
         Instruction.i18nExistsHook = I18n::exists;
         CCDisplaySources.KINETIC_BATTERY.attachRender = new KineticBatteryDisplaySourceRender();
         CCPartialModels.register();
@@ -44,8 +47,8 @@ public class CreateConnectedClient implements ClientModInitializer {
         CCItemTooltips.register();
         ColorProviderRegistry.BLOCK.register(CCColorHandlers.waterBlockTint(), CCBlocks.FAN_SPLASHING_CATALYST);
         // MVP no-ops: custom block-entity rendering, kinetic-battery item predicates,
-        // the sequenced-pulse-generator screen and Ponder scenes
-        // are excluded in build.gradle until their 1.21.11 client API ports are complete.
+        // and Ponder scenes are still excluded in build.gradle until their
+        // 1.21.11 client API ports are complete.
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.KINETIC_BATTERY, KineticBatteryTooltipBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.BRASS_CHUTE, ChuteTooltipBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.FLUID_VESSEL, FluidVesselTooltipBehaviour::new);

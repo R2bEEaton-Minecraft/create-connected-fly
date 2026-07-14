@@ -1,17 +1,18 @@
 package com.hlysine.create_connected.registries;
 
 import com.hlysine.create_connected.CreateConnected;
-import com.mojang.blaze3d.systems.RenderSystem;
 // com.zurrtum.create.catnip.gui/.gui.element moved to com.zurrtum.create.client.catnip.gui/.gui.element
 // (confirmed present only under the client jar's client. prefix, absent from the common jar) - these
 // are inherently client-only rendering utilities, consistent with the rest of this port's pattern.
+import com.zurrtum.create.client.catnip.gui.TextureSheetSegment;
 import com.zurrtum.create.client.catnip.gui.UIRenderHelper;
 import com.zurrtum.create.client.catnip.gui.element.ScreenElement;
 import com.zurrtum.create.catnip.theme.Color;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 
-public enum CCGuiTextures implements ScreenElement {
+public enum CCGuiTextures implements ScreenElement, TextureSheetSegment {
 
     SEQUENCER("sequencer", 256, 205),
     SEQUENCER_INSTRUCTION("sequencer", 0, 16, 237, 22),
@@ -49,17 +50,38 @@ public enum CCGuiTextures implements ScreenElement {
         this.startY = startY;
     }
 
-    public void bind() {
-        RenderSystem.setShaderTexture(0, location);
+    @Override
+    public Identifier getLocation() {
+        return location;
     }
 
     public void render(GuiGraphics graphics, int x, int y) {
-        graphics.blit(location, x, y, startX, startY, width, height);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, location, x, y, (float) startX, (float) startY, width, height,
+                256, 256);
     }
 
     public void render(GuiGraphics graphics, int x, int y, Color c) {
-        bind();
-        UIRenderHelper.drawColoredTexture(graphics, c, x, y, startX, startY, width, height);
+        UIRenderHelper.drawColoredTexture(graphics, bind(), c, x, y, startX, startY, width, height);
+    }
+
+    @Override
+    public int getStartX() {
+        return startX;
+    }
+
+    @Override
+    public int getStartY() {
+        return startY;
+    }
+
+    @Override
+    public int getWidth() {
+        return width;
+    }
+
+    @Override
+    public int getHeight() {
+        return height;
     }
 
 }

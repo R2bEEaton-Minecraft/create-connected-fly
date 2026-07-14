@@ -52,7 +52,6 @@ sourceSets.client.java.exclude(
         "com/hlysine/create_connected/ponder/**",
         "com/hlysine/create_connected/registries/CCPonderPlugin.java",
         "com/hlysine/create_connected/registries/CCBlockEntityRenders.java",
-        "com/hlysine/create_connected/registries/CCGuiTextures.java",
         "com/hlysine/create_connected/content/contraption/jukebox/ContraptionMusicManager.java",
         "com/hlysine/create_connected/content/contraption/jukebox/PlayContraptionJukeboxPacketClient.java",
         "com/hlysine/create_connected/content/fancatalyst/FanCatalystRotatingHeadRenderer.java",
@@ -64,9 +63,7 @@ sourceSets.client.java.exclude(
         "com/hlysine/create_connected/content/kineticbridge/KineticBridgeBlockItemClient.java",
         "com/hlysine/create_connected/content/kineticbridge/StressImpactScrollValueBehaviour.java",
         "com/hlysine/create_connected/content/linkedtransmitter/LinkedAnalogLeverRenderer.java",
-        "com/hlysine/create_connected/content/linkedtransmitter/LinkedTransmitterFrequencySlot.java",
-        "com/hlysine/create_connected/content/sequencedpulsegenerator/SequencedPulseGeneratorScreen.java",
-        "com/hlysine/create_connected/content/sequencedpulsegenerator/SequencedPulseGeneratorBlockClient.java"
+        "com/hlysine/create_connected/content/linkedtransmitter/LinkedTransmitterFrequencySlot.java"
 )
 
 dependencies {
