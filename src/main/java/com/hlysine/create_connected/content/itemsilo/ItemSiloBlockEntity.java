@@ -309,7 +309,7 @@ public class ItemSiloBlockEntity extends SmartBlockEntity implements IMultiBlock
     }
 
     public static int getMaxLength(int radius) {
-        return 6;
+        return radius * 3;
     }
 
     @Override

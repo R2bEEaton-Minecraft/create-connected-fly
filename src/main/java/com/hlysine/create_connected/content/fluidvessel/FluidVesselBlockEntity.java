@@ -31,7 +31,6 @@ import static net.minecraft.core.Direction.Axis;
 public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IMultiBlockEntityContainer.Fluid {
 
     private static final int MAX_SIZE = 3;
-    private static final int MAX_HEIGHT = 6;
     private static final int SYNC_RATE = 8;
 
     protected WindowType windowType;
@@ -507,8 +506,8 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IMul
         return AllConfigs.server().fluids.fluidTankCapacity.get() * BucketFluidInventory.CAPACITY;
     }
 
-    public static int getMaxHeight() {
-        return MAX_HEIGHT;
+    public static int getMaxHeight(int width) {
+        return width * 3;
     }
 
     @Override
@@ -581,7 +580,7 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IMul
     @Override
     public int getMaxLength(Axis longAxis, int width) {
         if (longAxis == Axis.Y) return getMaxWidth();
-        return getMaxHeight();
+        return getMaxHeight(width);
     }
 
     @Override
