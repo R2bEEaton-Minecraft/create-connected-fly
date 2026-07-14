@@ -4,6 +4,7 @@ import com.hlysine.create_connected.content.brassgearbox.BrassGearboxRenderer;
 import com.hlysine.create_connected.content.brassgearbox.BrassGearboxVisual;
 import com.hlysine.create_connected.content.crankwheel.CrankWheelRenderer;
 import com.hlysine.create_connected.content.crankwheel.CrankWheelVisual;
+import com.hlysine.create_connected.content.dashboard.DashboardRenderer;
 import com.hlysine.create_connected.content.kineticbridge.KineticBridgeRenderer;
 import com.hlysine.create_connected.content.kineticbridge.KineticBridgeVisual;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryRenderer;
@@ -137,6 +138,8 @@ public final class CCMvpBlockEntityRenders {
                 .factory(KineticBatteryVisual::new)
                 .skipVanillaRender(be -> false)
                 .apply();
+
+        BlockEntityRendererRegistry.register(CCBlockEntityTypes.DASHBOARD, DashboardRenderer::new);
 
         registerKineticBridgeRenderer(CCBlockEntityTypes.KINETIC_BRIDGE, false);
         SimpleBlockEntityVisualizer.builder(CCBlockEntityTypes.KINETIC_BRIDGE)

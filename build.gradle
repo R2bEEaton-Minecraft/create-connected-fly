@@ -55,7 +55,6 @@ sourceSets.client.java.exclude(
         "com/hlysine/create_connected/registries/CCGuiTextures.java",
         "com/hlysine/create_connected/content/contraption/jukebox/ContraptionMusicManager.java",
         "com/hlysine/create_connected/content/contraption/jukebox/PlayContraptionJukeboxPacketClient.java",
-        "com/hlysine/create_connected/content/dashboard/DashboardRenderer.java",
         "com/hlysine/create_connected/content/fancatalyst/FanCatalystRotatingHeadRenderer.java",
         "com/hlysine/create_connected/content/fancatalyst/SkullTypes.java",
         "com/hlysine/create_connected/content/fluidvessel/FluidVesselModel.java",
