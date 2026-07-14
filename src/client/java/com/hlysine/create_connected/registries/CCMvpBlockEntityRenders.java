@@ -20,6 +20,7 @@ import com.zurrtum.create.client.content.kinetics.simpleRelays.encased.EncasedCo
 import com.zurrtum.create.client.content.kinetics.crank.HandCrankRenderer;
 import com.zurrtum.create.client.content.kinetics.transmission.SplitShaftRenderer;
 import com.zurrtum.create.client.content.kinetics.transmission.SplitShaftVisual;
+import com.zurrtum.create.client.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
 import com.zurrtum.create.client.flywheel.lib.visualization.SimpleBlockEntityVisualizer;
 import com.zurrtum.create.content.kinetics.transmission.SplitShaftBlockEntity;
 import com.zurrtum.create.content.kinetics.crank.HandCrankBlockEntity;
@@ -141,6 +142,7 @@ public final class CCMvpBlockEntityRenders {
                 .apply();
 
         BlockEntityRendererRegistry.register(CCBlockEntityTypes.DASHBOARD, DashboardRenderer::new);
+        BlockEntityRendererRegistry.register(CCBlockEntityTypes.LINKED_TRANSMITTER, SmartBlockEntityRenderer::new);
 
         registerKineticBridgeRenderer(CCBlockEntityTypes.KINETIC_BRIDGE, false);
         SimpleBlockEntityVisualizer.builder(CCBlockEntityTypes.KINETIC_BRIDGE)

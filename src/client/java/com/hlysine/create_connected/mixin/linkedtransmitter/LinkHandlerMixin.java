@@ -5,6 +5,7 @@ import com.zurrtum.create.AllItems;
 import com.zurrtum.create.client.content.redstone.link.LinkBehaviour;
 import com.zurrtum.create.client.content.redstone.link.LinkHandler;
 import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
+import com.zurrtum.create.catnip.data.Iterate;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
@@ -33,16 +34,23 @@ public class LinkHandlerMixin {
         if (!world.getBlockState(pos).is(CCBlocks.LINKED_ANALOG_LEVER))
             return;
 
-        // Let normal analog-lever interaction own empty-hand clicks. Non-empty item clicks can still
-        // target the linked-transmitter frequency slots.
-        if (heldItem.isEmpty()) {
+        LinkBehaviour behaviour = BlockEntityBehaviour.get(world, pos, LinkBehaviour.TYPE);
+        if (behaviour == null) {
             cir.setReturnValue(null);
             cir.cancel();
             return;
         }
 
-        // If the link behaviour is missing, don't consume the interaction path.
-        if (BlockEntityBehaviour.get(world, pos, LinkBehaviour.TYPE) == null) {
+        boolean targetingSlot = false;
+        for (boolean first : Iterate.trueAndFalse) {
+            if (behaviour.testHit(first, ray.getLocation())) {
+                targetingSlot = true;
+                break;
+            }
+        }
+
+        // Let normal analog-lever interaction own clicks that miss the frequency slots.
+        if (!targetingSlot) {
             cir.setReturnValue(null);
             cir.cancel();
         }

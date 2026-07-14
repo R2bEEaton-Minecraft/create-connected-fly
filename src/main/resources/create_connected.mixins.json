@@ -56,6 +56,8 @@
     "copycat.BlockStateModelLoaderMixin",
     "copycat.fence.ValueBoxRendererMixin",
     "linkedtransmitter.LinkHandlerMixin",
+    "linkedtransmitter.LinkedAnalogLeverBlockEntityMixin",
+    "linkedtransmitter.LinkedTransmitterBlockEntityMixin",
     "nestedschematics.ClientSchematicLoaderMixin",
     "sequencedgearshift.AbstractSimiScreenAccessor",
     "sequencedgearshift.SequencedGearshiftScreenMixin",

@@ -5,7 +5,6 @@ import com.zurrtum.create.client.foundation.blockEntity.behaviour.ValueBoxTransf
 import com.zurrtum.create.client.flywheel.lib.transform.TransformStack;
 import com.zurrtum.create.catnip.math.AngleHelper;
 import com.zurrtum.create.catnip.math.VecHelper;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -36,26 +35,14 @@ public class LinkedTransmitterFrequencySlot extends ValueBoxTransform.Dual {
         Direction facing = state.getValue(LinkedButtonBlock.FACING);
         AttachFace face = state.getValue(LinkedButtonBlock.FACE);
         boolean locked = state.getValue(LinkedButtonBlock.LOCKED);
-        Block block = state.getBlock();
-        boolean analogLever = block instanceof LinkedAnalogLeverBlock;
-
-        Vec3 location;
-        if (analogLever) {
-            location = switch (face) {
-                case FLOOR -> VecHelper.voxelSpace(isFirst() ? 3f : 13f, 0.1f + (locked ? 0.5f : 1), 13f);
-                case WALL -> VecHelper.voxelSpace(13f, isFirst() ? 13f : 3f, 0.1f + (locked ? 0.5f : 1));
-                case CEILING -> VecHelper.voxelSpace(isFirst() ? 3f : 13f, 15.9f - (locked ? 0.5f : 1), 3f);
-            };
-        } else {
-            location = switch (face) {
-                case FLOOR ->
-                        VecHelper.voxelSpace(2.5f, 0.1f + (locked ? 0.5f : 1), 10.5f).add(isFirst() ? Vec3.ZERO : VecHelper.voxelSpace(0, 0, -5));
-                case WALL ->
-                        VecHelper.voxelSpace(13.5f, 10.5f, 0.1f + (locked ? 0.5f : 1)).add(isFirst() ? Vec3.ZERO : VecHelper.voxelSpace(0, -5, 0));
-                case CEILING ->
-                        VecHelper.voxelSpace(2.5f, 15.9f - (locked ? 0.5f : 1), 5.5f).add(isFirst() ? Vec3.ZERO : VecHelper.voxelSpace(0, 0, 5));
-            };
-        }
+        Vec3 location = switch (face) {
+            case FLOOR ->
+                    VecHelper.voxelSpace(2.5f, 0.1f + (locked ? 0.5f : 1), 10.5f).add(isFirst() ? Vec3.ZERO : VecHelper.voxelSpace(0, 0, -5));
+            case WALL ->
+                    VecHelper.voxelSpace(13.5f, 10.5f, 0.1f + (locked ? 0.5f : 1)).add(isFirst() ? Vec3.ZERO : VecHelper.voxelSpace(0, -5, 0));
+            case CEILING ->
+                    VecHelper.voxelSpace(2.5f, 15.9f - (locked ? 0.5f : 1), 5.5f).add(isFirst() ? Vec3.ZERO : VecHelper.voxelSpace(0, 0, 5));
+        };
         location = VecHelper.rotateCentered(location, AngleHelper.horizontalAngle(facing), Axis.Y);
         return location;
     }
@@ -73,7 +60,7 @@ public class LinkedTransmitterFrequencySlot extends ValueBoxTransform.Dual {
 
     @Override
     public float getScale() {
-        return .4f;
+        return .4975f;
     }
 }
 
