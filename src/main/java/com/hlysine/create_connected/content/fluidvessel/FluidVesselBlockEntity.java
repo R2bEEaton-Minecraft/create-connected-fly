@@ -5,6 +5,7 @@ import com.zurrtum.create.api.connectivity.ConnectivityHandler;
 import com.zurrtum.create.content.fluids.tank.FluidTankBlockEntity;
 import com.zurrtum.create.foundation.blockEntity.IMultiBlockEntityContainer;
 import com.zurrtum.create.infrastructure.config.AllConfigs;
+import com.zurrtum.create.infrastructure.fluids.BucketFluidInventory;
 import com.zurrtum.create.infrastructure.fluids.FluidStack;
 import com.zurrtum.create.catnip.animation.LerpedFloat;
 import net.minecraft.core.BlockPos;
@@ -30,6 +31,7 @@ import static net.minecraft.core.Direction.Axis;
 public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IMultiBlockEntityContainer.Fluid {
 
     private static final int MAX_SIZE = 3;
+    private static final int MAX_HEIGHT = 6;
     private static final int SYNC_RATE = 8;
 
     protected WindowType windowType;
@@ -500,11 +502,13 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IMul
     }
 
     public static int getCapacityMultiplier() {
-        return AllConfigs.server().fluids.fluidTankCapacity.get() * 1000;
+        // Create Fly stores fluid in Fabric droplets (81,000 per bucket), not millibuckets.
+        // With the default tank capacity of 8 buckets this is reported as 8,000 mB per vessel.
+        return AllConfigs.server().fluids.fluidTankCapacity.get() * BucketFluidInventory.CAPACITY;
     }
 
     public static int getMaxHeight() {
-        return AllConfigs.server().fluids.fluidTankMaxHeight.get();
+        return MAX_HEIGHT;
     }
 
     @Override
