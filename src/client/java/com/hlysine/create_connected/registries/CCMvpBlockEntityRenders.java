@@ -47,7 +47,9 @@ public final class CCMvpBlockEntityRenders {
                 CCBlocks.BRAKE,
                 CCBlocks.SIX_WAY_GEARBOX,
                 CCBlocks.KINETIC_BRIDGE,
-                CCBlocks.KINETIC_BRIDGE_DESTINATION
+                CCBlocks.KINETIC_BRIDGE_DESTINATION,
+                CCBlocks.FLUID_VESSEL,
+                CCBlocks.CREATIVE_FLUID_VESSEL
         );
         // Railway's 1.21.11 conductor vent registers this explicitly in addition to its model's
         // render_type. This keeps the empty copycat indicator's transparent pixels out of SOLID.

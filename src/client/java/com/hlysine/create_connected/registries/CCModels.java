@@ -9,6 +9,7 @@ import com.hlysine.create_connected.content.copycat.slab.CopycatSlabModel;
 import com.hlysine.create_connected.content.copycat.stairs.CopycatStairsModel;
 import com.hlysine.create_connected.content.copycat.verticalstep.CopycatVerticalStepModel;
 import com.hlysine.create_connected.content.copycat.wall.CopycatWallModel;
+import com.hlysine.create_connected.content.fluidvessel.FluidVesselFlyModel;
 import com.hlysine.create_connected.content.itemsilo.ItemSiloCTBehaviour;
 import com.zurrtum.create.client.AllExtensions;
 import com.zurrtum.create.client.infrastructure.model.CopycatModel;
@@ -43,6 +44,8 @@ public class CCModels {
         // Connected-texture models use the same wrapper pipeline as copycats, but keep their normal
         // static render layer. This mirrors Create Fly's ITEM_VAULT -> CTModel registration.
         ALL.put(CCBlocks.ITEM_SILO, CTModel.of(new ItemSiloCTBehaviour()));
+        ALL.put(CCBlocks.FLUID_VESSEL, FluidVesselFlyModel::standard);
+        ALL.put(CCBlocks.CREATIVE_FLUID_VESSEL, FluidVesselFlyModel::creative);
 
         register(CCBlocks.COPYCAT_BLOCK, CopycatBlockModel::new);
         register(CCBlocks.COPYCAT_SLAB, CopycatSlabModel::new);
