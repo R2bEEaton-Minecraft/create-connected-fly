@@ -49,6 +49,7 @@ public final class CCMvpBlockEntityRenders {
                 CCBlocks.SIX_WAY_GEARBOX,
                 CCBlocks.KINETIC_BRIDGE,
                 CCBlocks.KINETIC_BRIDGE_DESTINATION,
+                CCBlocks.SEQUENCED_PULSE_GENERATOR,
                 CCBlocks.FLUID_VESSEL,
                 CCBlocks.CREATIVE_FLUID_VESSEL
         );
