@@ -41,7 +41,9 @@ public abstract class AnalogLeverBlockMixin extends FaceAttachedHorizontalDirect
             method = "onRemove"
     )
     private void onRemove(BlockState state, Level worldIn, BlockPos pos, BlockState newState, boolean isMoving, CallbackInfo ci) {
-        if (state.getBlock() instanceof AnalogLeverBlock && newState.getBlock() instanceof AnalogLeverBlock)
+        // Only suppress self-state transitions. Replacements between the base analog lever and the
+        // linked variant must still run normal removal/replacement hooks.
+        if (state.getBlock() == newState.getBlock())
             ci.cancel();
     }
 }

@@ -23,7 +23,9 @@ import com.hlysine.create_connected.registries.CCMvpBlockEntityRenders;
 import com.hlysine.create_connected.registries.CCModels;
 import com.hlysine.create_connected.registries.CCPartialModels;
 import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
+import com.zurrtum.create.client.content.redstone.link.ConnectedLinkBehaviour;
 import com.zurrtum.create.client.foundation.blockEntity.behaviour.scrollValue.RotationDirectionScrollBehaviour;
+import com.zurrtum.create.client.foundation.blockEntity.behaviour.tooltip.AnalogLeverTooltipBehaviour;
 import com.zurrtum.create.client.foundation.blockEntity.behaviour.tooltip.ChuteTooltipBehaviour;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
@@ -54,6 +56,9 @@ public class CreateConnectedClient implements ClientModInitializer {
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.FLUID_VESSEL, FluidVesselTooltipBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.CREATIVE_FLUID_VESSEL, FluidVesselTooltipBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.OVERSTRESS_CLUTCH, OverstressClutchTooltipBehaviour::new);
+        BlockEntityBehaviour.addClient(CCBlockEntityTypes.LINKED_TRANSMITTER, ConnectedLinkBehaviour::new);
+        BlockEntityBehaviour.addClient(CCBlockEntityTypes.LINKED_ANALOG_LEVER, ConnectedLinkBehaviour::new);
+        BlockEntityBehaviour.addClient(CCBlockEntityTypes.LINKED_ANALOG_LEVER, AnalogLeverTooltipBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.CENTRIFUGAL_CLUTCH,
                 CentrifugalClutchScrollValueBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.FREEWHEEL_CLUTCH,

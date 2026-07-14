@@ -3,9 +3,11 @@ package com.hlysine.create_connected.content.linkedtransmitter;
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.registries.CCItems;
 import com.zurrtum.create.AllSoundEvents;
+import com.zurrtum.create.AllItems;
 import com.zurrtum.create.api.schematic.requirement.SpecialBlockItemRequirement;
 import com.zurrtum.create.content.equipment.wrench.IWrenchable;
 import com.zurrtum.create.content.redstone.analogLever.AnalogLeverBlock;
+import com.zurrtum.create.content.redstone.analogLever.AnalogLeverBlockEntity;
 import com.zurrtum.create.content.schematics.requirement.ItemRequirement;
 import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
@@ -24,6 +26,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -84,10 +88,7 @@ public class LinkedAnalogLeverBlock extends AnalogLeverBlock implements SpecialB
         if (player.isSpectator())
             return InteractionResult.PASS;
 
-        if (isHittingBase(state, level, pos, hitResult)) {
-            return super.useWithoutItem(state, level, pos, player, hitResult);
-        }
-        return LinkedTransmitterBlock.super.useTransmitter(state, level, pos, player);
+        return activateAnalogLever(level, pos, player);
     }
 
     @Override
@@ -98,7 +99,34 @@ public class LinkedAnalogLeverBlock extends AnalogLeverBlock implements SpecialB
                                                     @NotNull Player player,
                                                     @NotNull InteractionHand hand,
                                                     @NotNull BlockHitResult hitResult) {
-        return LinkedTransmitterBlock.super.useWax(stack, state, level, pos, player, hand, hitResult);
+        if (stack.is(AllItems.WRENCH)) {
+            UseOnContext context = new UseOnContext(player, hand, hitResult);
+            return player.isShiftKeyDown() ? onSneakWrenched(state, context) : onWrenched(state, context);
+        }
+
+        InteractionResult waxResult = LinkedTransmitterBlock.super.useWax(stack, state, level, pos, player, hand, hitResult);
+        if (waxResult != InteractionResult.TRY_WITH_EMPTY_HAND)
+            return waxResult;
+
+        if (player.isSpectator())
+            return InteractionResult.PASS;
+
+        return activateAnalogLever(level, pos, player);
+    }
+
+    private InteractionResult activateAnalogLever(Level level, BlockPos pos, Player player) {
+        if (level.isClientSide()) {
+            return InteractionResult.SUCCESS;
+        }
+
+        BlockEntity blockEntity = level.getBlockEntity(pos);
+        if (!(blockEntity instanceof AnalogLeverBlockEntity analogLever))
+            return InteractionResult.PASS;
+
+        analogLever.changeState(player.isShiftKeyDown());
+        float pitch = .25f + ((analogLever.getState() + 5) / 15f) * .5f;
+        level.playSound(null, pos, SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.2F, pitch);
+        return InteractionResult.SUCCESS_SERVER;
     }
 
     // BlockBehaviour.onRemove(BlockState, Level, BlockPos, BlockState newState, boolean) was replaced by
@@ -112,7 +140,7 @@ public class LinkedAnalogLeverBlock extends AnalogLeverBlock implements SpecialB
     // making this check redundant rather than unexpressable.
     @Override
     public void affectNeighborsAfterRemoval(@NotNull BlockState state, @NotNull net.minecraft.server.level.ServerLevel world, @NotNull BlockPos pos, boolean isMoving) {
-        if (!isMoving && getBlockEntityOptional(world, pos).map(be -> ((LinkedAnalogLeverBlockEntity) be).containsBase).orElse(false))
+        if (!isMoving && world.getBlockEntity(pos) instanceof LinkedAnalogLeverBlockEntity be && be.containsBase)
             Block.popResource(world, pos, new ItemStack(CCItems.LINKED_TRANSMITTER));
         getBase().defaultBlockState().affectNeighborsAfterRemoval(world, pos, isMoving);
     }
@@ -129,13 +157,16 @@ public class LinkedAnalogLeverBlock extends AnalogLeverBlock implements SpecialB
         if (!player.isCreative()) {
             player.getInventory().placeItemBackInInventory(new ItemStack(CCItems.LINKED_TRANSMITTER));
         }
-        withBlockEntityDo(context.getLevel(), context.getClickedPos(), be -> ((LinkedAnalogLeverBlockEntity) be).containsBase = false);
+        if (context.getLevel().getBlockEntity(context.getClickedPos()) instanceof LinkedAnalogLeverBlockEntity be) {
+            be.containsBase = false;
+        }
         replaceWithBase(state, context.getLevel(), context.getClickedPos());
         return InteractionResult.SUCCESS;
     }
 
     @Override
     public void replaceBase(BlockState baseState, Level world, BlockPos pos) {
+        world.removeBlockEntity(pos);
         world.setBlockAndUpdate(pos, defaultBlockState()
                 .setValue(FACING, baseState.getValue(FACING))
                 .setValue(FACE, baseState.getValue(FACE))
@@ -145,6 +176,7 @@ public class LinkedAnalogLeverBlock extends AnalogLeverBlock implements SpecialB
 
     public void replaceWithBase(BlockState state, Level world, BlockPos pos) {
         AllSoundEvents.CONTROLLER_TAKE.playOnServer(world, pos);
+        world.removeBlockEntity(pos);
         world.setBlockAndUpdate(pos, getBase().defaultBlockState()
                 .setValue(FACING, state.getValue(FACING))
                 .setValue(FACE, state.getValue(FACE)));

@@ -211,5 +211,12 @@ public class CCBlockEntityTypes {
                         CCBlocks.COPYCAT_VERTICAL_STEP, CCBlocks.COPYCAT_STAIRS, CCBlocks.COPYCAT_FENCE,
                         CCBlocks.COPYCAT_FENCE_GATE, CCBlocks.COPYCAT_WALL, CCBlocks.COPYCAT_BOARD)
                 .forEach(createCopycatType::addSupportedBlock);
+
+        // AnalogLeverBlockEntity's constructor hardcodes Create's ANALOG_LEVER type before this mod's
+        // subclass can retag itself to LINKED_ANALOG_LEVER. Let Create's own type accept the linked
+        // block state during that early validation step, then the subclass can continue with its
+        // Connected-specific behaviours.
+        ((net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityType) AllBlockEntityTypes.ANALOG_LEVER)
+                .addSupportedBlock(CCBlocks.LINKED_ANALOG_LEVER);
     }
 }
