@@ -3,11 +3,14 @@ package com.hlysine.create_connected.content.inventorybridge;
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.zurrtum.create.content.equipment.wrench.IWrenchable;
 import com.zurrtum.create.foundation.block.IBE;
+import com.zurrtum.create.infrastructure.items.ItemInventoryProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.Container;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -21,7 +24,7 @@ import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class InventoryBridgeBlock extends Block implements IBE<InventoryBridgeBlockEntity>, IWrenchable {
+public class InventoryBridgeBlock extends Block implements IBE<InventoryBridgeBlockEntity>, IWrenchable, ItemInventoryProvider<InventoryBridgeBlockEntity> {
 
     public static BooleanProperty ATTACHED_POSITIVE = BooleanProperty.create("attached_positive");
     public static BooleanProperty ATTACHED_NEGATIVE = BooleanProperty.create("attached_negative");
@@ -45,13 +48,16 @@ public class InventoryBridgeBlock extends Block implements IBE<InventoryBridgeBl
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         BlockState state = defaultBlockState();
 
-        // NeoForge's BlockCapability/Capabilities.ItemHandler.BLOCK lookup is gone - Fabric's
-        // ItemStorage.SIDED.find(level, pos, side) is the direct replacement (side=null here,
-        // matching the original's side-agnostic probe intent).
+        // NeoForge's side-agnostic capability probe used to answer "is there an inventory in this
+        // neighboring block?" regardless of how that inventory is exposed. On Fabric, querying the
+        // neighbor from the face the bridge would actually connect through is the closest
+        // equivalent, and falling back to a side-agnostic lookup keeps omni-directional
+        // inventories working.
         Direction preferredFacing = null;
         for (Direction face : context.getNearestLookingDirections()) {
             BlockPos neighborPos = context.getClickedPos().relative(face);
-            if (ItemStorage.SIDED.find(context.getLevel(), neighborPos, null) != null) {
+            if (ItemStorage.SIDED.find(context.getLevel(), neighborPos, face.getOpposite()) != null
+                    || ItemStorage.SIDED.find(context.getLevel(), neighborPos, null) != null) {
                 preferredFacing = face;
                 break;
             }
@@ -67,6 +73,11 @@ public class InventoryBridgeBlock extends Block implements IBE<InventoryBridgeBl
     @Override
     public void onPlace(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, @NotNull BlockState oldState, boolean isMoving) {
         withBlockEntityDo(worldIn, pos, InventoryBridgeBlockEntity::updateConnectedInventory);
+    }
+
+    @Override
+    public Container getInventory(LevelAccessor world, BlockPos pos, BlockState state, InventoryBridgeBlockEntity blockEntity, Direction context) {
+        return blockEntity.getItemCapability();
     }
 
     // neighborChanged(state, level, pos, block, fromPos, isMoving) is gone - vanilla now passes an

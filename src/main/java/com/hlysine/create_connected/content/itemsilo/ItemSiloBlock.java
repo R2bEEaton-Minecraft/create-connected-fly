@@ -7,11 +7,14 @@ import com.zurrtum.create.content.equipment.wrench.IWrenchable;
 import com.zurrtum.create.content.logistics.vault.ItemVaultBlock;
 import com.zurrtum.create.foundation.block.IBE;
 import com.zurrtum.create.foundation.item.ItemHelper;
+import com.zurrtum.create.infrastructure.items.ItemInventoryProvider;
+import net.minecraft.world.Container;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
@@ -23,7 +26,7 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 
 import org.jetbrains.annotations.Nullable;
 
-public class ItemSiloBlock extends Block implements IWrenchable, IBE<ItemSiloBlockEntity> {
+public class ItemSiloBlock extends Block implements IWrenchable, IBE<ItemSiloBlockEntity>, ItemInventoryProvider<ItemSiloBlockEntity> {
     public static final BooleanProperty LARGE = ItemVaultBlock.LARGE;
 
     public ItemSiloBlock(Properties p_i48440_1_) {
@@ -67,6 +70,11 @@ public class ItemSiloBlock extends Block implements IWrenchable, IBE<ItemSiloBlo
         if (!isVault(state))
             return false;
         return state.getValue(LARGE);
+    }
+
+    @Override
+    public Container getInventory(LevelAccessor world, BlockPos pos, BlockState state, ItemSiloBlockEntity blockEntity, Direction context) {
+        return blockEntity.getItemCapability();
     }
 
     // Vaults are less noisy when placed in batch (now unused - see getSoundType() below;

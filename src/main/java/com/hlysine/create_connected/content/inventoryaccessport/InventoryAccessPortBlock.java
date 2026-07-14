@@ -4,11 +4,14 @@ import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.zurrtum.create.content.equipment.wrench.IWrenchable;
 import com.zurrtum.create.content.redstone.DirectedDirectionalBlock;
 import com.zurrtum.create.foundation.block.IBE;
+import com.zurrtum.create.infrastructure.items.ItemInventoryProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.Container;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -23,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 // NeoForge's IBlockExtension marker interface doesn't exist on Fabric and had no overridden methods
 // actually consumed from it here - dropped from the implements clause entirely.
-public class InventoryAccessPortBlock extends DirectedDirectionalBlock implements IBE<InventoryAccessPortBlockEntity>, IWrenchable {
+public class InventoryAccessPortBlock extends DirectedDirectionalBlock implements IBE<InventoryAccessPortBlockEntity>, IWrenchable, ItemInventoryProvider<InventoryAccessPortBlockEntity> {
 
     public static BooleanProperty ATTACHED = BlockStateProperties.ATTACHED;
 
@@ -41,13 +44,15 @@ public class InventoryAccessPortBlock extends DirectedDirectionalBlock implement
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         BlockState state = defaultBlockState();
 
-        // NeoForge's BlockCapability/Capabilities.ItemHandler.BLOCK lookup is gone - Fabric's
-        // ItemStorage.SIDED.find(level, pos, side) is the direct replacement (side=null here,
-        // matching the original's side-agnostic probe intent).
+        // NeoForge's side-agnostic capability probe used to answer "is there an inventory in this
+        // neighboring block?" regardless of how that inventory is exposed. On Fabric, querying the
+        // neighbor from the face the port would actually connect through is the closest equivalent,
+        // and falling back to a side-agnostic lookup keeps omni-directional inventories working.
         Direction preferredFacing = null;
         for (Direction face : context.getNearestLookingDirections()) {
             BlockPos neighborPos = context.getClickedPos().relative(face);
-            if (ItemStorage.SIDED.find(context.getLevel(), neighborPos, null) != null) {
+            if (ItemStorage.SIDED.find(context.getLevel(), neighborPos, face.getOpposite()) != null
+                    || ItemStorage.SIDED.find(context.getLevel(), neighborPos, null) != null) {
                 preferredFacing = face;
                 break;
             }
@@ -70,6 +75,11 @@ public class InventoryAccessPortBlock extends DirectedDirectionalBlock implement
     @Override
     public void onPlace(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, @NotNull BlockState oldState, boolean isMoving) {
         withBlockEntityDo(worldIn, pos, InventoryAccessPortBlockEntity::updateConnectedInventory);
+    }
+
+    @Override
+    public Container getInventory(LevelAccessor world, BlockPos pos, BlockState state, InventoryAccessPortBlockEntity blockEntity, Direction context) {
+        return blockEntity.getItemCapability();
     }
 
     // NeoForge's IBlockExtension.onNeighborChange(state, LevelReader, pos, neighborPos) doesn't exist
