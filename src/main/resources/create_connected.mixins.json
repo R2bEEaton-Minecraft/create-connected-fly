@@ -11,7 +11,8 @@
     "copycat.fencegate.FenceGateBlockAccessor",
     "kineticbattery.KineticNetworkAccessor",
     "linkedtransmitter.AnalogLeverBlockEntityAccessor",
-    "linkedtransmitter.BlockEntityTypeAccessor"
+    "linkedtransmitter.BlockEntityTypeAccessor",
+    "redstonelinkwildcard.RedstoneLinkNetworkHandlerMixin"
   ],
   "client": [
     "copycat.BlockStateModelLoaderMixin",

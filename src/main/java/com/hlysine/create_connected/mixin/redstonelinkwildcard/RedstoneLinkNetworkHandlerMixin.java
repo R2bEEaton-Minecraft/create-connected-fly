@@ -23,7 +23,7 @@ public class RedstoneLinkNetworkHandlerMixin {
 
     @Inject(
             method = "addToNetwork",
-            at = @At(value = "INVOKE", target = "Lcom/simibubi/create/content/redstone/link/RedstoneLinkNetworkHandler;updateNetworkOf(Lnet/minecraft/world/level/LevelAccessor;Lcom/simibubi/create/content/redstone/link/IRedstoneLinkable;)V")
+            at = @At(value = "INVOKE", target = "Lcom/zurrtum/create/content/redstone/link/RedstoneLinkNetworkHandler;updateNetworkOf(Lnet/minecraft/world/level/LevelAccessor;Lcom/zurrtum/create/content/redstone/link/IRedstoneLinkable;)V")
     )
     private void addToNetwork(LevelAccessor world, IRedstoneLinkable actor, CallbackInfo ci) {
         LinkWildcardNetworkHandler.addToNetwork((RedstoneLinkNetworkHandler) (Object) this, world, actor);
