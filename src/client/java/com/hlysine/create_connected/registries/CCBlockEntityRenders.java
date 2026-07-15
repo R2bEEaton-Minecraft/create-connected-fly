@@ -5,6 +5,7 @@ import com.hlysine.create_connected.content.brassgearbox.BrassGearboxVisual;
 import com.hlysine.create_connected.content.crankwheel.CrankWheelRenderer;
 import com.hlysine.create_connected.content.crankwheel.CrankWheelVisual;
 import com.hlysine.create_connected.content.dashboard.DashboardRenderer;
+import com.hlysine.create_connected.content.fluidvessel.FluidVesselRenderer;
 import com.hlysine.create_connected.content.kineticbridge.KineticBridgeRenderer;
 import com.hlysine.create_connected.content.kineticbridge.KineticBridgeVisual;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryRenderer;
@@ -143,6 +144,8 @@ public final class CCBlockEntityRenders {
                 .apply();
 
         BlockEntityRendererRegistry.register(CCBlockEntityTypes.DASHBOARD, DashboardRenderer::new);
+        registerFluidVesselRenderer(CCBlockEntityTypes.FLUID_VESSEL);
+        registerFluidVesselRenderer(CCBlockEntityTypes.CREATIVE_FLUID_VESSEL);
         BlockEntityRendererRegistry.register(CCBlockEntityTypes.LINKED_TRANSMITTER, SmartBlockEntityRenderer::new);
         // LinkedAnalogLeverBlockEntity retags itself to this type (see its constructor), so this
         // registration is what actually renders linked levers. Plain analog levers keep Create
@@ -191,6 +194,11 @@ public final class CCBlockEntityRenders {
     @SuppressWarnings({"rawtypes", "unchecked"})
     private static void registerLinkedAnalogLeverRenderer(BlockEntityType<?> type) {
         BlockEntityRendererRegistry.register(type, (BlockEntityRendererProvider) LinkedAnalogLeverRendererPort::new);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void registerFluidVesselRenderer(BlockEntityType<?> type) {
+        BlockEntityRendererRegistry.register(type, (BlockEntityRendererProvider) FluidVesselRenderer::new);
     }
 
 }

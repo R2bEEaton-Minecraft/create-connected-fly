@@ -2,48 +2,30 @@ package com.hlysine.create_connected.content.fluidvessel;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.zurrtum.create.client.AllPartialModels;
-import com.zurrtum.create.client.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
-import com.zurrtum.create.client.flywheel.lib.transform.TransformStack;
 import com.zurrtum.create.catnip.animation.LerpedFloat;
-import com.zurrtum.create.catnip.data.Iterate;
-import com.zurrtum.create.catnip.platform.NeoForgeCatnipServices;
+import com.zurrtum.create.client.AllPartialModels;
 import com.zurrtum.create.client.catnip.render.CachedBuffers;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
+import com.zurrtum.create.client.catnip.render.FluidRenderHelper;
+import com.zurrtum.create.client.catnip.render.SuperByteBuffer;
+import com.zurrtum.create.infrastructure.fluids.FluidStack;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
+import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.util.Mth;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import org.jetbrains.annotations.Nullable;
 
-// Rewritten onto MC 1.21.11's new BlockEntityRenderer "render state" architecture (real
-// SafeBlockEntityRenderer was renamed to SmartBlockEntityRenderer<T, S> - verified via the real
-// sources jar and javap on the resolved jar; see PORTING_NOTES.md "FluidVesselRenderer /
-// KineticBridgeRenderer render-state rewrite"). Unlike KineticBlockEntityRenderer's
-// CustomGeometryRenderer-per-state pattern, SmartBlockEntityRenderer draws directly in submit(...)
-// (which receives a real PoseStack), so extractRenderState just captures the data needed
-// (fluid/boiler state, dimensions) and submit() does the actual pushPose/translate/draw calls -
-// same overall idea, different real API shape for this base class.
-//
-// NOT YET FIXED, deferred (not stubbed): the fluid-box rendering below still references
-// NeoForge's own FluidStack/FluidTank/NeoForgeCatnipServices.FLUID_RENDERER, none of which exist
-// on Fabric - this is the same NeoForge-Capabilities-to-Fabric-Transfer-API rewrite already tracked
-// as its own separate priority item (the ~15 capability block entities), not something to
-// improvise here. The boiler-gauge rendering (no fluid capability dependency at all) is fully
-// fixed onto the new architecture below.
-public class FluidVesselRenderer extends SmartBlockEntityRenderer<FluidVesselBlockEntity, FluidVesselRenderer.FluidVesselRenderState> {
-
+public class FluidVesselRenderer implements BlockEntityRenderer<FluidVesselBlockEntity, FluidVesselRenderer.FluidVesselRenderState> {
     public FluidVesselRenderer(BlockEntityRendererProvider.Context context) {
-        super(context);
     }
 
     @Override
@@ -59,160 +41,204 @@ public class FluidVesselRenderer extends SmartBlockEntityRenderer<FluidVesselBlo
             Vec3 cameraPos,
             @Nullable ModelFeatureRenderer.CrumblingOverlay crumblingOverlay
     ) {
-        super.extractRenderState(be, state, tickProgress, cameraPos, crumblingOverlay);
-        state.isController = be.isController();
-        if (!state.isController)
+        if (!be.isController())
             return;
 
-        state.hasWindow = be.hasWindow();
-        state.boilerActive = be.boiler.isActive();
-        state.axis = be.getAxis();
-        state.width = be.getWidth();
-        state.height = be.getHeight();
-
-        if (!state.hasWindow) {
-            if (state.boilerActive) {
-                state.gaugeProgress = be.boiler.gauge.getValue(tickProgress);
-                state.occludedDirections = be.boiler.occludedDirections.clone();
-            }
-            return;
+        if (be.hasWindow()) {
+            updateFluidVesselState(be, state, tickProgress, crumblingOverlay);
+        } else if (be.boiler.isActive()) {
+            updateBoilerState(be, state, tickProgress, crumblingOverlay);
         }
-
-        LerpedFloat fluidLevel = be.getFluidLevel();
-        if (fluidLevel == null) {
-            state.fluidLevelValue = -1;
-            return;
-        }
-        state.fluidLevelValue = fluidLevel.getValue(tickProgress);
-        state.tankInventory = be.getTankInventory();
     }
 
-    @Override
-    public void submit(FluidVesselRenderState state, PoseStack matrices, SubmitNodeCollector queue, CameraRenderState cameraState) {
-        super.submit(state, matrices, queue, cameraState);
-        if (!state.isController)
-            return;
-
-        if (!state.hasWindow) {
-            if (state.boilerActive)
-                submitBoiler(state, matrices, queue);
-            return;
-        }
-
-        if (state.fluidLevelValue < 0)
+    private void updateFluidVesselState(
+            FluidVesselBlockEntity be,
+            FluidVesselRenderState state,
+            float tickProgress,
+            @Nullable ModelFeatureRenderer.CrumblingOverlay crumblingOverlay
+    ) {
+        LerpedFloat fluidLevel = be.getFluidLevel();
+        if (fluidLevel == null)
             return;
 
         float capSize = 1 / 4f;
         float tankHullSize = 1 / 16f + 1 / 128f;
         float minPuddleHeight = 1 / 16f;
-        float totalHeight = state.width - 2 * tankHullSize - minPuddleHeight;
-
-        float level = state.fluidLevelValue;
+        float totalHeight = be.getWidth() - 2 * tankHullSize - minPuddleHeight;
+        float level = fluidLevel.getValue(tickProgress);
         if (level < 1 / (512f * totalHeight))
             return;
-        float clampedLevel = Mth.clamp(level * totalHeight, 0, totalHeight);
 
-        FluidTank tank = state.tankInventory;
-        FluidStack fluidStack = tank.getFluid();
-
+        FluidStack fluidStack = be.getTankInventory().getFluid();
         if (fluidStack.isEmpty())
             return;
 
-        boolean top = fluidStack.getFluid()
-                .getFluidType()
-                .isLighterThanAir();
+        BlockEntityRenderState.extractBase(be, state, crumblingOverlay);
+        state.layer = RenderTypes.translucentMovingBlock();
+        FluidVesselRenderData data = new FluidVesselRenderData();
+        state.data = data;
 
-        Axis axis = state.axis;
-        float xMin = axis == Axis.X ? capSize : tankHullSize;
-        float xMax = axis == Axis.X ? xMin + state.height - 2 * capSize : xMin + state.width - 2 * tankHullSize;
-        float yMin = totalHeight + tankHullSize + minPuddleHeight - clampedLevel;
-        float yMax = yMin + clampedLevel;
+        float clampedLevel = Mth.clamp(level * totalHeight, 0, totalHeight);
+        data.translateY = clampedLevel - totalHeight;
+        data.light = state.lightCoords;
+        data.fluid = fluidStack.getFluid();
+        data.changes = fluidStack.getComponentChanges();
 
-        if (top) {
-            yMin += totalHeight - clampedLevel;
-            yMax += totalHeight - clampedLevel;
-        }
-
-        float zMin = axis == Axis.Z ? capSize : tankHullSize;
-        float zMax = axis == Axis.Z ? zMin + state.height - 2 * capSize : zMin + state.width - 2 * tankHullSize;
-
-        MultiBufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
-        matrices.pushPose();
-        matrices.translate(0, clampedLevel - totalHeight, 0);
-        NeoForgeCatnipServices.FLUID_RENDERER.renderFluidBox(
-                fluidStack,
-                xMin, yMin, zMin,
-                xMax, yMax, zMax,
-                buffer,
-                matrices,
-                state.lightCoords,
-                false,
-                true
-        );
-        matrices.popPose();
+        Axis axis = be.getAxis();
+        data.xMin = axis == Axis.X ? capSize : tankHullSize;
+        data.xMax = axis == Axis.X
+                ? data.xMin + be.getHeight() - 2 * capSize
+                : data.xMin + be.getWidth() - 2 * tankHullSize;
+        data.yMin = totalHeight + tankHullSize + minPuddleHeight - clampedLevel;
+        data.yMax = data.yMin + clampedLevel;
+        data.zMin = axis == Axis.Z ? capSize : tankHullSize;
+        data.zMax = axis == Axis.Z
+                ? data.zMin + be.getHeight() - 2 * capSize
+                : data.zMin + be.getWidth() - 2 * tankHullSize;
     }
 
-    protected void submitBoiler(FluidVesselRenderState state, PoseStack matrices, SubmitNodeCollector queue) {
-        BlockState blockState = state.blockState;
-        matrices.pushPose();
-        var msr = TransformStack.of(matrices);
-        Axis axis = state.axis;
-        msr.translate(axis == Axis.X ? state.height / 2f : state.width / 2f, 0.5, axis == Axis.Z ? state.height / 2f : state.width / 2f);
+    private void updateBoilerState(
+            FluidVesselBlockEntity be,
+            FluidVesselRenderState state,
+            float tickProgress,
+            @Nullable ModelFeatureRenderer.CrumblingOverlay crumblingOverlay
+    ) {
+        boolean[] occludedDirections = be.boiler.occludedDirections;
+        if (occludedDirections[0] && occludedDirections[1] && occludedDirections[2] && occludedDirections[3])
+            return;
 
-        float dialPivotY = 6f / 16;
-        float dialPivotZ = 8f / 16;
-        float progress = state.gaugeProgress;
-        int light = state.lightCoords;
-
-        queue.submitCustomGeometry(matrices, RenderTypes.cutoutMovingBlock(), (matricesEntry, vertexConsumer) -> {
-            for (Direction d : Iterate.horizontalDirections) {
-                if (state.occludedDirections[d.get2DDataValue()])
-                    continue;
-                if (d.getAxis() != axis)
-                    continue;
-                float yRot = -d.toYRot() - 90;
-                CachedBuffers.partial(AllPartialModels.BOILER_GAUGE, blockState)
-                        .rotateYDegrees(yRot)
-                        .uncenter()
-                        .translate(state.width / 2f - 6 / 16f, 0, 0)
-                        .light(light)
-                        .renderInto(matricesEntry, vertexConsumer);
-                CachedBuffers.partial(AllPartialModels.BOILER_GAUGE_DIAL, blockState)
-                        .rotateYDegrees(yRot)
-                        .uncenter()
-                        .translate(state.width / 2f - 6 / 16f, 0, 0)
-                        .translate(0, dialPivotY, dialPivotZ)
-                        .rotateXDegrees(-145 * progress + 90)
-                        .translate(0, -dialPivotY, -dialPivotZ)
-                        .light(light)
-                        .renderInto(matricesEntry, vertexConsumer);
-            }
-        });
-
-        matrices.popPose();
+        BlockEntityRenderState.extractBase(be, state, crumblingOverlay);
+        state.layer = RenderTypes.cutoutMovingBlock();
+        BoilerRenderData data = new BoilerRenderData();
+        state.data = data;
+        data.axis = be.getAxis();
+        data.translateX = data.axis == Axis.X ? be.getHeight() / 2f : be.getWidth() / 2f;
+        data.translateZ = data.axis == Axis.Z ? be.getHeight() / 2f : be.getWidth() / 2f;
+        data.light = state.lightCoords;
+        data.gaugeOffset = be.getWidth() / 2f - 6 / 16f;
+        data.dialPivotY = 6f / 16;
+        data.dialPivotZ = 8f / 16;
+        data.progress = -145 * be.boiler.gauge.getValue(tickProgress) + 90;
+        data.gauge = CachedBuffers.partial(AllPartialModels.BOILER_GAUGE, state.blockState);
+        data.gaugeDial = CachedBuffers.partial(AllPartialModels.BOILER_GAUGE_DIAL, state.blockState);
+        data.north = !occludedDirections[2] && data.axis == Axis.Z;
+        data.south = !occludedDirections[0] && data.axis == Axis.Z;
+        data.west = !occludedDirections[1] && data.axis == Axis.X;
+        data.east = !occludedDirections[3] && data.axis == Axis.X;
     }
 
-    // Real, minor behavior change: vanilla's shouldRenderOffScreen() no longer takes the
-    // BlockEntity instance (see PORTING_NOTES.md), so we can no longer return `true` only for the
-    // controller part of a multi-block vessel and `false` otherwise - always returning `true` here
-    // errs on the side of the old controller behavior (always rendered regardless of view
-    // frustum), at the cost of slightly less strict culling for non-controller parts, which is a
-    // negligible performance difference, not a functional regression.
+    @Override
+    public void submit(
+            FluidVesselRenderState state,
+            PoseStack matrices,
+            SubmitNodeCollector queue,
+            CameraRenderState cameraState
+    ) {
+        if (state.data == null)
+            return;
+
+        state.data.translate(matrices);
+        queue.submitCustomGeometry(matrices, state.layer, state.data);
+    }
+
     @Override
     public boolean shouldRenderOffScreen() {
         return true;
     }
 
-    public static class FluidVesselRenderState extends SmartRenderState {
-        public boolean isController;
-        public boolean hasWindow;
-        public boolean boilerActive;
+    public static class FluidVesselRenderState extends BlockEntityRenderState {
+        public RenderType layer;
+        public RenderData data;
+    }
+
+    public interface RenderData extends SubmitNodeCollector.CustomGeometryRenderer {
+        void translate(PoseStack matrices);
+    }
+
+    public static class FluidVesselRenderData implements RenderData {
+        public Fluid fluid;
+        public DataComponentPatch changes;
+        public float xMin;
+        public float xMax;
+        public float yMin;
+        public float yMax;
+        public float zMin;
+        public float zMax;
+        public float translateY;
+        public int light;
+
+        @Override
+        public void translate(PoseStack matrices) {
+            matrices.translate(0, translateY, 0);
+        }
+
+        @Override
+        public void render(PoseStack.Pose matricesEntry, VertexConsumer vertexConsumer) {
+            FluidRenderHelper.renderFluidBox(
+                    fluid,
+                    changes,
+                    xMin,
+                    yMin,
+                    zMin,
+                    xMax,
+                    yMax,
+                    zMax,
+                    vertexConsumer,
+                    matricesEntry,
+                    light,
+                    false,
+                    true
+            );
+        }
+    }
+
+    public static class BoilerRenderData implements RenderData {
         public Axis axis;
-        public int width;
-        public int height;
-        public float gaugeProgress;
-        public boolean[] occludedDirections;
-        public float fluidLevelValue = -1;
-        public FluidTank tankInventory;
+        public float translateX;
+        public float translateZ;
+        public float gaugeOffset;
+        public float dialPivotY;
+        public float dialPivotZ;
+        public float progress;
+        public SuperByteBuffer gauge;
+        public SuperByteBuffer gaugeDial;
+        public boolean north;
+        public boolean south;
+        public boolean west;
+        public boolean east;
+        public int light;
+
+        @Override
+        public void translate(PoseStack matrices) {
+            matrices.translate(translateX, 0.5, translateZ);
+        }
+
+        private void renderFace(int yRot, PoseStack.Pose matricesEntry, VertexConsumer vertexConsumer) {
+            gauge.rotateYDegrees(yRot)
+                    .uncenter()
+                    .translate(gaugeOffset, 0, 0)
+                    .light(light)
+                    .renderInto(matricesEntry, vertexConsumer);
+            gaugeDial.rotateYDegrees(yRot)
+                    .uncenter()
+                    .translate(gaugeOffset, 0, 0)
+                    .translate(0, dialPivotY, dialPivotZ)
+                    .rotateXDegrees(progress)
+                    .translate(0, -dialPivotY, -dialPivotZ)
+                    .light(light)
+                    .renderInto(matricesEntry, vertexConsumer);
+        }
+
+        @Override
+        public void render(PoseStack.Pose matricesEntry, VertexConsumer vertexConsumer) {
+            if (south)
+                renderFace(-90, matricesEntry, vertexConsumer);
+            if (west)
+                renderFace(-180, matricesEntry, vertexConsumer);
+            if (north)
+                renderFace(-270, matricesEntry, vertexConsumer);
+            if (east)
+                renderFace(-360, matricesEntry, vertexConsumer);
+        }
     }
 }
