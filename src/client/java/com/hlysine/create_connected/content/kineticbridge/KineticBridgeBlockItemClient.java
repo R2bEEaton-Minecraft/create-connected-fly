@@ -6,6 +6,7 @@ import com.zurrtum.create.client.catnip.outliner.Outliner;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.phys.AABB;
@@ -21,7 +22,8 @@ public class KineticBridgeBlockItemClient {
         Direction facing = ((KineticBridgeBlock) item.getBlock()).getDirectionForPlacement(context);
         if (!(context.getPlayer() instanceof LocalPlayer localPlayer))
             return;
-        Outliner.getInstance().showAABB(Pair.of("kinetic_bridge", pos), new AABB(pos).expandTowards(facing.getNormal().getX(), facing.getNormal().getY(), facing.getNormal().getZ()))
+        Vec3i step = facing.getUnitVec3i();
+        Outliner.getInstance().showAABB(Pair.of("kinetic_bridge", pos), new AABB(pos).expandTowards(step.getX(), step.getY(), step.getZ()))
                 .colored(0xFF_ff5d6c);
         ConnectedLang.translate("kinetic_bridge.not_enough_space")
                 .color(0xFF_ff5d6c)

@@ -1,13 +1,16 @@
 package com.hlysine.create_connected;
 
 import com.hlysine.create_connected.config.CCConfigsClient;
-import com.hlysine.create_connected.content.dashboard.ClientPlayerAccess;
 import com.hlysine.create_connected.content.ClutchValueBox;
+import com.hlysine.create_connected.content.dashboard.ClientPlayerAccess;
 import com.hlysine.create_connected.content.centrifugalclutch.CentrifugalClutchScrollValueBehaviour;
+import com.hlysine.create_connected.content.contraption.jukebox.PlayContraptionJukeboxPacketClient;
 import com.hlysine.create_connected.content.dashboard.DashboardBlockEntity;
 import com.hlysine.create_connected.content.fluidvessel.FluidVesselTooltipBehaviour;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryDisplaySourceRender;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryTooltipBehaviour;
+import com.hlysine.create_connected.content.kineticbridge.KineticBridgeBlockItemClient;
+import com.hlysine.create_connected.content.kineticbridge.StressImpactScrollValueBehaviour;
 import com.hlysine.create_connected.content.overstressclutch.OverstressClutchBlockEntityClient;
 import com.hlysine.create_connected.content.overstressclutch.OverstressClutchTooltipBehaviour;
 import com.hlysine.create_connected.content.overstressclutch.OverstressClutchScrollValueBehaviour;
@@ -19,7 +22,7 @@ import com.hlysine.create_connected.registries.CCBlocks;
 import com.hlysine.create_connected.registries.CCColorHandlers;
 import com.hlysine.create_connected.registries.CCDisplaySources;
 import com.hlysine.create_connected.registries.CCItemTooltips;
-import com.hlysine.create_connected.registries.CCMvpBlockEntityRenders;
+import com.hlysine.create_connected.registries.CCBlockEntityRenders;
 import com.hlysine.create_connected.registries.CCModels;
 import com.hlysine.create_connected.registries.CCPartialModels;
 import com.hlysine.create_connected.registries.CCPonderPlugin;
@@ -46,20 +49,20 @@ public class CreateConnectedClient implements ClientModInitializer {
         DashboardBlockEntity.localPlayerHook = ClientPlayerAccess::getPlayer;
         SequencedPulseGeneratorBlock.displayScreenHook = SequencedPulseGeneratorBlockClient::displayScreen;
         Instruction.i18nExistsHook = I18n::exists;
+        KineticBridgeBlockItemClient.register();
+        PlayContraptionJukeboxPacketClient.register();
         CCDisplaySources.KINETIC_BATTERY.attachRender = new KineticBatteryDisplaySourceRender();
         CCPartialModels.register();
         CCModels.register();
-        CCMvpBlockEntityRenders.register();
+        CCBlockEntityRenders.register();
         CCItemTooltips.register();
         PonderIndex.addPlugin(new CCPonderPlugin());
         ColorProviderRegistry.BLOCK.register(CCColorHandlers.waterBlockTint(), CCBlocks.FAN_SPLASHING_CATALYST);
-        // MVP no-ops: custom block-entity rendering, kinetic-battery item predicates,
-        // and Ponder scenes are still excluded in build.gradle until their
-        // 1.21.11 client API ports are complete.
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.KINETIC_BATTERY, KineticBatteryTooltipBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.BRASS_CHUTE, ChuteTooltipBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.FLUID_VESSEL, FluidVesselTooltipBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.CREATIVE_FLUID_VESSEL, FluidVesselTooltipBehaviour::new);
+        BlockEntityBehaviour.addClient(CCBlockEntityTypes.KINETIC_BRIDGE, StressImpactScrollValueBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.OVERSTRESS_CLUTCH, OverstressClutchTooltipBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.LINKED_TRANSMITTER, ConnectedLinkBehaviour::new);
         // LinkedAnalogLeverBlockEntity retags itself to LINKED_ANALOG_LEVER (see its constructor),

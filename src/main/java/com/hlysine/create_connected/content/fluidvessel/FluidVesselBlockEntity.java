@@ -4,6 +4,7 @@ import com.hlysine.create_connected.CreateConnected;
 import com.zurrtum.create.api.connectivity.ConnectivityHandler;
 import com.zurrtum.create.content.fluids.tank.FluidTankBlockEntity;
 import com.zurrtum.create.foundation.blockEntity.IMultiBlockEntityContainer;
+import com.zurrtum.create.foundation.fluid.FluidHelper;
 import com.zurrtum.create.infrastructure.config.AllConfigs;
 import com.zurrtum.create.infrastructure.fluids.BucketFluidInventory;
 import com.zurrtum.create.infrastructure.fluids.FluidStack;
@@ -132,6 +133,30 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IMul
         lastKnownPos = worldPosition;
     }
 
+    private void invalidateFluidCapabilityCache() {
+        if (!hasLevel() || level.isClientSide())
+            return;
+
+        Axis axis = getAxis();
+        int cachedWidth = Math.max(1, width);
+        int cachedHeight = Math.max(1, height);
+        for (int yOffset = 0; yOffset < cachedWidth; yOffset++) {
+            for (int lengthOffset = 0; lengthOffset < cachedHeight; lengthOffset++) {
+                for (int widthOffset = 0; widthOffset < cachedWidth; widthOffset++) {
+                    BlockPos pos = worldPosition.offset(
+                            axis == Axis.X ? lengthOffset : widthOffset,
+                            yOffset,
+                            axis == Axis.Z ? lengthOffset : widthOffset
+                    );
+                    FluidHelper.invalidateInventoryCache(pos);
+                }
+            }
+        }
+        FluidHelper.invalidateInventoryCache(worldPosition);
+        if (controller != null)
+            FluidHelper.invalidateInventoryCache(controller);
+    }
+
     @Override
     protected void onFluidStackChanged(FluidStack newFluidStack) {
         if (!hasLevel())
@@ -199,6 +224,7 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IMul
     public void removeController(boolean keepFluids) {
         if (level.isClientSide())
             return;
+        invalidateFluidCapabilityCache();
         updateConnectivity = true;
         if (!keepFluids)
             applyFluidTankSize(1);
@@ -217,6 +243,7 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IMul
         }
 
         refreshCapability();
+        invalidateFluidCapabilityCache();
         setChanged();
         sendData();
     }
@@ -361,8 +388,10 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IMul
             return;
         if (controller.equals(this.controller))
             return;
+        invalidateFluidCapabilityCache();
         this.controller = controller;
         refreshCapability();
+        invalidateFluidCapabilityCache();
         setChanged();
         sendData();
     }
@@ -542,6 +571,7 @@ public class FluidVesselBlockEntity extends FluidTankBlockEntity implements IMul
             setWindows(window);
         onFluidStackChanged(tankInventory.getFluid());
         updateBoilerState();
+        invalidateFluidCapabilityCache();
         setChanged();
     }
 

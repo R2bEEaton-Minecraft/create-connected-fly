@@ -5,6 +5,8 @@ import com.hlysine.create_connected.content.fluidvessel.FluidVesselBlockEntity;
 import com.hlysine.create_connected.content.inventoryaccessport.InventoryAccessPortBlockEntity;
 import com.hlysine.create_connected.content.inventorybridge.InventoryBridgeBlockEntity;
 import com.hlysine.create_connected.content.itemsilo.ItemSiloBlockEntity;
+import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
+import com.zurrtum.create.foundation.blockEntity.behaviour.CachedFluidInventoryBehaviour;
 import com.zurrtum.create.infrastructure.transfer.FluidInventoryStorage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
@@ -28,30 +30,54 @@ import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
  */
 public class CCTransfer {
     public static void register() {
-        ItemStorage.SIDED.registerForBlockEntity(
-                (be, side) -> InventoryStorage.of(be.getItemCapability(), side),
-                CCBlockEntityTypes.ITEM_SILO
+        ItemStorage.SIDED.registerForBlocks(
+                (world, pos, state, blockEntity, side) -> blockEntity instanceof ItemSiloBlockEntity be
+                        ? InventoryStorage.of(be.getItemCapability(), side)
+                        : null,
+                CCBlocks.ITEM_SILO
         );
-        ItemStorage.SIDED.registerForBlockEntity(
-                (be, side) -> InventoryStorage.of(be.getItemCapability(), side),
-                CCBlockEntityTypes.INVENTORY_ACCESS_PORT
+        ItemStorage.SIDED.registerForBlocks(
+                (world, pos, state, blockEntity, side) -> blockEntity instanceof InventoryAccessPortBlockEntity be
+                        ? InventoryStorage.of(be.getItemCapability(), side)
+                        : null,
+                CCBlocks.INVENTORY_ACCESS_PORT
         );
-        ItemStorage.SIDED.registerForBlockEntity(
-                (be, side) -> InventoryStorage.of(be.getItemCapability(), side),
-                CCBlockEntityTypes.INVENTORY_BRIDGE
+        ItemStorage.SIDED.registerForBlocks(
+                (world, pos, state, blockEntity, side) -> blockEntity instanceof InventoryBridgeBlockEntity be
+                        ? InventoryStorage.of(be.getItemCapability(), side)
+                        : null,
+                CCBlocks.INVENTORY_BRIDGE
         );
-        ItemStorage.SIDED.registerForBlockEntity(
-                (be, side) -> InventoryStorage.of(be.itemHandler(), side),
-                CCBlockEntityTypes.BRASS_CHUTE
+        ItemStorage.SIDED.registerForBlocks(
+                (world, pos, state, blockEntity, side) -> blockEntity instanceof BrassChuteBlockEntity be
+                        ? InventoryStorage.of(be.itemHandler(), side)
+                        : null,
+                CCBlocks.BRASS_CHUTE
         );
 
-        FluidStorage.SIDED.registerForBlockEntity(
-                (be, side) -> be.fluidCapability == null ? null : FluidInventoryStorage.of(be.fluidCapability, side),
-                CCBlockEntityTypes.FLUID_VESSEL
+        BlockEntityBehaviour.add(CCBlockEntityTypes.FLUID_VESSEL,
+                be -> new CachedFluidInventoryBehaviour<>(be, tank -> {
+                    if (tank.fluidCapability == null)
+                        tank.refreshCapability();
+                    return tank.fluidCapability;
+                }));
+        BlockEntityBehaviour.add(CCBlockEntityTypes.CREATIVE_FLUID_VESSEL,
+                be -> new CachedFluidInventoryBehaviour<>(be, tank -> {
+                    if (tank.fluidCapability == null)
+                        tank.refreshCapability();
+                    return tank.fluidCapability;
+                }));
+        FluidStorage.SIDED.registerForBlocks(
+                (world, pos, state, blockEntity, side) -> blockEntity instanceof FluidVesselBlockEntity be
+                        ? CachedFluidInventoryBehaviour.get(be, side)
+                        : null,
+                CCBlocks.FLUID_VESSEL
         );
-        FluidStorage.SIDED.registerForBlockEntity(
-                (be, side) -> be.fluidCapability == null ? null : FluidInventoryStorage.of(be.fluidCapability, side),
-                CCBlockEntityTypes.CREATIVE_FLUID_VESSEL
+        FluidStorage.SIDED.registerForBlocks(
+                (world, pos, state, blockEntity, side) -> blockEntity instanceof FluidVesselBlockEntity be
+                        ? CachedFluidInventoryBehaviour.get(be, side)
+                        : null,
+                CCBlocks.CREATIVE_FLUID_VESSEL
         );
     }
 }

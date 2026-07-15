@@ -3,12 +3,9 @@ package com.hlysine.create_connected.content.contraption.jukebox;
 import com.zurrtum.create.content.contraptions.AbstractContraptionEntity;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.JukeboxSong;
-
-import java.util.Optional;
 
 public class PlayContraptionJukeboxPacketClient {
     public static void register() {
@@ -26,14 +23,13 @@ public class PlayContraptionJukeboxPacketClient {
         if (!(entity instanceof AbstractContraptionEntity contraptionEntity))
             return;
         if (payload.play()) {
-            Optional<JukeboxSong> song = world.registryAccess()
-                    .registryOrThrow(Registries.JUKEBOX_SONG)
-                    .getHolder(payload.recordId())
-                    .map(Holder.Reference::value);
-            if (song.isEmpty())
+            JukeboxSong song = world.registryAccess()
+                    .lookupOrThrow(Registries.JUKEBOX_SONG)
+                    .byId(payload.recordId());
+            if (song == null)
                 return;
             ContraptionMusicManager.playContraptionMusic(
-                    song.get(),
+                    song,
                     contraptionEntity,
                     payload.contraptionPos(),
                     payload.worldPos(),

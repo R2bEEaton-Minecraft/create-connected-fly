@@ -5,17 +5,12 @@ import com.zurrtum.create.catnip.data.Pair;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.JukeboxSong;
+import net.minecraft.sounds.SoundSource;
 
 import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 public class ContraptionMusicManager {
     private static final Map<Pair<Integer, BlockPos>, SoundInstance> playingContraptionRecords = new HashMap<>();
@@ -52,6 +47,5 @@ public class ContraptionMusicManager {
             playingContraptionRecords.put(contraption, newInstance);
             Minecraft.getInstance().getSoundManager().play(newInstance);
         }
-        Minecraft.getInstance().levelRenderer.notifyNearbyEntities(Minecraft.getInstance().level, worldPos, song != null);
     }
 }

@@ -1,25 +1,24 @@
 package com.hlysine.create_connected.content.kineticbridge;
 
-
 import com.google.common.collect.ImmutableList;
 import com.hlysine.create_connected.ConnectedLang;
-import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
-import com.zurrtum.create.client.foundation.blockEntity.behaviour.ValueBoxTransform;
+import com.zurrtum.create.foundation.blockEntity.behaviour.ValueSettings;
 import com.zurrtum.create.client.foundation.blockEntity.ValueSettingsBoard;
 import com.zurrtum.create.client.foundation.blockEntity.ValueSettingsFormatter;
 import com.zurrtum.create.client.foundation.blockEntity.behaviour.scrollValue.ScrollValueBehaviour;
 import com.zurrtum.create.client.catnip.lang.LangNumberFormat;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.BlockHitResult;
 
-public class StressImpactScrollValueBehaviour extends ScrollValueBehaviour {
+public class StressImpactScrollValueBehaviour
+        extends ScrollValueBehaviour<KineticBridgeBlockEntity, ServerStressImpactScrollValueBehaviour> {
 
-    public StressImpactScrollValueBehaviour(Component label, SmartBlockEntity be, ValueBoxTransform slot) {
-        super(label, be, slot);
-        withFormatter(v -> String.format("%1sx", LangNumberFormat.format(convertValue(v))));
+    public StressImpactScrollValueBehaviour(KineticBridgeBlockEntity blockEntity) {
+        super(Component.translatable("create_connected.kinetic_bridge.stress_impact"), blockEntity,
+                new com.hlysine.create_connected.content.ClutchValueBox());
+        withFormatter(value -> LangNumberFormat.format(convertValue(value)) + "x");
     }
 
     public static float convertValue(int value) {
@@ -39,28 +38,9 @@ public class StressImpactScrollValueBehaviour extends ScrollValueBehaviour {
         return new ValueSettingsBoard(label, 160, 10, rows, formatter);
     }
 
-    @Override
-    public void setValueSettings(Player player, ValueSettings valueSetting, boolean ctrlHeld) {
-        int value = Math.max(0, valueSetting.value());
-        if (!valueSetting.equals(getValueSettings()))
-            playFeedbackSound(this);
-        setValue(Mth.abs(value));
-    }
-
-    @Override
-    public ValueSettings getValueSettings() {
-        return new ValueSettings(0, Math.abs(value));
-    }
-
     public MutableComponent formatSettings(ValueSettings settings) {
         return ConnectedLang.number(Math.max(0, convertValue(settings.value()))).add(Component.literal("x"))
                 .component();
     }
-
-    @Override
-    public String getClipboardKey() {
-        return "Stress Impact";
-    }
-
 }
 

@@ -10,6 +10,7 @@ import com.zurrtum.create.foundation.block.IBE;
 import com.zurrtum.create.foundation.blockEntity.ComparatorUtil;
 import com.zurrtum.create.foundation.fluid.FluidHelper;
 import com.zurrtum.create.foundation.fluid.FluidHelper.FluidExchange;
+import com.zurrtum.create.infrastructure.fluids.FluidInventoryProvider;
 import com.zurrtum.create.infrastructure.fluids.FluidInventory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -31,6 +32,7 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.util.RandomSource;
@@ -54,7 +56,8 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import com.zurrtum.create.infrastructure.fluids.FluidStack;
 
-public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVesselBlockEntity> {
+public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVesselBlockEntity>,
+        FluidInventoryProvider<FluidVesselBlockEntity> {
 
     public static final BooleanProperty POSITIVE = BooleanProperty.create("positive");
     public static final BooleanProperty NEGATIVE = BooleanProperty.create("negative");
@@ -290,6 +293,14 @@ public class FluidVesselBlock extends Block implements IWrenchable, IBE<FluidVes
     @Override
     public BlockEntityType<? extends FluidVesselBlockEntity> getBlockEntityType() {
         return creative ? CCBlockEntityTypes.CREATIVE_FLUID_VESSEL : CCBlockEntityTypes.FLUID_VESSEL;
+    }
+
+    @Override
+    public FluidInventory getFluidInventory(LevelAccessor world, BlockPos pos, BlockState state,
+                                            FluidVesselBlockEntity blockEntity, Direction context) {
+        if (blockEntity.fluidCapability == null)
+            blockEntity.refreshCapability();
+        return blockEntity.fluidCapability;
     }
 
     @Override
