@@ -88,17 +88,20 @@ public class LinkedAnalogLeverBlock extends AnalogLeverBlock implements SpecialB
         if (player.isSpectator())
             return InteractionResult.PASS;
 
-        return activateAnalogLever(level, pos, player);
+        if (isHittingBase(state, level, pos, hitResult)) {
+            return super.useWithoutItem(state, level, pos, player, hitResult);
+        }
+        return LinkedTransmitterBlock.super.useTransmitter(state, level, pos, player);
     }
 
     @Override
     public @NotNull InteractionResult useItemOn(@NotNull ItemStack stack,
-                                                    @NotNull BlockState state,
-                                                    @NotNull Level level,
-                                                    @NotNull BlockPos pos,
-                                                    @NotNull Player player,
-                                                    @NotNull InteractionHand hand,
-                                                    @NotNull BlockHitResult hitResult) {
+                                                @NotNull BlockState state,
+                                                @NotNull Level level,
+                                                @NotNull BlockPos pos,
+                                                @NotNull Player player,
+                                                @NotNull InteractionHand hand,
+                                                @NotNull BlockHitResult hitResult) {
         if (stack.is(AllItems.WRENCH)) {
             UseOnContext context = new UseOnContext(player, hand, hitResult);
             return player.isShiftKeyDown() ? onSneakWrenched(state, context) : onWrenched(state, context);
@@ -111,22 +114,13 @@ public class LinkedAnalogLeverBlock extends AnalogLeverBlock implements SpecialB
         if (player.isSpectator())
             return InteractionResult.PASS;
 
-        return activateAnalogLever(level, pos, player);
-    }
+        // Create Fly's AnalogLeverBlock performs the state change in useItemOn (it no longer
+        // overrides useWithoutItem at all), so base hits must be delegated here - falling through
+        // to useWithoutItem would silently do nothing.
+        if (isHittingBase(state, level, pos, hitResult))
+            return super.useItemOn(stack, state, level, pos, player, hand, hitResult);
 
-    private InteractionResult activateAnalogLever(Level level, BlockPos pos, Player player) {
-        if (level.isClientSide()) {
-            return InteractionResult.SUCCESS;
-        }
-
-        BlockEntity blockEntity = level.getBlockEntity(pos);
-        if (!(blockEntity instanceof AnalogLeverBlockEntity analogLever))
-            return InteractionResult.PASS;
-
-        analogLever.changeState(player.isShiftKeyDown());
-        float pitch = .25f + ((analogLever.getState() + 5) / 15f) * .5f;
-        level.playSound(null, pos, SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.2F, pitch);
-        return InteractionResult.SUCCESS_SERVER;
+        return InteractionResult.TRY_WITH_EMPTY_HAND;
     }
 
     // BlockBehaviour.onRemove(BlockState, Level, BlockPos, BlockState newState, boolean) was replaced by
@@ -198,6 +192,12 @@ public class LinkedAnalogLeverBlock extends AnalogLeverBlock implements SpecialB
         requiredItems.add(new ItemStack(getBase()));
         requiredItems.add(new ItemStack(CCItems.LINKED_TRANSMITTER));
         return new ItemRequirement(ItemRequirement.ItemUseType.CONSUME, requiredItems);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Class<AnalogLeverBlockEntity> getBlockEntityClass() {
+        return (Class<AnalogLeverBlockEntity>) (Class<?>) LinkedAnalogLeverBlockEntity.class;
     }
 
     @Override

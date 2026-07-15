@@ -23,6 +23,8 @@ import com.hlysine.create_connected.registries.CCMvpBlockEntityRenders;
 import com.hlysine.create_connected.registries.CCModels;
 import com.hlysine.create_connected.registries.CCPartialModels;
 import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
+import com.zurrtum.create.AllBlockEntityTypes;
+import com.zurrtum.create.client.content.redstone.link.ConnectedAnalogLeverLinkBehaviour;
 import com.zurrtum.create.client.content.redstone.link.ConnectedLinkBehaviour;
 import com.zurrtum.create.client.foundation.blockEntity.behaviour.scrollValue.RotationDirectionScrollBehaviour;
 import com.zurrtum.create.client.foundation.blockEntity.behaviour.tooltip.AnalogLeverTooltipBehaviour;
@@ -57,7 +59,10 @@ public class CreateConnectedClient implements ClientModInitializer {
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.CREATIVE_FLUID_VESSEL, FluidVesselTooltipBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.OVERSTRESS_CLUTCH, OverstressClutchTooltipBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.LINKED_TRANSMITTER, ConnectedLinkBehaviour::new);
-        BlockEntityBehaviour.addClient(CCBlockEntityTypes.LINKED_ANALOG_LEVER, ConnectedLinkBehaviour::new);
+        // LinkedAnalogLeverBlockEntity retags itself to LINKED_ANALOG_LEVER (see its constructor),
+        // so these registrations key correctly; Create Fly's own ANALOG_LEVER registrations no
+        // longer reach linked levers, hence the tooltip behaviour is re-added here.
+        BlockEntityBehaviour.addClient(CCBlockEntityTypes.LINKED_ANALOG_LEVER, ConnectedAnalogLeverLinkBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.LINKED_ANALOG_LEVER, AnalogLeverTooltipBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.CENTRIFUGAL_CLUTCH,
                 CentrifugalClutchScrollValueBehaviour::new);

@@ -28,7 +28,7 @@ public class ItemUseOverridesMixin {
             at = @At("HEAD"),
             argsOnly = true
     )
-    private BlockHitResult preciseHitLocation(ServerPlayer player, Level level, ItemStack stack, InteractionHand hand, BlockHitResult hitResult) {
+    private BlockHitResult preciseHitLocation(BlockHitResult hitResult, ServerPlayer player, Level level, ItemStack stack, InteractionHand hand) {
         BlockState state = level.getBlockState(hitResult.getBlockPos());
         Identifier id = RegisteredObjectsHelper.getKeyOrThrow(state.getBlock());
         if (PreciseItemUseOverrides.OVERRIDES.contains(id)) {

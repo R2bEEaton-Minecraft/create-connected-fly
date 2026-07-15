@@ -9,6 +9,7 @@ import com.hlysine.create_connected.content.kineticbridge.KineticBridgeRenderer;
 import com.hlysine.create_connected.content.kineticbridge.KineticBridgeVisual;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryRenderer;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryVisual;
+import com.hlysine.create_connected.content.linkedtransmitter.LinkedAnalogLeverRendererPort;
 import com.hlysine.create_connected.content.parallelgearbox.ParallelGearboxRenderer;
 import com.hlysine.create_connected.content.parallelgearbox.ParallelGearboxVisual;
 import com.hlysine.create_connected.content.shearpin.ShearPinVisual;
@@ -143,6 +144,10 @@ public final class CCMvpBlockEntityRenders {
 
         BlockEntityRendererRegistry.register(CCBlockEntityTypes.DASHBOARD, DashboardRenderer::new);
         BlockEntityRendererRegistry.register(CCBlockEntityTypes.LINKED_TRANSMITTER, SmartBlockEntityRenderer::new);
+        // LinkedAnalogLeverBlockEntity retags itself to this type (see its constructor), so this
+        // registration is what actually renders linked levers. Plain analog levers keep Create
+        // Fly's own AnalogLeverRenderer/AnalogLeverVisual.
+        registerLinkedAnalogLeverRenderer(CCBlockEntityTypes.LINKED_ANALOG_LEVER);
 
         registerKineticBridgeRenderer(CCBlockEntityTypes.KINETIC_BRIDGE, false);
         SimpleBlockEntityVisualizer.builder(CCBlockEntityTypes.KINETIC_BRIDGE)
@@ -181,6 +186,11 @@ public final class CCMvpBlockEntityRenders {
                 ? (BlockEntityRendererProvider) KineticBridgeRenderer::destination
                 : (BlockEntityRendererProvider) KineticBridgeRenderer::source;
         BlockEntityRendererRegistry.register(type, renderer);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void registerLinkedAnalogLeverRenderer(BlockEntityType<?> type) {
+        BlockEntityRendererRegistry.register(type, (BlockEntityRendererProvider) LinkedAnalogLeverRendererPort::new);
     }
 
 }

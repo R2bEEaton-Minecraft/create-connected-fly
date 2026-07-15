@@ -2467,10 +2467,10 @@ enabled.
 
 ### Temporarily disabled common/runtime integration
 
-- `fabric.mod.json` points to `create_connected.mvp.mixins.json`, an empty mixin configuration. The
-  full `create_connected.mixins.json` remains intact for incremental restoration. This was required
-  because the first required runtime mixin tested, `fluidvessel.SteamEngineBlockMixin`, still targets
-  the removed `SteamEngineBlock.onRemove(...)` signature and aborts bootstrap.
+- `fabric.mod.json` now points directly to `create_connected.mixins.json`; the temporary
+  `create_connected.mvp.mixins.json` split has been removed so runtime and development launches use
+  the same mixin set again. This avoids fixes landing in the dormant config and never executing in
+  game.
 - `CCTransfer.register()` is not called. One incomplete block-entity type supplies a null block to
   Fabric's lookup registration, so external item/fluid automation access is disabled for the MVP.
 - Three obsolete access-widener methods (`RecipeProvider.getName`,
@@ -2635,11 +2635,45 @@ provided by Create or an installed integration, without re-enabling broken recip
   Connected copycat subclasses through `BlockEntityType.isValid`, ensuring the entity needed for
   right-click material storage exists. All nine blocks are explicitly registered as `CUTOUT` with
   Fabric's `BlockRenderLayerMap` so the empty indicator's alpha is honored.
-- The active runtime config is `create_connected.mvp.mixins.json`, not the dormant full config.
-  It now includes the copycat model-loader hook, copycat block-entity compatibility hooks, and the
-  fence-gate accessor. Without the loader hook, captured materials were stored but the static base
-  JSON remained rendered; without the accessor entry, right-clicking a gate crashed at class load.
+- The active runtime config is `create_connected.mixins.json`; the earlier MVP-only split was
+  removed once the remaining required mixins were restored to the real launch path. This keeps
+  copycat, linked-transmitter, and other runtime fixes on the same configuration used in dev.
 - `ISimpleCopycatModel.MutableAABB` intentionally retains directionally reversed raw bounds after
   rotation/Y-flip, matching the original implementation. Minecraft's `AABB` constructor normalizes
   the final crop box, while `assemblePiece` uses the raw transformed minimum as its movement anchor;
   normalizing early displaced rotated fence and gate pieces.
+
+## Linked analog lever: interaction + stale value-box crash (2026-07-15)
+
+- `LinkedAnalogLeverBlock` base-portion clicks now delegate to `super.useItemOn(...)`. Create Fly's
+  `AnalogLeverBlock` performs the signal-strength change in `useItemOn` and no longer overrides
+  `useWithoutItem` at all, so the previous `useWithoutItem`-based delegation (upstream's Forge-era
+  flow) silently did nothing — right-clicking the lever base could not change strength. Sneak-click
+  decrease still works because Create Fly's own `ServerPlayerGameModeMixin` forces block use while
+  sneaking for any `instanceof AnalogLeverBlock`, which includes this subclass.
+- `LinkedTransmitterFrequencySlot` now returns a null local offset (and fails `shouldRender`/
+  `testHit`) for states without the `LOCKED` property. Create's outliner keeps fading value boxes
+  alive for a few ticks after the targeted block changes, so after breaking a linked analog lever
+  the slot callbacks could receive a plain `create:analog_lever` state and crash on
+  `getValue(LOCKED)` (crash-2026-07-15_09.08.46-client.txt).
+
+## Linked analog lever: block-entity type identity (2026-07-15)
+
+- Root cause of "frequency items invisible" AND "lever dead after relog": Create Fly's 2-arg
+  `AnalogLeverBlockEntity(BlockPos, BlockState)` constructor hardcodes `AllBlockEntityTypes.
+  ANALOG_LEVER`, and the port's `LinkedAnalogLeverBlockEntity` dropped its own type param, so every
+  linked-lever BE ran with Create's type. Consequences: (1) it saved to disk as
+  `create:analog_lever` and reloaded as a plain `AnalogLeverBlockEntity` — losing link data and
+  breaking interaction after relog; (2) Create Fly's `AnalogLeverVisual` (Flywheel, registered for
+  `ANALOG_LEVER` with unconditional `skipVanillaRender`) suppressed the vanilla render pass — the
+  only path that draws the transmitter frequency items — so the items never rendered while the
+  handle (drawn by the visual) looked fine; (3) every registration keyed by
+  `CCBlockEntityTypes.LINKED_ANALOG_LEVER` (renderer, `BlockEntityBehaviour.addClient`) silently
+  never applied.
+- Fix: `BlockEntityTypeAccessor` (`@Mixin(BlockEntity)`, `@Mutable @Accessor("type")`) lets the
+  constructor retag itself to the type passed by the registration factory. With the correct type,
+  the plain-`ANALOG_LEVER` renderer override and client-behaviour registrations that compensated
+  for the wrong identity were removed; plain analog levers are back on Create Fly's own
+  renderer/visual.
+- Verified in-game via temporary instrumentation: renderer extract/submit now run for linked
+  levers and the link render state carries the configured frequency stacks.

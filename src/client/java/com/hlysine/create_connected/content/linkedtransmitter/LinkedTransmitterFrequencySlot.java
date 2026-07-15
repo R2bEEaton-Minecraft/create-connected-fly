@@ -22,16 +22,26 @@ public class LinkedTransmitterFrequencySlot extends ValueBoxTransform.Dual {
 
     @Override
     public boolean shouldRender(BlockState state) {
-        return !state.getValue(BlockStateProperties.LOCKED) && super.shouldRender(state);
+        return hasSlots(state) && !state.getValue(BlockStateProperties.LOCKED) && super.shouldRender(state);
     }
 
     @Override
     public boolean testHit(LevelAccessor level, BlockPos pos, BlockState state, Vec3 localHit) {
-        return !state.getValue(BlockStateProperties.LOCKED) && super.testHit(level, pos, state, localHit);
+        return hasSlots(state) && !state.getValue(BlockStateProperties.LOCKED) && super.testHit(level, pos, state, localHit);
+    }
+
+    // The outliner keeps fading value boxes alive for a few ticks after the targeted block
+    // changes, so these callbacks can receive a plain analog lever state (which has FACING/FACE
+    // but no LOCKED) right after the linked block is broken or swapped. A null local offset makes
+    // the base class skip rendering, hits, and transforms alike.
+    private static boolean hasSlots(BlockState state) {
+        return state.hasProperty(BlockStateProperties.LOCKED);
     }
 
     @Override
     public Vec3 getLocalOffset(BlockState state) {
+        if (!hasSlots(state))
+            return null;
         Direction facing = state.getValue(LinkedButtonBlock.FACING);
         AttachFace face = state.getValue(LinkedButtonBlock.FACE);
         boolean locked = state.getValue(LinkedButtonBlock.LOCKED);

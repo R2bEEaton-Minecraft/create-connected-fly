@@ -1,7 +1,7 @@
 package com.hlysine.create_connected.mixin.linkedtransmitter;
 
 import com.hlysine.create_connected.content.linkedtransmitter.LinkedAnalogLeverBlockEntity;
-import com.zurrtum.create.client.content.redstone.link.ConnectedLinkBehaviour;
+import com.zurrtum.create.client.content.redstone.link.ConnectedAnalogLeverLinkBehaviour;
 import com.zurrtum.create.client.content.redstone.link.LinkBehaviour;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -17,6 +17,6 @@ public class LinkedAnalogLeverBlockEntityMixin {
             return;
         if (be.getBehaviour(LinkBehaviour.TYPE) != null)
             return;
-        be.attachBehaviourLate(new ConnectedLinkBehaviour(be));
+        be.attachBehaviourLate(new ConnectedAnalogLeverLinkBehaviour(be));
     }
 }
