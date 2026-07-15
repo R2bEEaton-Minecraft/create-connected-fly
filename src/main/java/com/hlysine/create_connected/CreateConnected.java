@@ -1,6 +1,7 @@
 package com.hlysine.create_connected;
 
 import com.hlysine.create_connected.compat.AdditionalPlacementsCompat;
+import com.hlysine.create_connected.compat.CCResourceConditions;
 import com.hlysine.create_connected.compat.CopycatsManager;
 import com.hlysine.create_connected.compat.Mods;
 import com.hlysine.create_connected.config.CCConfigs;
@@ -55,6 +56,7 @@ public class CreateConnected implements ModInitializer {
         CCCreativeTabs.register();
         CCSoundEvents.register();
         CCTransfer.register();
+        CCResourceConditions.register();
 
         CCConfigs.register();
         LinkWildcardNetworkHandler.register();

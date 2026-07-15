@@ -3,6 +3,9 @@ plugins {
     id 'maven-publish'
 }
 
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+
 version = "${project.create_fly_target_version}${project.port_version}+fabric-mc${project.minecraft_version}"
 group = project.maven_group
 
@@ -20,6 +23,266 @@ repositories {
         }
         filter {
             includeGroup "maven.modrinth"
+        }
+    }
+}
+
+def generatedRuntimeDataDir = layout.buildDirectory.dir("generated/runtime-data")
+def runtimeRecipeRoots = ["crafting/", "sequenced_assembly/", "filling/", "item_application/"]
+
+def convertNeoForgeCondition
+convertNeoForgeCondition = { Object raw ->
+    if (!(raw instanceof Map)) {
+        throw new GradleException("Expected condition object, got: ${raw}")
+    }
+
+    Map<String, Object> condition = new LinkedHashMap<>((Map<String, Object>) raw)
+    String type = (String) condition.remove("type")
+
+    if (type == null) {
+        throw new GradleException("Condition object missing 'type': ${raw}")
+    }
+
+    switch (type) {
+        case "create_connected:feature_enabled":
+        case "create_connected:feature_enabled_in_copycats":
+            condition.put("condition", type)
+            return condition
+        case "neoforge:mod_loaded":
+            return [
+                    condition: "fabric:all_mods_loaded",
+                    values   : [condition.remove("modid")]
+            ]
+        case "neoforge:not":
+            return [
+                    condition: "fabric:not",
+                    value    : convertNeoForgeCondition(condition.remove("value"))
+            ]
+        case "neoforge:and":
+            return [
+                    condition: "fabric:and",
+                    values   : ((List<?>) condition.remove("values")).collect(convertNeoForgeCondition)
+            ]
+        case "neoforge:or":
+            return [
+                    condition: "fabric:or",
+                    values   : ((List<?>) condition.remove("values")).collect(convertNeoForgeCondition)
+            ]
+        case "neoforge:false":
+            return [
+                    condition: "fabric:not",
+                    value    : [condition: "fabric:true"]
+            ]
+        default:
+            throw new GradleException("Unsupported NeoForge condition type '${type}' in generated recipe data")
+    }
+}
+
+def convertIngredient
+convertIngredient = { Object raw ->
+    if (raw instanceof Map) {
+        Map<String, Object> ingredient = new LinkedHashMap<>((Map<String, Object>) raw)
+        String type = (String) ingredient.get("type")
+        if (type == "neoforge:compound") {
+            List<?> nestedIngredients = (List<?>) ingredient.get("ingredients")
+            if (nestedIngredients == null || nestedIngredients.size() != 1) {
+                throw new GradleException("Unsupported NeoForge compound ingredient: ${raw}")
+            }
+            return convertIngredient(nestedIngredients.get(0))
+        }
+        if (ingredient.containsKey("item")) {
+            return ingredient.get("item")
+        }
+        if (ingredient.containsKey("tag")) {
+            return "#" + ingredient.get("tag")
+        }
+    }
+    if (raw instanceof List) {
+        return ((List<?>) raw).collect(convertIngredient)
+    }
+    return raw
+}
+
+def convertFluidIngredient
+convertFluidIngredient = { Object raw ->
+    if (!(raw instanceof Map)) {
+        return raw
+    }
+
+    Map<String, Object> ingredient = new LinkedHashMap<>((Map<String, Object>) raw)
+    String type = (String) ingredient.get("type")
+
+    if (type == "neoforge:compound") {
+        List<?> nestedIngredients = (List<?>) ingredient.get("ingredients")
+        if (nestedIngredients == null || nestedIngredients.size() != 1) {
+            throw new GradleException("Unsupported NeoForge compound fluid ingredient: ${raw}")
+        }
+
+        Map<String, Object> nestedIngredient = new LinkedHashMap<>((Map<String, Object>) nestedIngredients.get(0))
+        if (!nestedIngredient.containsKey("amount") && ingredient.containsKey("amount")) {
+            nestedIngredient.put("amount", ingredient.get("amount"))
+        }
+        return convertFluidIngredient(nestedIngredient)
+    }
+
+    if (type == "neoforge:single" || ingredient.containsKey("fluid")) {
+        ingredient.remove("type")
+        ingredient.put("type", "fluid_stack")
+        return ingredient
+    }
+
+    if (type == "neoforge:tag" || ingredient.containsKey("tag")) {
+        Object tag = ingredient.remove("tag")
+        ingredient.remove("type")
+        ingredient.put("type", "fluid_tag")
+        ingredient.put("fluid_tag", tag instanceof String && !((String) tag).startsWith("#") ? "#${tag}" : tag)
+        return ingredient
+    }
+
+    throw new GradleException("Unsupported fluid ingredient: ${raw}")
+}
+
+tasks.register("prepareRuntimeRecipeData") {
+    inputs.dir("src/generated/resources/data/create_connected/recipe")
+    outputs.dir(generatedRuntimeDataDir)
+
+    doLast {
+        File outputRoot = generatedRuntimeDataDir.get().asFile
+        delete(outputRoot)
+
+        File sourceRoot = file("src/generated/resources/data/create_connected/recipe")
+        if (!sourceRoot.exists()) {
+            return
+        }
+
+        sourceRoot.eachFileRecurse(groovy.io.FileType.FILES) { File sourceFile ->
+            String relativePath = sourceRoot.toPath().relativize(sourceFile.toPath()).toString().replace('\\', '/')
+            if (!runtimeRecipeRoots.any { relativePath.startsWith(it) }) {
+                return
+            }
+
+            Map<String, Object> json = (Map<String, Object>) new JsonSlurper().parse(sourceFile)
+            Object conditions = json.remove("neoforge:conditions")
+            if (conditions != null) {
+                json.put("fabric:load_conditions", ((List<?>) conditions).collect(convertNeoForgeCondition))
+            }
+
+            String recipeType = (String) json.get("type")
+            if (recipeType != null && recipeType.startsWith("minecraft:")) {
+                if (json.containsKey("key")) {
+                    Map<String, Object> key = new LinkedHashMap<>((Map<String, Object>) json.get("key"))
+                    key.replaceAll { _, value -> convertIngredient(value) }
+                    json.put("key", key)
+                }
+                if (json.containsKey("ingredients")) {
+                    json.put("ingredients", ((List<?>) json.get("ingredients")).collect(convertIngredient))
+                }
+                if (json.containsKey("ingredient")) {
+                    json.put("ingredient", convertIngredient(json.get("ingredient")))
+                }
+            } else if (recipeType == "create:item_application") {
+                List<?> ingredients = (List<?>) json.remove("ingredients")
+                if (ingredients == null || ingredients.size() != 2) {
+                    throw new GradleException("Expected exactly 2 ingredients in item application recipe '${relativePath}'")
+                }
+
+                json.put("target", convertIngredient(ingredients.get(0)))
+                json.put("ingredient", convertIngredient(ingredients.get(1)))
+            } else if (recipeType == "create:filling") {
+                List<?> ingredients = (List<?>) json.remove("ingredients")
+                List<?> results = (List<?>) json.remove("results")
+                if (ingredients == null || ingredients.size() != 2) {
+                    throw new GradleException("Expected exactly 2 ingredients in filling recipe '${relativePath}'")
+                }
+                if (results == null || results.size() != 1) {
+                    throw new GradleException("Expected exactly 1 result in filling recipe '${relativePath}'")
+                }
+
+                json.put("ingredient", convertIngredient(ingredients.get(0)))
+                json.put("fluid_ingredient", convertFluidIngredient(ingredients.get(1)))
+                json.put("result", results.get(0))
+            } else if (recipeType == "create:sequenced_assembly") {
+                json.put("ingredient", convertIngredient(json.get("ingredient")))
+
+                List<?> results = (List<?>) json.remove("results")
+                if (results == null || results.isEmpty()) {
+                    throw new GradleException("Expected at least 1 result in sequenced assembly recipe '${relativePath}'")
+                }
+
+                List<Map<String, Object>> weightedResults = results.collect { Object rawResult ->
+                    new LinkedHashMap<>((Map<String, Object>) rawResult)
+                }
+                double totalWeight = weightedResults.sum { Map<String, Object> result ->
+                    Object chance = result.get("chance")
+                    chance instanceof Number ? ((Number) chance).doubleValue() : 1.0d
+                } as double
+                if (totalWeight <= 0.0d) {
+                    throw new GradleException("Expected positive total weight in sequenced assembly recipe '${relativePath}'")
+                }
+
+                Map<String, Object> primaryResult = new LinkedHashMap<>(weightedResults.get(0))
+                double primaryWeight = primaryResult.get("chance") instanceof Number
+                        ? ((Number) primaryResult.get("chance")).doubleValue()
+                        : 1.0d
+                primaryResult.put("chance", primaryWeight / totalWeight)
+
+                json.put("result", primaryResult)
+                if (results.size() > 1) {
+                    json.put("junks", weightedResults.subList(1, weightedResults.size()))
+                }
+
+                List<?> sequence = (List<?>) json.get("sequence")
+                if (sequence == null) {
+                    throw new GradleException("Expected sequence steps in sequenced assembly recipe '${relativePath}'")
+                }
+
+                List<Map<String, Object>> convertedSequence = sequence.collect { Object rawStep ->
+                    Map<String, Object> step = new LinkedHashMap<>((Map<String, Object>) rawStep)
+                    String stepType = (String) step.get("type")
+                    List<?> stepIngredients = (List<?>) step.remove("ingredients")
+
+                    switch (stepType) {
+                        case "create:deploying":
+                        case "create:item_application":
+                            if (stepIngredients == null || stepIngredients.size() != 2) {
+                                throw new GradleException("Expected exactly 2 ingredients in sequenced step '${stepType}' for '${relativePath}'")
+                            }
+                            step.put("target", "\$ingredient")
+                            step.put("ingredient", convertIngredient(stepIngredients.get(1)))
+                            break
+                        case "create:pressing":
+                            if (stepIngredients == null || stepIngredients.size() != 1) {
+                                throw new GradleException("Expected exactly 1 ingredient in sequenced step '${stepType}' for '${relativePath}'")
+                            }
+                            step.put("ingredient", "\$ingredient")
+                            break
+                        case "create:filling":
+                            if (stepIngredients == null || stepIngredients.size() != 2) {
+                                throw new GradleException("Expected exactly 2 ingredients in sequenced step '${stepType}' for '${relativePath}'")
+                            }
+                            step.put("ingredient", "\$ingredient")
+                            step.put("fluid_ingredient", convertFluidIngredient(stepIngredients.get(1)))
+                            step.remove("results")
+                            step.put("result", "\$result")
+                            break
+                        default:
+                            throw new GradleException("Unsupported sequenced assembly step type '${stepType}' in '${relativePath}'")
+                    }
+
+                    if (stepType != "create:filling") {
+                        step.remove("results")
+                        step.put("results", ["\$result"])
+                    }
+
+                    return step
+                }
+
+                json.put("sequence", convertedSequence)
+            }
+
+            File targetFile = new File(outputRoot, "data/create_connected/recipe/${relativePath}")
+            targetFile.parentFile.mkdirs()
+            targetFile.text = JsonOutput.prettyPrint(JsonOutput.toJson(json)) + System.lineSeparator()
         }
     }
 }
@@ -66,13 +329,28 @@ dependencies {
     // Create Fly
     modImplementation "maven.modrinth:create-fly:${project.create_version}"
 
-    // JEI - optional compat, compile-only since it's a soft dependency (gated by Mods.JEI.isLoaded())
+    // JEI - optional compat, compile-only for production but present in the local dev runtime
     modCompileOnly "maven.modrinth:jei:${project.jei_version}"
+    modLocalRuntime "maven.modrinth:jei:${project.jei_version}"
 }
 
 processResources {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     inputs.property "version", project.version
+    dependsOn(tasks.named("prepareRuntimeRecipeData"))
+    exclude { details ->
+        String absolutePath = details.file.absolutePath.replace('\\', '/')
+        if (!absolutePath.contains('/src/generated/resources/')) {
+            return false
+        }
+
+        String relativePath = details.path
+        return relativePath.startsWith('data/') && (
+                relativePath.contains('/recipe/') ||
+                        relativePath.contains('/advancement/') ||
+                        relativePath.contains('/loot_table/')
+        )
+    }
 
     // The generated client assets are valid and contain most models/lang/sounds. Generated data
     // still contains NeoForge recipe conditions and pre-1.21.11 recipe shapes, so keep it out of
@@ -82,6 +360,10 @@ processResources {
         include "data/**/jukebox_song/**"
         include "data/**/tags/block/**"
         include "data/**/tags/item/**"
+    }
+
+    from(generatedRuntimeDataDir) {
+        include "data/**"
     }
 
     filesMatching("fabric.mod.json") {
