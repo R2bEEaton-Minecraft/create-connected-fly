@@ -49,8 +49,6 @@ loom {
 // unfinished client implementations so the port can reach a first runnable baseline.
 // Restore entries one feature cluster at a time; see PORTING_NOTES.md "MVP launch profile".
 sourceSets.client.java.exclude(
-        "com/hlysine/create_connected/ponder/**",
-        "com/hlysine/create_connected/registries/CCPonderPlugin.java",
         "com/hlysine/create_connected/registries/CCBlockEntityRenders.java",
         "com/hlysine/create_connected/content/contraption/jukebox/ContraptionMusicManager.java",
         "com/hlysine/create_connected/content/contraption/jukebox/PlayContraptionJukeboxPacketClient.java",

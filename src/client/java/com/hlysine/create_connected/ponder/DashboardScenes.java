@@ -5,8 +5,6 @@ import com.hlysine.create_connected.content.dashboard.DashboardBlockEntity;
 import com.zurrtum.create.AllBlocks;
 import com.zurrtum.create.AllDataComponents;
 import com.zurrtum.create.AllItems;
-import com.zurrtum.create.content.equipment.clipboard.ClipboardContent;
-import com.zurrtum.create.content.equipment.clipboard.ClipboardOverrides;
 import com.zurrtum.create.client.foundation.ponder.CreateSceneBuilder;
 import com.zurrtum.create.catnip.math.Pointing;
 import com.zurrtum.create.client.ponder.api.PonderPalette;
@@ -16,6 +14,8 @@ import com.zurrtum.create.client.ponder.api.element.ParrotPose;
 import com.zurrtum.create.client.ponder.api.scene.SceneBuilder;
 import com.zurrtum.create.client.ponder.api.scene.SceneBuildingUtil;
 import com.zurrtum.create.client.ponder.api.scene.Selection;
+import com.zurrtum.create.infrastructure.component.ClipboardContent;
+import com.zurrtum.create.infrastructure.component.ClipboardType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.CommonComponents;
@@ -55,8 +55,8 @@ public class DashboardScenes {
         scene.idle(80);
 
         Vec3 target = util.vector().topOf(boardPos);
-        ItemStack clipboard = AllBlocks.CLIPBOARD.asStack();
-        clipboard.set(AllDataComponents.CLIPBOARD_CONTENT, ClipboardContent.EMPTY.setType(ClipboardOverrides.ClipboardType.WRITTEN));
+        ItemStack clipboard = new ItemStack(AllBlocks.CLIPBOARD);
+        clipboard.set(AllDataComponents.CLIPBOARD_CONTENT, ClipboardContent.EMPTY.setType(ClipboardType.WRITTEN));
         scene.overlay().showControls(target, Pointing.RIGHT, 40).withItem(clipboard)
                 .rightClick();
         scene.idle(6);
@@ -89,7 +89,7 @@ public class DashboardScenes {
                 .placeNearTarget();
         scene.idle(50);
 
-        ItemStack item1 = AllItems.PROPELLER.asStack();
+        ItemStack item1 = new ItemStack(AllItems.PROPELLER);
         scene.world().createItemOnBeltLike(depotPos, Direction.SOUTH, item1);
         scene.world().modifyBlockEntity(boardPos, DashboardBlockEntity.class,
                 be -> be.setLine(0, item1.getHoverName())
@@ -125,7 +125,7 @@ public class DashboardScenes {
                 .placeNearTarget();
         scene.idle(100);
 
-        scene.overlay().showControls(target, Pointing.RIGHT, 40).withItem(AllItems.WRENCH.asStack());
+        scene.overlay().showControls(target, Pointing.RIGHT, 40).withItem(new ItemStack(AllItems.WRENCH));
         scene.idle(6);
         scene.world().modifyBlock(boardPos, state -> state.setValue(DashboardBlock.OPEN, false), false);
         scene.idle(25);

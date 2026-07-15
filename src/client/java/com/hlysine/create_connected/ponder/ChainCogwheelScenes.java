@@ -84,7 +84,7 @@ public class ChainCogwheelScenes {
 
         scene.addKeyframe();
         scene.overlay().showControls(util.vector().topOf(rotatedECD), Pointing.DOWN, 30).rightClick()
-                .withItem(AllItems.WRENCH.asStack());
+                .withItem(new net.minecraft.world.item.ItemStack(AllItems.WRENCH));
         scene.idle(7);
         scene.world().modifyBlock(rotatedECD, s -> s.setValue(ChainDriveBlock.AXIS, Direction.Axis.Y), true);
         scene.idle(40);

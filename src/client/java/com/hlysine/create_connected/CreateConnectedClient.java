@@ -22,6 +22,7 @@ import com.hlysine.create_connected.registries.CCItemTooltips;
 import com.hlysine.create_connected.registries.CCMvpBlockEntityRenders;
 import com.hlysine.create_connected.registries.CCModels;
 import com.hlysine.create_connected.registries.CCPartialModels;
+import com.hlysine.create_connected.registries.CCPonderPlugin;
 import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
 import com.zurrtum.create.AllBlockEntityTypes;
 import com.zurrtum.create.client.content.redstone.link.ConnectedAnalogLeverLinkBehaviour;
@@ -29,6 +30,7 @@ import com.zurrtum.create.client.content.redstone.link.ConnectedLinkBehaviour;
 import com.zurrtum.create.client.foundation.blockEntity.behaviour.scrollValue.RotationDirectionScrollBehaviour;
 import com.zurrtum.create.client.foundation.blockEntity.behaviour.tooltip.AnalogLeverTooltipBehaviour;
 import com.zurrtum.create.client.foundation.blockEntity.behaviour.tooltip.ChuteTooltipBehaviour;
+import com.zurrtum.create.client.ponder.foundation.PonderIndex;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.minecraft.client.resources.language.I18n;
@@ -49,6 +51,7 @@ public class CreateConnectedClient implements ClientModInitializer {
         CCModels.register();
         CCMvpBlockEntityRenders.register();
         CCItemTooltips.register();
+        PonderIndex.addPlugin(new CCPonderPlugin());
         ColorProviderRegistry.BLOCK.register(CCColorHandlers.waterBlockTint(), CCBlocks.FAN_SPLASHING_CATALYST);
         // MVP no-ops: custom block-entity rendering, kinetic-battery item predicates,
         // and Ponder scenes are still excluded in build.gradle until their

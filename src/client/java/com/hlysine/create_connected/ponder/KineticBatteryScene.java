@@ -351,10 +351,10 @@ public class KineticBatteryScene {
         scene.world().showSection(util.select().position(battery), Direction.DOWN);
         scene.idle(20);
 
-        scene.overlay().showControls(util.vector().blockSurface(battery, Direction.UP), Pointing.DOWN, 30).withItem(AllItems.WRENCH.asStack());
+        scene.overlay().showControls(util.vector().blockSurface(battery, Direction.UP), Pointing.DOWN, 30).withItem(new ItemStack(AllItems.WRENCH));
         scene.idle(30);
         scene.world().destroyBlock(battery);
-        ItemStack batteryStack = CCBlocks.KINETIC_BATTERY.asStack();
+        ItemStack batteryStack = new ItemStack(CCBlocks.KINETIC_BATTERY);
         batteryStack.set(CCDataComponents.KINETIC_BATTERY_CHARGE, KineticBatteryBlockEntity.getMaxBatteryLevel());
         var item = scene.world().createItemEntity(util.vector().centerOf(battery), Vec3.ZERO, batteryStack);
         scene.idle(20);
@@ -386,7 +386,7 @@ public class KineticBatteryScene {
         scene.overlay().showControls(util.vector().blockSurface(battery, Direction.UP), Pointing.DOWN, 30).withItem(batteryStack);
         scene.idle(30);
         scene.world().modifyBlock(battery, state -> state.setValue(KineticBatteryBlock.LEVEL, 5), false);
-        item = scene.world().createItemEntity(util.vector().centerOf(battery.above()), Vec3.ZERO, CCBlocks.KINETIC_BATTERY.asStack());
+        item = scene.world().createItemEntity(util.vector().centerOf(battery.above()), Vec3.ZERO, new ItemStack(CCBlocks.KINETIC_BATTERY));
 
         scene.overlay().showText(120)
                 .text("When a battery is discharging, right click with a charged battery to recharge")
@@ -407,7 +407,7 @@ public class KineticBatteryScene {
         scene.world().showSection(util.select().position(battery), Direction.DOWN);
         scene.idle(20);
 
-        scene.overlay().showControls(util.vector().blockSurface(battery, Direction.UP), Pointing.DOWN, 30).withItem(CCBlocks.KINETIC_BATTERY.asStack());
+        scene.overlay().showControls(util.vector().blockSurface(battery, Direction.UP), Pointing.DOWN, 30).withItem(new ItemStack(CCBlocks.KINETIC_BATTERY));
         scene.idle(30);
         scene.world().modifyBlock(battery, state -> state.setValue(KineticBatteryBlock.LEVEL, 0), false);
         item = scene.world().createItemEntity(util.vector().centerOf(battery.above()), Vec3.ZERO, batteryStack);
@@ -420,7 +420,7 @@ public class KineticBatteryScene {
         scene.idle(140);
         scene.world().modifyEntity(item, e -> e.remove(Entity.RemovalReason.DISCARDED));
 
-        scene.world().modifyBlockEntityNBT(util.select().position(deployer), DeployerBlockEntity.class, nbt -> nbt.put("HeldItem", batteryStack.saveOptional(scene.world().getHolderLookupProvider())));
+        scene.world().modifyBlockEntity(deployer, DeployerBlockEntity.class, be -> be.heldItem = batteryStack.copy());
         scene.world().showSection(deployerGroup, Direction.DOWN);
         scene.idle(10);
         scene.world().showSection(armGroup, Direction.DOWN);

@@ -3,8 +3,10 @@ package com.hlysine.create_connected.ponder;
 import com.hlysine.create_connected.registries.CCBlocks;
 import com.hlysine.create_connected.registries.CCItems;
 import com.hlysine.create_connected.content.linkedtransmitter.LinkedTransmitterBlockEntity;
+import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
 import com.zurrtum.create.AllItems;
 import com.zurrtum.create.content.redstone.link.RedstoneLinkBlockEntity;
+import com.zurrtum.create.content.redstone.link.ServerLinkBehaviour;
 import com.zurrtum.create.client.foundation.ponder.CreateSceneBuilder;
 import com.zurrtum.create.catnip.math.Pointing;
 import com.zurrtum.create.client.ponder.api.PonderPalette;
@@ -128,31 +130,31 @@ public class LinkedTransmitterScenes {
         scene.overlay().showControls(frontSlot, Pointing.UP, 30).withItem(iron);
         scene.idle(7);
         scene.overlay().showControls(backSlot, Pointing.DOWN, 30).withItem(sapling);
-        scene.world().modifyBlockEntityNBT(leverSelect, LinkedTransmitterBlockEntity.class,
-                nbt -> nbt.put("FrequencyLast", iron.saveOptional(scene.world().getHolderLookupProvider())));
+        scene.world().modifyBlockEntity(lever, LinkedTransmitterBlockEntity.class,
+                be -> BlockEntityBehaviour.get(be, ServerLinkBehaviour.TYPE).setFrequency(false, iron));
         scene.idle(7);
-        scene.world().modifyBlockEntityNBT(leverSelect, LinkedTransmitterBlockEntity.class,
-                nbt -> nbt.put("FrequencyFirst", sapling.saveOptional(scene.world().getHolderLookupProvider())));
+        scene.world().modifyBlockEntity(lever, LinkedTransmitterBlockEntity.class,
+                be -> BlockEntityBehaviour.get(be, ServerLinkBehaviour.TYPE).setFrequency(true, sapling));
         scene.idle(20);
 
         scene.overlay().showControls(bottom2Slot, Pointing.UP, 30).withItem(iron);
         scene.idle(7);
         scene.overlay().showControls(top2Slot, Pointing.DOWN, 30).withItem(sapling);
-        scene.world().modifyBlockEntityNBT(linkRightSelect, RedstoneLinkBlockEntity.class,
-                nbt -> nbt.put("FrequencyLast", iron.saveOptional(scene.world().getHolderLookupProvider())));
+        scene.world().modifyBlockEntity(linkRight, RedstoneLinkBlockEntity.class,
+                be -> BlockEntityBehaviour.get(be, ServerLinkBehaviour.TYPE).setFrequency(false, iron));
         scene.idle(7);
-        scene.world().modifyBlockEntityNBT(linkRightSelect, RedstoneLinkBlockEntity.class,
-                nbt -> nbt.put("FrequencyFirst", sapling.saveOptional(scene.world().getHolderLookupProvider())));
+        scene.world().modifyBlockEntity(linkRight, RedstoneLinkBlockEntity.class,
+                be -> BlockEntityBehaviour.get(be, ServerLinkBehaviour.TYPE).setFrequency(true, sapling));
         scene.idle(20);
 
         scene.overlay().showControls(bottom3Slot, Pointing.UP, 30).withItem(gold);
         scene.idle(7);
         scene.overlay().showControls(top3Slot, Pointing.DOWN, 30).withItem(sapling);
-        scene.world().modifyBlockEntityNBT(linkLeftSelect, RedstoneLinkBlockEntity.class,
-                nbt -> nbt.put("FrequencyLast", gold.saveOptional(scene.world().getHolderLookupProvider())));
+        scene.world().modifyBlockEntity(linkLeft, RedstoneLinkBlockEntity.class,
+                be -> BlockEntityBehaviour.get(be, ServerLinkBehaviour.TYPE).setFrequency(false, gold));
         scene.idle(7);
-        scene.world().modifyBlockEntityNBT(linkLeftSelect, RedstoneLinkBlockEntity.class,
-                nbt -> nbt.put("FrequencyFirst", sapling.saveOptional(scene.world().getHolderLookupProvider())));
+        scene.world().modifyBlockEntity(linkLeft, RedstoneLinkBlockEntity.class,
+                be -> BlockEntityBehaviour.get(be, ServerLinkBehaviour.TYPE).setFrequency(true, sapling));
         scene.idle(20);
 
         scene.world().toggleRedstonePower(leverSelect);
@@ -245,7 +247,7 @@ public class LinkedTransmitterScenes {
 
         scene.overlay().showControls(transmitVec, Pointing.DOWN, 40)
                 .rightClick()
-                .withItem(new ItemStack(AllItems.WRENCH.get()));
+                .withItem(new ItemStack(AllItems.WRENCH));
         scene.idle(20);
         scene.world().modifyBlock(lever, s -> Blocks.LEVER.defaultBlockState()
                         .setValue(ATTACH_FACE, s.getValue(ATTACH_FACE))
