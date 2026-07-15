@@ -90,7 +90,9 @@ processResources {
     // the MVP runtime pack until that conversion is complete.
     from("src/generated/resources") {
         include "assets/**"
+        include "data/**/jukebox_song/**"
         include "data/**/tags/block/**"
+        include "data/**/tags/item/**"
     }
 
     filesMatching("fabric.mod.json") {
