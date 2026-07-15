@@ -20,6 +20,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.function.Supplier;
 
 import static com.hlysine.create_connected.content.inventorybridge.InventoryBridgeBlock.ATTACHED_NEGATIVE;
@@ -48,6 +49,9 @@ public class InventoryBridgeBlockEntity extends SmartBlockEntity {
     @Override
     public void initialize() {
         super.initialize();
+        if (filters != null) {
+            filters.updateFilterPresence();
+        }
         updateConnectedInventory();
     }
 
@@ -110,6 +114,9 @@ public class InventoryBridgeBlockEntity extends SmartBlockEntity {
     }
 
     public void updateConnectedInventory() {
+        if (filters != null) {
+            filters.updateFilterPresence();
+        }
         negativeInventory.findNewCapability();
         positiveInventory.findNewCapability();
         boolean previouslyPowered = powered;
@@ -129,8 +136,16 @@ public class InventoryBridgeBlockEntity extends SmartBlockEntity {
 
     @Override
     protected void read(ValueInput tag, boolean clientPacket) {
-        super.read(tag, clientPacket);
         powered = tag.getBooleanOr("Powered", false);
+        try {
+            super.read(tag, clientPacket);
+        } catch (NoSuchElementException ignored) {
+            // Older/newly-ported scene templates can still contain sided-filter entries without the
+            // new explicit side field. Ignore those malformed entries and keep the filters empty.
+        }
+        if (filters != null) {
+            filters.updateFilterPresence();
+        }
     }
 
     @Override

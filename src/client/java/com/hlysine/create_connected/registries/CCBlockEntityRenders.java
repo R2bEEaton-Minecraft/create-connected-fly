@@ -146,6 +146,7 @@ public final class CCBlockEntityRenders {
         BlockEntityRendererRegistry.register(CCBlockEntityTypes.DASHBOARD, DashboardRenderer::new);
         registerFluidVesselRenderer(CCBlockEntityTypes.FLUID_VESSEL);
         registerFluidVesselRenderer(CCBlockEntityTypes.CREATIVE_FLUID_VESSEL);
+        BlockEntityRendererRegistry.register(CCBlockEntityTypes.INVENTORY_BRIDGE, SmartBlockEntityRenderer::new);
         BlockEntityRendererRegistry.register(CCBlockEntityTypes.LINKED_TRANSMITTER, SmartBlockEntityRenderer::new);
         // LinkedAnalogLeverBlockEntity retags itself to this type (see its constructor), so this
         // registration is what actually renders linked levers. Plain analog levers keep Create

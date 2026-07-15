@@ -7,8 +7,10 @@ import com.hlysine.create_connected.content.centrifugalclutch.CentrifugalClutchS
 import com.hlysine.create_connected.content.contraption.jukebox.PlayContraptionJukeboxPacketClient;
 import com.hlysine.create_connected.content.dashboard.DashboardBlockEntity;
 import com.hlysine.create_connected.content.fluidvessel.FluidVesselTooltipBehaviour;
+import com.hlysine.create_connected.content.inventorybridge.InventoryBridgeFilteringBehaviour;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryDisplaySourceRender;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryTooltipBehaviour;
+import com.hlysine.create_connected.content.kineticbattery.KineticBatteryValueBox;
 import com.hlysine.create_connected.content.kineticbridge.KineticBridgeBlockItemClient;
 import com.hlysine.create_connected.content.kineticbridge.StressImpactScrollValueBehaviour;
 import com.hlysine.create_connected.content.overstressclutch.OverstressClutchBlockEntityClient;
@@ -58,10 +60,16 @@ public class CreateConnectedClient implements ClientModInitializer {
         CCItemTooltips.register();
         PonderIndex.addPlugin(new CCPonderPlugin());
         ColorProviderRegistry.BLOCK.register(CCColorHandlers.waterBlockTint(), CCBlocks.FAN_SPLASHING_CATALYST);
+        BlockEntityBehaviour.addClient(CCBlockEntityTypes.KINETIC_BATTERY,
+                be -> new RotationDirectionScrollBehaviour(
+                        be,
+                        Component.translatable("create.contraptions.windmill.rotation_direction"),
+                        new KineticBatteryValueBox(3)));
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.KINETIC_BATTERY, KineticBatteryTooltipBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.BRASS_CHUTE, ChuteTooltipBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.FLUID_VESSEL, FluidVesselTooltipBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.CREATIVE_FLUID_VESSEL, FluidVesselTooltipBehaviour::new);
+        BlockEntityBehaviour.addClient(CCBlockEntityTypes.INVENTORY_BRIDGE, InventoryBridgeFilteringBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.KINETIC_BRIDGE, StressImpactScrollValueBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.OVERSTRESS_CLUTCH, OverstressClutchTooltipBehaviour::new);
         BlockEntityBehaviour.addClient(CCBlockEntityTypes.LINKED_TRANSMITTER, ConnectedLinkBehaviour::new);

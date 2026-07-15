@@ -9,7 +9,6 @@ import com.zurrtum.create.AllItems;
 import com.zurrtum.create.content.kinetics.belt.BeltBlock;
 import com.zurrtum.create.content.kinetics.belt.BeltPart;
 import com.zurrtum.create.content.kinetics.chainDrive.ChainDriveBlock;
-import com.zurrtum.create.content.kinetics.deployer.DeployerBlockEntity;
 import com.zurrtum.create.content.kinetics.saw.SawBlock;
 import com.zurrtum.create.content.redstone.displayLink.DisplayLinkBlock;
 import com.zurrtum.create.content.redstone.thresholdSwitch.ThresholdSwitchBlock;
@@ -340,12 +339,12 @@ public class KineticBatteryScene {
         BlockPos battery = util.grid().at(2, 1, 2);
         Selection saw = util.select().fromTo(0, 1, 2, 1, 1, 2);
         BlockPos lever = util.grid().at(2, 1, 1);
-        BlockPos deployer = util.grid().at(4, 1, 2);
         Selection deployerGroup = util.select().fromTo(4, 1, 2, 4, 1, 5).add(util.select().position(3, 0, 5));
         BlockPos arm = util.grid().at(2, 1, 4);
         Selection armGroup = util.select().fromTo(2, 1, 4, 2, 1, 5).add(util.select().position(2, 0, 5));
         Selection depot = util.select().position(0, 1, 4);
 
+        scene.world().setBlocks(deployerGroup, Blocks.AIR.defaultBlockState(), false);
         scene.world().showSection(util.select().fromTo(0, 0, 0, 4, 0, 4), Direction.UP);
         scene.idle(10);
         scene.world().showSection(util.select().position(battery), Direction.DOWN);
@@ -420,16 +419,13 @@ public class KineticBatteryScene {
         scene.idle(140);
         scene.world().modifyEntity(item, e -> e.remove(Entity.RemovalReason.DISCARDED));
 
-        scene.world().modifyBlockEntity(deployer, DeployerBlockEntity.class, be -> be.heldItem = batteryStack.copy());
-        scene.world().showSection(deployerGroup, Direction.DOWN);
-        scene.idle(10);
         scene.world().showSection(armGroup, Direction.DOWN);
         scene.idle(10);
         scene.world().showSection(depot, Direction.DOWN);
         scene.idle(20);
 
         scene.overlay().showText(100)
-                .text("Deployers and mechanical arms can automate the energy transfer")
+                .text("Mechanical arms can automate the energy transfer between batteries")
                 .placeNearTarget()
                 .attachKeyFrame()
                 .pointAt(util.vector().topOf(arm.below()));

@@ -78,8 +78,8 @@ public class CentrifugalClutchBlockEntity extends SplitShaftBlockEntity {
 
     @Override
     public void onSpeedChanged(float previousSpeed) {
-        onKineticUpdate();
         super.onSpeedChanged(previousSpeed);
+        onKineticUpdate();
     }
 
     @Override

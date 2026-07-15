@@ -52,7 +52,6 @@ sourceSets.client.java.exclude(
         "com/hlysine/create_connected/content/fancatalyst/FanCatalystRotatingHeadRenderer.java",
         "com/hlysine/create_connected/content/fancatalyst/SkullTypes.java",
         "com/hlysine/create_connected/content/kineticbattery/KineticBatteryOverrides.java",
-        "com/hlysine/create_connected/content/kineticbattery/KineticBatteryValueBox.java",
 )
 
 dependencies {
