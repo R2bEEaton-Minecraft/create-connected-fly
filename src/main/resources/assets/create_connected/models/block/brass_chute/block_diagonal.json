@@ -5,6 +5,7 @@
 	"textures": {
 		"3": "create_connected:block/brass_chute_large",
 		"4": "create_connected:block/brass_chute",
+		"5": "create_connected:block/brass_chute_hole",
 		"particle": "create:block/brass_block"
 	},
 	"elements": [

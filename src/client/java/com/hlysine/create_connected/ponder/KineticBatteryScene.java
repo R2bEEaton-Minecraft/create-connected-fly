@@ -3,7 +3,7 @@ package com.hlysine.create_connected.ponder;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryBlock;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryBlockEntity;
 import com.hlysine.create_connected.registries.CCBlocks;
-import com.hlysine.create_connected.registries.CCDataComponents;
+import com.hlysine.create_connected.registries.CCItems;
 import com.zurrtum.create.AllBlocks;
 import com.zurrtum.create.AllItems;
 import com.zurrtum.create.content.kinetics.belt.BeltBlock;
@@ -65,7 +65,7 @@ public class KineticBatteryScene {
         scene.world().showSection(rotation1, Direction.DOWN);
         scene.idle(10);
         scene.world().showSection(util.select().position(shaft), Direction.DOWN);
-        scene.world().setKineticSpeed(util.select().position(battery), -64);
+        scene.world().setKineticSpeed(util.select().position(battery), 64);
         scene.idle(20);
 
         scene.overlay().showText(80)
@@ -92,7 +92,7 @@ public class KineticBatteryScene {
         scene.world().toggleRedstonePower(util.select().position(lever));
         scene.effects().indicateRedstone(lever);
         scene.world().modifyBlock(battery, state -> state.setValue(KineticBatteryBlock.POWER, 15), false);
-        scene.world().setKineticSpeed(util.select().position(battery).add(util.select().position(shaft)).add(util.select().position(saw)), -64);
+        scene.world().setKineticSpeed(util.select().position(battery).add(util.select().position(shaft)).add(util.select().position(saw)), 64);
 
         scene.idle(20);
 
@@ -353,8 +353,7 @@ public class KineticBatteryScene {
         scene.overlay().showControls(util.vector().blockSurface(battery, Direction.UP), Pointing.DOWN, 30).withItem(new ItemStack(AllItems.WRENCH));
         scene.idle(30);
         scene.world().destroyBlock(battery);
-        ItemStack batteryStack = new ItemStack(CCBlocks.KINETIC_BATTERY);
-        batteryStack.set(CCDataComponents.KINETIC_BATTERY_CHARGE, KineticBatteryBlockEntity.getMaxBatteryLevel());
+        ItemStack batteryStack = new ItemStack(CCItems.CHARGED_KINETIC_BATTERY);
         var item = scene.world().createItemEntity(util.vector().centerOf(battery), Vec3.ZERO, batteryStack);
         scene.idle(20);
 
@@ -366,7 +365,7 @@ public class KineticBatteryScene {
         scene.idle(90);
 
         scene.world().hideSection(util.select().position(battery), Direction.UP);
-        scene.world().modifyEntity(item, e -> e.remove(Entity.RemovalReason.DISCARDED));
+        scene.world().modifyEntity(item, Entity::discard);
         scene.idle(20);
         scene.world().restoreBlocks(util.select().position(battery));
         scene.world().modifyBlock(battery, state -> state.setValue(KineticBatteryBlock.LEVEL, 2), false);
@@ -398,7 +397,7 @@ public class KineticBatteryScene {
         scene.idle(10);
         scene.world().hideSection(saw, Direction.UP);
         scene.idle(10);
-        scene.world().modifyEntity(item, e -> e.remove(Entity.RemovalReason.DISCARDED));
+        scene.world().modifyEntity(item, Entity::discard);
         scene.world().hideSection(util.select().position(battery), Direction.UP);
         scene.idle(20);
         scene.world().setKineticSpeed(util.select().position(battery), 0);
@@ -417,7 +416,7 @@ public class KineticBatteryScene {
                 .attachKeyFrame()
                 .pointAt(util.vector().topOf(battery));
         scene.idle(140);
-        scene.world().modifyEntity(item, e -> e.remove(Entity.RemovalReason.DISCARDED));
+        scene.world().modifyEntity(item, Entity::discard);
 
         scene.world().showSection(armGroup, Direction.DOWN);
         scene.idle(10);
